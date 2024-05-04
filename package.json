@@ -7,13 +7,12 @@
       "itchio-downloader": "./dist/cli.js"
    },
    "scripts": {
-      "clean": "rimraf ./dist",
+      "clean": "rimraf ./dist, testOutput",
       "build": "npm run clean && tsc",
-      "dev": "nodemon --watch src --ext ts --exec \"ts-node ./src/test.ts\"",
-      "build-cli": "npm run clean && tsc -p && shx chmod +x ./dist/cli.js",
-      "test": "ts-node",
-      "test:downloadSingle": "npm run build && yarn test ./src/tests/downloadSingle.ts",
-      "test:downloadMultiple": "npm run build && yarn test ./src/tests/downloadMultiple.ts"
+      "dev": "nodemon --watch src --ext ts --exec \"ts-node ./src/index.ts\"",
+      "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",
+      "test:downloadSingle": "npm run build && ts-node ./src/tests/downloadSingle.ts",
+      "test:downloadMultiple": "npm run build && ts-node ./src/tests/downloadMultiple.ts"
    },
    "author": "Wal33D",
    "license": "ISC",

@@ -1,9 +1,15 @@
+#!/usr/bin/env node
+
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { downloadGame } from './itchDownloader/downloadGame';
 import { DownloadGameParams } from './itchDownloader/types';
 
 const argv: any = yargs(hideBin(process.argv))
+   .option('url', {
+      describe: 'The full URL to the game on itch.io',
+      type: 'string'
+   })
    .option('name', {
       describe: 'The name of the game to download',
       type: 'string'
@@ -19,14 +25,24 @@ const argv: any = yargs(hideBin(process.argv))
    .option('cleanDirectory', {
       describe: 'Whether to clean the directory before downloading',
       type: 'boolean',
-      default: false
+      default: true
    })
-   .demandOption(['name', 'author', 'filepath'], 'Please provide both name, author, and filepath to download the game')
+   .check((argv) => {
+      // Ensure either URL is provided or both name and author are provided
+      if (argv.url) {
+         return true;
+      } else if (argv.name && argv.author) {
+         return true;
+      } else {
+         throw new Error('Please provide either a URL or both name and author.');
+      }
+   })
    .help()
    .alias('help', 'h')
    .parse();
 
 const params: DownloadGameParams = {
+   itchGameUrl: argv.url,
    name: argv.name,
    author: argv.author,
    desiredFileDirectory: argv.filepath,
