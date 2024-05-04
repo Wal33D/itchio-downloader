@@ -19,8 +19,6 @@ npm install itchio-downloader
 yarn add itchio-downloader
 ```
 
-````
-
 ## Usage
 
 ### Importing the package
@@ -78,16 +76,19 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, open an issue first to discuss what you would like to change.
 
 Ensure to update tests as appropriate.
+
 ## Command Line Usage
 
 To use Itchio-Downloader from the command line:
 
 1. First, ensure the CLI is built:
+
    ```bash
    yarn build-cli
    ```
 
 2. Run the command with the required options. For example:
+
    ```bash
    itchio-downloader --name "manic miners" --author "baraklava"
    ```
@@ -110,4 +111,3 @@ To use Itchio-Downloader from the command line:
 ## License
 
 Distributed under the ISC License.
-````
