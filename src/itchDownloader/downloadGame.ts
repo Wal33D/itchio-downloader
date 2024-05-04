@@ -1,13 +1,14 @@
 import { Browser } from 'puppeteer';
+import { createFile } from '../fileUtils/createFile';
 import { renameFile } from '../fileUtils/renameFile';
 import { waitForFile } from '../fileUtils/waitForFile';
+import { clearDirectory } from '../fileUtils/clearDirectory';
 import { initiateDownload } from './initiateDownload';
 import { initializeBrowser } from './initializeBrowser';
 import { fetchItchGameProfile } from './fetchItchGameProfile';
 import { setAndPrepareDownloadDirectory } from './setAndPrepareDownloadDirectory';
 import { acquireLock, isLocked, releaseLock } from '../fileUtils/fileLock';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
-import { createFile } from '../fileUtils/createFile';
 
 let globalBrowser: Browser | null = null; // Globally accessible browser instance
 
@@ -27,7 +28,7 @@ export async function downloadGame(params: DownloadGameParams | DownloadGamePara
 }
 
 async function downloadGameSingle(params: DownloadGameParams): Promise<DownloadGameResponse> {
-   let { name, author, desiredFileName, desiredFileDirectory, itchGameUrl } = params;
+   let { name, author, desiredFileName, desiredFileDirectory, itchGameUrl, cleanDirectory } = params;
 
    // Construct the itchGameUrl from name and author if not provided
    if (!itchGameUrl && name && author) {
@@ -68,6 +69,11 @@ async function downloadGameSingle(params: DownloadGameParams): Promise<DownloadG
 
       browserInit = await initializeBrowser({ userDataDir });
       if (!browserInit.status) throw new Error('Browser initialization failed: ' + browserInit.message);
+
+      if (cleanDirectory) {
+         console.log(`Cleaning download directory at ${desiredFileDirectory}`);
+         await clearDirectory({ directoryPath: downloadDirPath });
+      }
       console.log(`Browser initialized successfully`, userDataDir);
 
       globalBrowser = browserInit.browser;
@@ -91,7 +97,10 @@ async function downloadGameSingle(params: DownloadGameParams): Promise<DownloadG
          finalFilePath = renameResult.newFilePath as any;
          console.log('File renamed successfully to:', finalFilePath);
       }
-      await createFile({ filePath: downloadDirPath + '\\metadata.json', content: JSON.stringify(gameProfile?.itchRecord as IItchRecord) });
+      await createFile({
+         filePath: downloadDirPath + `\\${gameProfile?.itchRecord?.name}-metadata.json`,
+         content: JSON.stringify(gameProfile?.itchRecord as IItchRecord)
+      });
 
       status = puppeteerResult.status;
       message = 'Download and file operations successful.';
