@@ -1,0 +1,34 @@
+{
+   "name": "itchio-downloader",
+   "version": "0.0.1",
+   "description": "Programatically download games from itch.io",
+   "main": "dist/index.js",
+   "scripts": {
+      "clean": "rimraf dist",
+      "build": "npm run clean && tsc",
+      "dev": "nodemon --watch src --ext ts --exec \"ts-node src/test.ts\"",
+      "test": "ts-node",
+      "test:downloadSingle": "npm run build && yarn test src/tests/downloadSingle.ts",
+      "test:downloadMultiple": "npm run build && yarn test src/tests/downloadMultiple.ts"
+   },
+   "author": "Wal33D",
+   "license": "ISC",
+   "dependencies": {
+      "express": "^4.19.2",
+      "node-stream-zip": "^1.15.0",
+      "puppeteer": "^22.7.1",
+      "unzipper": "^0.11.4",
+      "windows-shortcuts": "^0.1.6",
+      "xml2js": "^0.6.2"
+   },
+   "devDependencies": {
+      "@types/node": "^20.12.7",
+      "@types/node-fetch": "^2.6.11",
+      "@types/puppeteer": "^7.0.4",
+      "fs-extra": "^11.2.0",
+      "nodemon": "^3.1.0",
+      "rimraf": "^5.0.5",
+      "ts-node": "^10.9.2",
+      "typescript": "^5.4.5"
+   }
+}

@@ -1,0 +1,30 @@
+# Node.js
+node_modules/
+yarn-error.log
+yarn-debug.log
+
+# TypeScript
+dist/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+
+# Editor settings
+.vscode/
+*.dat
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Custom additions for specific directories
+/bin/
+/levels/
+/lib/
+/output/
+/cache/
+/installations/
+.prettierrc
+/testOutput/*
+*.zip
