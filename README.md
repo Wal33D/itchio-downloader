@@ -52,8 +52,9 @@ To download multiple games, provide an array of parameters for each game. You ca
 ```javascript
 async function downloadMultipleGames() {
    const gameParams = [
-      { name: 'manic-miners', author: 'baraklava', cleanDirectory: true },
-      { itchGameUrl: 'https://anotherdev.itch.io/another-game', cleanDirectory: true }
+      { name: 'manic-miners', author: 'baraklava' },
+      { itchGameUrl: 'https://anotherdev.itch.io/another-game' },
+      { itchGameUrl: 'https://moregames.itch.io/better-game' }
    ];
 
    await downloadGame(gameParams);
