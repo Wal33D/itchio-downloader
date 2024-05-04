@@ -1,5 +1,9 @@
 # Itchio-Downloader
 
+**GitHub Repository:** [gmail-node-mailer on GitHub](https://github.com/Wal33D/itchio-downloader)
+
+**npm Package:** [gmail-node-mailer on npm](https://www.npmjs.com/package/itchio-downloader)
+
 Itchio-Downloader is a Node.js package that enables you to programmatically download games from [itch.io](https://itch.io). This tool allows you to access and download any free game available on itch.io directly through URLs or by specifying the game's name and its author's username, all without the need for an API key, manual interaction, or the itch.io desktop application (GUI) and Butler.
 
 ## Features
