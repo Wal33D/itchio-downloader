@@ -6,9 +6,9 @@ const preferedDownloadDirectory = path.join(__dirname, '..', '..', 'testOutput')
 
 async function downloadMultipleGamesExample() {
    const gameParams: DownloadGameParams[] = [
-      { name: 'eyeless-jack', author: 'tayoodev', desiredFileDirectory: preferedDownloadDirectory },
-      { itchGameUrl: 'https://baraklava.itch.io/manic-miners', desiredFileDirectory: preferedDownloadDirectory },
-      { itchGameUrl: 'https://orangepixel.itch.io/gauntlet-of-power', desiredFileDirectory: preferedDownloadDirectory }
+      { name: 'eyeless-jack', author: 'tayoodev', desiredFileDirectory: preferedDownloadDirectory, cleanDirectory: true },
+      { itchGameUrl: 'https://baraklava.itch.io/manic-miners', desiredFileDirectory: preferedDownloadDirectory, cleanDirectory: true },
+      { itchGameUrl: 'https://orangepixel.itch.io/gauntlet-of-power', desiredFileDirectory: preferedDownloadDirectory, cleanDirectory: true }
    ];
 
    try {
