@@ -6,6 +6,10 @@
 
 Itchio-Downloader is a Node.js package that enables you to programmatically download games from [itch.io](https://itch.io). This tool allows you to access and download any free game available on itch.io directly through URLs or by specifying the game's name and its author's username, all without the need for an API key, manual interaction, or the itch.io desktop application (GUI) and Butler.
 
+## Motivation
+
+I created this tool to build a game launcher/updater for the public/free games that I love. I decided to release this tool so others could use it for similar projects or entirely new ideas. To the best of my knowledge, this is the only programmatic method of downloading itch.io games without requiring an API key, OAuth key, or being the game developer. This makes Itchio-Downloader a unique and useful tool for the community!
+
 ## Features
 
 -  **Direct Downloads**: Download games directly from itch.io using either a specific URL or by specifying the game's name and author. No need for the itch.io desktop GUI or Butler.
@@ -102,7 +106,10 @@ To use Itchio-Downloader from the command line:
 The `downloadGame` function accepts the following parameters within `DownloadGameParams`:
 
 -  `name`: (Optional) The name of the game (used in conjunction with `author`).
--  `author`: (Optional) The author's username on itch.io (used with `name`).
+-  `author`: (Optional) The author's username on itch.io (used with `name`
+
+).
+
 -  `itchGameUrl`: (Optional) Direct URL to the game's itch.io page.
 -  `desiredFileName`: (Optional) Specify a custom filename for the downloaded file.
 -  `desiredFileDirectory`: (Optional) Directory where the downloaded files should be saved.
