@@ -110,20 +110,20 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 
 ## Types
 
-```
+```javascript
 export type DownloadGameParams = {
-   name?: string;
-   author?: string;
-   cleanDirectory?: boolean;
-   desiredFileName?: string;
-   desiredFileDirectory?: string;
-   itchGameUrl?: string;
+   name?: string,
+   author?: string,
+   cleanDirectory?: boolean,
+   desiredFileName?: string,
+   desiredFileDirectory?: string,
+   itchGameUrl?: string
 };
 
 export type DownloadGameResponse = {
-   status: boolean;
-   message: string;
-   filePath?: string;
+   status: boolean,
+   message: string,
+   filePath?: string
 };
 ```
 
