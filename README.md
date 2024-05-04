@@ -138,6 +138,7 @@ export type DownloadGameResponse = {
 
 ## yarn test:downloadSingle --> example response
 
+```bash
 Single Game Download Result: {
 status: true,
 message: 'Download and file operations successful.',
@@ -158,6 +159,7 @@ itchGameUrl: 'https://baraklava.itch.io/manic-miners',
 itchMetaDataUrl: 'https://baraklava.itch.io/manic-miners/data.json'
 }
 }
+```
 
 ## Contributing
 
@@ -168,3 +170,7 @@ Ensure to update tests as appropriate.
 ## License
 
 Distributed under the ISC License.
+
+```
+
+```
