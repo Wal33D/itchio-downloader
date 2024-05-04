@@ -103,3 +103,24 @@ export const setAndPrepareDownloadDirectory = async ({
       message
    };
 };
+
+const bug = {
+   status: true,
+   message: 'Download and file operations successful.',
+   metadataPath: 'C:\\Users\\Aquataze\\Desktop\\itchDownloader\\testOutput\\manic-miners\\manic-miners-metadata.json',
+   filePath: 'C:\\Users\\Aquataze\\Desktop\\itchDownloader\\testOutput\\manic-miners\\ManicMinersV1.0.zip',
+   metaData: {
+      title: 'Manic Miners: A LEGO Rock Raiders remake',
+      coverImage: 'https://img.itch.zone/aW1nLzEzMTQ1NzA1LnBuZw==/315x250%23c/i%2BJ4qs.png',
+      authors: [[Object]],
+      tags: [],
+      id: 598634,
+      commentsLink: 'https://baraklava.itch.io/manic-miners/comments',
+      selfLink: 'https://baraklava.itch.io/manic-miners',
+      author: 'baraklava',
+      name: 'manic-miners',
+      domain: '.itch.io',
+      itchGameUrl: 'https://baraklava.itch.io/manic-miners',
+      itchMetaDataUrl: 'https://baraklava.itch.io/manic-miners/data.json'
+   }
+};
