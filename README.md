@@ -108,6 +108,25 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 -  `desiredFileDirectory`: (Optional) Directory where the downloaded files should be saved.
 -  `cleanDirectory`: (Optional) Whether to clean the directory before downloading the files.
 
+## Types
+
+```
+export type DownloadGameParams = {
+   name?: string;
+   author?: string;
+   cleanDirectory?: boolean;
+   desiredFileName?: string;
+   desiredFileDirectory?: string;
+   itchGameUrl?: string;
+};
+
+export type DownloadGameResponse = {
+   status: boolean;
+   message: string;
+   filePath?: string;
+};
+```
+
 ## Contributing
 
 Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, open an issue first to discuss what you would like to change.
