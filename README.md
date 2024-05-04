@@ -61,23 +61,6 @@ async function downloadMultipleGames() {
 downloadMultipleGames();
 ```
 
-## Configuration Options
-
-The `downloadGame` function accepts the following parameters within `DownloadGameParams`:
-
--  `name`: (Optional) The name of the game (used in conjunction with `author`).
--  `author`: (Optional) The author's username on itch.io (used with `name`).
--  `itchGameUrl`: (Optional) Direct URL to the game's itch.io page.
--  `desiredFileName`: (Optional) Specify a custom filename for the downloaded file.
--  `desiredFileDirectory`: (Optional) Directory where the downloaded files should be saved.
--  `cleanDirectory`: (Optional) Whether to clean the directory before downloading the files.
-
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, open an issue first to discuss what you would like to change.
-
-Ensure to update tests as appropriate.
-
 ## Command Line Usage
 
 To use Itchio-Downloader from the command line:
@@ -108,6 +91,23 @@ To use Itchio-Downloader from the command line:
       filePath: 'C:\\Users\\Aquataze\\AppData\\Local\\ItchDownloader\\manic-miners\\ManicMinersV1.0.zip'
    }
    ```
+
+## Configuration Options
+
+The `downloadGame` function accepts the following parameters within `DownloadGameParams`:
+
+-  `name`: (Optional) The name of the game (used in conjunction with `author`).
+-  `author`: (Optional) The author's username on itch.io (used with `name`).
+-  `itchGameUrl`: (Optional) Direct URL to the game's itch.io page.
+-  `desiredFileName`: (Optional) Specify a custom filename for the downloaded file.
+-  `desiredFileDirectory`: (Optional) Directory where the downloaded files should be saved.
+-  `cleanDirectory`: (Optional) Whether to clean the directory before downloading the files.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, open an issue first to discuss what you would like to change.
+
+Ensure to update tests as appropriate.
 
 ## License
 
