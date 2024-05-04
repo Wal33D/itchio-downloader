@@ -37,6 +37,8 @@ async function downloadGameSingle(params: DownloadGameParams): Promise<DownloadG
    console.log('Starting downloadGameSingle function...');
    let message = '';
    let status = false;
+   let metaData = null;
+   let metadataPath = '';
    let finalFilePath = '';
    let browserInit: { browser: Browser | null; status: boolean; message: string } | null = null;
 
@@ -97,9 +99,11 @@ async function downloadGameSingle(params: DownloadGameParams): Promise<DownloadG
          finalFilePath = renameResult.newFilePath as any;
          console.log('File renamed successfully to:', finalFilePath);
       }
+      metaData = gameProfile?.itchRecord as IItchRecord;
+      metadataPath = downloadDirPath + `\\${gameProfile?.itchRecord?.name}-metadata.json`;
       await createFile({
-         filePath: downloadDirPath + `\\${gameProfile?.itchRecord?.name}-metadata.json`,
-         content: JSON.stringify(gameProfile?.itchRecord as IItchRecord)
+         filePath: metadataPath,
+         content: JSON.stringify(metaData, null, 2)
       });
 
       status = puppeteerResult.status;
@@ -124,7 +128,7 @@ async function downloadGameSingle(params: DownloadGameParams): Promise<DownloadG
       }
    }
 
-   return { status, message, filePath: finalFilePath };
+   return { status, message, metadataPath, filePath: finalFilePath, metaData };
 }
 
 // Handle cleanup on process exit or interruption

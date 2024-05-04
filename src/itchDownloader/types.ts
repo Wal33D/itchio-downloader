@@ -101,5 +101,7 @@ export type DownloadGameParams = {
 export type DownloadGameResponse = {
    status: boolean;
    message: string;
+   metaData?: IItchRecord;
+   metadataPath?: string;
    filePath?: string;
 };
