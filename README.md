@@ -1,28 +1,24 @@
-Certainly! Here’s a simple template for a README file for your `itchio-downloader` package. This template will provide an overview of the package, its main features, installation instructions, usage examples, and other useful information. You can expand this template to include more specific details or to fit the style of your project documentation.
-
-### README.md for Itchio-Downloader
-
-````markdown
 # Itchio-Downloader
 
-Itchio-Downloader is a Node.js package designed to programmatically download games from [itch.io](https://itch.io). Utilizing Puppeteer to handle web scraping and downloads, this tool simplifies the process of fetching game files directly from game URLs provided by the user.
+Itchio-Downloader is a Node.js package designed to programmatically download games from [itch.io](https://itch.io). Leveraging Puppeteer for web interactions, this tool simplifies the process of acquiring game files directly from URLs or by specifying the game name and author.
 
 ## Features
 
--  Download a single game from itch.io using a URL.
--  Download multiple games in one batch operation.
--  Customizable download settings (file directory, renaming files, etc.).
--  Built-in error handling and resource management.
+-  Download games directly from itch.io using either a specific URL or by specifying the game's name and author.
+-  Support for downloading multiple games in a batch operation.
+-  Customizable settings for file renaming and download directories.
+-  Built-in cleaning options to manage download directories effectively.
 
 ## Installation
 
-To install Itchio-Downloader, you will need Node.js and npm (or Yarn) installed on your computer. From your terminal, run the following command:
+To install Itchio-Downloader, ensure you have Node.js and npm (or Yarn) installed on your computer. From your terminal, run:
 
 ```bash
 npm install itchio-downloader
 # or
 yarn add itchio-downloader
 ```
+
 ````
 
 ## Usage
@@ -30,50 +26,89 @@ yarn add itchio-downloader
 ### Importing the package
 
 ```javascript
-const { downloadSingleGame, downloadMultipleGames } = require('itchio-downloader');
+const { downloadGame } = require('itchio-downloader');
 ```
 
 ### Downloading a Single Game
 
-To download a single game, provide the URL to the game's itch.io page:
+You can download a single game by either specifying a URL or a combination of the game's name and its author's username:
 
 ```javascript
-async function downloadSingle() {
-   const url = 'https://baraklava.itch.io/manic-miners';
-   await downloadSingleGame({
-      itchGameUrl: url
-   });
-}
-downloadSingle();
+// Using a direct URL:
+await downloadGame({ itchGameUrl: 'https://baraklava.itch.io/manic-miners' });
+
+// Using name and author and optional params:
+await downloadGame({
+   name: 'manic-miners',
+   author: 'baraklava',
+   desiredFileDirectory: 'full file path', // Optional
+   cleanDirectory: true // Optional
+});
 ```
 
 ### Downloading Multiple Games
 
-To download multiple games, provide an array of URLs:
+To download multiple games, provide an array of parameters for each game. You can mix URL and name/author specifications within the same operation:
 
 ```javascript
-async function downloadMultiple() {
-   const urls = ['https://gameone.itch.io/game1', 'https://gametwo.itch.io/game2'];
-   await downloadMultipleGames(urls);
+async function downloadMultipleGames() {
+   const gameParams = [
+      { name: 'manic-miners', author: 'baraklava', cleanDirectory: true },
+      { itchGameUrl: 'https://anotherdev.itch.io/another-game', cleanDirectory: true }
+   ];
+
+   await downloadGame(gameParams);
 }
-downloadMultiple();
+downloadMultipleGames();
 ```
 
 ## Configuration Options
 
-The `downloadGame` function accepts the following parameters:
+The `downloadGame` function accepts the following parameters within `DownloadGameParams`:
 
--  `name`: Optional. The name of the game.
--  `author`: Optional. The author of the game.
--  `desiredFileName`: Optional. Custom filename for the downloaded file.
--  `desiredFileDirectory`: Optional. Custom directory to save the downloaded file.
+-  `name`: (Optional) The name of the game (used in conjunction with `author`).
+-  `author`: (Optional) The author's username on itch.io (used with `name`).
+-  `itchGameUrl`: (Optional) Direct URL to the game's itch.io page.
+-  `desiredFileName`: (Optional) Specify a custom filename for the downloaded file.
+-  `desiredFileDirectory`: (Optional) Directory where the downloaded files should be saved.
+-  `cleanDirectory`: (Optional) Whether to clean the directory before downloading the files.
+
+## Command Line Usage
+
+To use Itchio-Downloader from the command line:
+
+1. First, ensure the CLI is built:
+   ```bash
+   yarn build-cli
+   ```
+
+2. Run the command with the required options. For example:
+   ```bash
+   itchio-downloader --name "manic miners" --author "baraklava"
+   ```
+
+   This command will start the download process and provide output similar to:
+
+   ```
+   Starting downloadGameSingle function...
+   Game profile fetched successfully: https://baraklava.itch.io/manic-miners
+   Download directory set C:\Users\Aquataze\AppData\Local\ItchDownloader\manic-miners
+   Downloading...
+   Download and file operations successful.
+   Game Download Result: {
+      status: true,
+      message: 'Download and file operations successful.',
+      filePath: 'C:\\Users\\Aquataze\\AppData\\Local\\ItchDownloader\\manic-miners\\ManicMinersV1.0.zip'
+   }
+   ```
 
 ## Contributing
 
-Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, open an issue first to discuss what you would like to change.
 
 Ensure to update tests as appropriate.
 
 ## License
 
-Distributed under the ISC License. See `LICENSE` for more information.
+Distributed under the ISC License.
+````
