@@ -13,17 +13,10 @@ export const setAndPrepareDownloadDirectory = async ({
    userDataDir = path.join(os.homedir(), 'AppData', 'LocalLow', 'ItchDownloaderData'),
    downloadDirPath = path.join(os.homedir(), 'AppData', 'Local', 'ItchDownloader')
 }: ChromeDirectoryOptions): Promise<ChromeOperationResult> => {
+   downloadDirPath = path.join(downloadDirPath, applicationName);
    const defaultPath = path.join(userDataDir, 'Default');
    const prefsFilePath = path.join(defaultPath, 'Preferences');
    const localStateFilePath = path.join(userDataDir, 'Local State');
-
-   // Define the default download directory path
-   const defaultDownloadPath = path.join(os.homedir(), 'AppData', 'Local', 'ItchDownloader');
-
-   // Only append applicationName if the path has not been explicitly set to a different path
-   if (downloadDirPath === defaultDownloadPath) {
-      downloadDirPath = path.join(downloadDirPath, applicationName);
-   }
 
    // Get system user's name or use a default name if undefined or empty
    const userInfo = os.userInfo();
@@ -109,4 +102,25 @@ export const setAndPrepareDownloadDirectory = async ({
       verificationResults,
       message
    };
+};
+
+const bug = {
+   status: true,
+   message: 'Download and file operations successful.',
+   metadataPath: 'C:\\Users\\Aquataze\\Desktop\\itchDownloader\\testOutput\\manic-miners\\manic-miners-metadata.json',
+   filePath: 'C:\\Users\\Aquataze\\Desktop\\itchDownloader\\testOutput\\manic-miners\\ManicMinersV1.0.zip',
+   metaData: {
+      title: 'Manic Miners: A LEGO Rock Raiders remake',
+      coverImage: 'https://img.itch.zone/aW1nLzEzMTQ1NzA1LnBuZw==/315x250%23c/i%2BJ4qs.png',
+      authors: [[Object]],
+      tags: [],
+      id: 598634,
+      commentsLink: 'https://baraklava.itch.io/manic-miners/comments',
+      selfLink: 'https://baraklava.itch.io/manic-miners',
+      author: 'baraklava',
+      name: 'manic-miners',
+      domain: '.itch.io',
+      itchGameUrl: 'https://baraklava.itch.io/manic-miners',
+      itchMetaDataUrl: 'https://baraklava.itch.io/manic-miners/data.json'
+   }
 };
