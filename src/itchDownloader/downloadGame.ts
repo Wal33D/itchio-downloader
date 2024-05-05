@@ -27,7 +27,7 @@ export async function downloadGame(params: DownloadGameParams | DownloadGamePara
    }
 }
 
-async function downloadGameSingle(params: DownloadGameParams): Promise<DownloadGameResponse> {
+export async function downloadGameSingle(params: DownloadGameParams): Promise<DownloadGameResponse> {
    let { name, author, desiredFileName, desiredFileDirectory, itchGameUrl, cleanDirectory } = params;
 
    // Construct the itchGameUrl from name and author if not provided

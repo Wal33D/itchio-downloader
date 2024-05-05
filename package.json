@@ -1,13 +1,13 @@
 {
    "name": "itchio-downloader",
-   "version": "0.0.14",
+   "version": "0.0.2",
    "description": "Programatically download games from itch.io",
    "main": "./dist/index.js",
    "bin": {
       "itchio-downloader": "./dist/cli.js"
    },
    "scripts": {
-      "clean": "rimraf ./dist, testOutput",
+      "clean": "rimraf ./dist/",
       "build": "npm run clean && tsc",
       "dev": "nodemon --watch src --ext ts --exec \"ts-node ./src/index.ts\"",
       "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",

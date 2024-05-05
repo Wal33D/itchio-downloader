@@ -173,7 +173,3 @@ Ensure to update tests as appropriate.
 ## License
 
 Distributed under the ISC License.
-
-```
-
-```
