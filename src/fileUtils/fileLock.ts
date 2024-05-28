@@ -3,7 +3,15 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-const lockFilePath = path.join(os.homedir(), 'AppData', 'LocalLow', 'ItchDownloadLock.lock');
+// Determine the OS specific path for the lock file
+let lockFilePath;
+if (os.platform() === 'win32') {
+   // Windows path
+   lockFilePath = path.join(os.homedir(), 'AppData', 'LocalLow', 'ItchDownloadLock.lock');
+} else {
+   // Linux (and possibly macOS) path, adjust accordingly
+   lockFilePath = path.join(os.tmpdir(), 'Itch.lock');
+}
 
 const fsWriteFile = util.promisify(fs.writeFile);
 const fsUnlink = util.promisify(fs.unlink);

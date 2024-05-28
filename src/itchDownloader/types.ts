@@ -92,9 +92,8 @@ export interface IItchRecord {
 export type DownloadGameParams = {
    name?: string;
    author?: string;
-   cleanDirectory?: boolean;
    desiredFileName?: string;
-   desiredFileDirectory?: string;
+   downloadDirectory?: string;
    itchGameUrl?: string;
 };
 

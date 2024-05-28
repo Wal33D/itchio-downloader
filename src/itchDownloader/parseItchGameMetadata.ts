@@ -6,7 +6,17 @@ import { IParsedItchGameMetadata } from './types';
  * @param {object} params - Parameters that can include a direct URL or author and game name.
  * @returns {Promise<IParsedItchGameMetadata>} - The parsed metadata object.
  */
-export const parseItchGameMetadata = async ({ itchGameUrl, author, name, domain = 'itch.io' }: { itchGameUrl?: string; author?: string; name?: string; domain?: string }): Promise<IParsedItchGameMetadata> => {
+export const parseItchGameMetadata = async ({
+   itchGameUrl,
+   author,
+   name,
+   domain = 'itch.io'
+}: {
+   itchGameUrl?: string;
+   author?: string;
+   name?: string;
+   domain?: string;
+}): Promise<IParsedItchGameMetadata> => {
    if (!itchGameUrl && author && name) {
       itchGameUrl = `https://${author}.${domain}/${name}/data.json`;
    }

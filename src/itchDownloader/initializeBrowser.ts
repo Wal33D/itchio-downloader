@@ -1,10 +1,11 @@
+import path from 'path';
 import puppeteer, { Browser } from 'puppeteer';
 
 export const initializeBrowser = async ({
-   userDataDir,
-   headless = true
+   downloadDirectory,
+   headless = false
 }: {
-   userDataDir: string;
+   downloadDirectory: string;
    headless?: boolean;
 }): Promise<{ browser: Browser | null; status: boolean; message: string }> => {
    let message = '';
@@ -15,14 +16,7 @@ export const initializeBrowser = async ({
       browser = await puppeteer.launch({
          headless: headless, // Set to false for visual debugging or true for production
          defaultViewport: null, // Use the default screen size of the system
-         userDataDir,
-         args: [
-            '--window-size=1920,1080', // Set window size
-            '--disable-features=IsolateOrigins,site-per-process', // Disables some security features for better automation compatibility
-            '--disable-blink-features=AutomationControlled', // Removes the flag that Puppeteer is controlling the browser
-            '--no-sandbox', // Disable the sandbox for simplicity (consider the security implications for production)
-            '--disable-setuid-sandbox' // Additional sandbox disabling
-         ]
+         args: []
       });
 
       // Create a new page in the browser
@@ -41,7 +35,11 @@ export const initializeBrowser = async ({
             get: () => false
          });
       });
-
+      const client = await page.target().createCDPSession();
+      await client.send('Page.setDownloadBehavior', {
+         behavior: 'allow',
+         downloadPath: path.resolve(downloadDirectory)
+      });
       status = true;
       message = 'Browser initialized successfully with enhanced settings.';
    } catch (error: any) {

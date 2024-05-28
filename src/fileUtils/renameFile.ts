@@ -3,6 +3,7 @@ import path from 'path';
 import util from 'util';
 
 const rename = util.promisify(fs.rename);
+const unlink = util.promisify(fs.unlink);
 
 /**
  * Renames a downloaded file with a new base name and/or extension. At least one of newBaseFileName or newBaseFileExt must be provided.
@@ -38,6 +39,15 @@ export const renameFile = async ({
       const newFilePath = path.join(directory, finalFileName);
 
       await rename(filePath, newFilePath);
+
+      // Add a short delay before deleting the original file
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Check if the original file still exists and delete it if necessary
+      if (fs.existsSync(filePath)) {
+         await unlink(filePath);
+      }
+
       message = `File renamed to ${finalFileName}`;
       return { status: true, message, newFilePath };
    } catch (error: any) {

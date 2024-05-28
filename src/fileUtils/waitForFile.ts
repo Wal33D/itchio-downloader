@@ -8,14 +8,16 @@ const access = util.promisify(fs.access);
 /**
  * Waits for a `.crdownload` file in the specified directory to disappear, indicating the download has finished, and then captures the renamed file.
  * Ignores `.temp` files and any `.crdownload` files already present at invocation.
- * @param {{ downloadPath: string }} params - Object containing the directory to monitor for downloads.
+ * @param {{ downloadDirectory: string }} params - Object containing the directory to monitor for downloads.
  * @returns {Promise<{status: boolean, message: string, filePath?: string}>} - Resolves with status, message, and the path of the completed file.
  */
-export async function waitForFile({ downloadPath }: { downloadPath: string }): Promise<{ status: boolean; message: string; filePath?: string }> {
+export async function waitForFile({ downloadDirectory }: { downloadDirectory: string }): Promise<{ status: boolean; message: string; filePath?: string }> {
    let message = 'Monitoring for file changes...';
 
    // Get initial list of `.crdownload` files to ignore.
-   const initialFiles = new Set((await readdir(downloadPath)).filter(file => file.endsWith('.crdownload')).map(file => path.join(downloadPath, file)));
+   const initialFiles = new Set(
+      (await readdir(downloadDirectory)).filter((file) => file.endsWith('.crdownload')).map((file) => path.join(downloadDirectory, file))
+   );
 
    const checkFileExistence = async (filePath: string) => {
       try {
@@ -30,10 +32,10 @@ export async function waitForFile({ downloadPath }: { downloadPath: string }): P
    };
 
    return new Promise<{ status: boolean; message: string; filePath?: string }>((resolve, reject) => {
-      const watcher = fs.watch(downloadPath, async (eventType, filename) => {
+      const watcher = fs.watch(downloadDirectory, async (eventType, filename) => {
          if (!filename || filename.endsWith('.temp') || filename.endsWith('.tmp')) return; // Ignore non-files and `.temp` files
 
-         const fullPath = path.join(downloadPath, filename);
+         const fullPath = path.join(downloadDirectory, filename);
 
          if (filename.endsWith('.crdownload')) {
             if (initialFiles.has(fullPath)) {
