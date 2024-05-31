@@ -3,7 +3,7 @@ import puppeteer, { Browser } from 'puppeteer';
 
 export const initializeBrowser = async ({
    downloadDirectory,
-   headless = false
+   headless = true
 }: {
    downloadDirectory: string;
    headless?: boolean;

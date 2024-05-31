@@ -95,6 +95,7 @@ export type DownloadGameParams = {
    desiredFileName?: string;
    downloadDirectory?: string;
    itchGameUrl?: string;
+   writeMetaData?: boolean;
 };
 
 export type DownloadGameResponse = {

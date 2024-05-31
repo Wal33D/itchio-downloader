@@ -1,7 +1,7 @@
 {
    "name": "itchio-downloader",
-   "version": "0.7.5",
-   "description": "Programatically download games from itch.io",
+   "version": "0.7.7",
+   "description": "Programatically download games from itch.io using Node",
    "main": "./dist/index.js",
    "bin": {
       "itchio-downloader": "./dist/cli.js"
@@ -12,6 +12,7 @@
       "dev": "nodemon --watch src --ext ts --exec \"ts-node ./src/index.ts\"",
       "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",
       "test:downloadSingle": "npm run build && ts-node ./src/tests/downloadSingle.ts",
+      "test:updateInternetArchive": "npm run build && ts-node ./src/tests/updateInternetArchiveItem.ts",
       "test:downloadMultiple": "npm run build && ts-node ./src/tests/downloadMultiple.ts"
    },
    "author": "Wal33D",
@@ -19,12 +20,9 @@
    "dependencies": {
       "express": "^4.19.2",
       "node-fetch": "^2.6.11",
-      "node-stream-zip": "^1.15.0",
       "os": "^0.1.2",
       "puppeteer": "^22.7.1",
-      "unzipper": "^0.11.4",
       "windows-shortcuts": "^0.1.6",
-      "xml2js": "^0.6.2",
       "yargs": "^17.7.2"
    },
    "devDependencies": {

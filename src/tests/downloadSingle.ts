@@ -4,7 +4,8 @@ import { DownloadGameParams } from '../itchDownloader/types';
 async function downloadSingleGameExample() {
    const params: DownloadGameParams = {
       itchGameUrl: 'https://baraklava.itch.io/manic-miners', // Specify the game URL or the author and name
-      desiredFileName: 'manic-miners-latest'
+      desiredFileName: 'manic-miners-latest',
+      writeMetaData: false
    };
 
    try {

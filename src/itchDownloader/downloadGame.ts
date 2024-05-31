@@ -24,7 +24,7 @@ export async function downloadGame(params: DownloadGameParams | DownloadGamePara
 }
 
 export async function downloadGameSingle(params: DownloadGameParams): Promise<DownloadGameResponse> {
-   let { name, author, desiredFileName, downloadDirectory, itchGameUrl } = params;
+   let { name, author, desiredFileName, downloadDirectory, itchGameUrl, writeMetaData = true } = params;
 
    if (!itchGameUrl && name && author) {
       itchGameUrl = `https://${author}.itch.io/${name.toLowerCase().replace(/\s+/g, '-')}`;
@@ -78,10 +78,13 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
       }
       metaData = gameProfile?.itchRecord as IItchRecord;
       metadataPath = downloadDirectory + `\\${gameProfile?.itchRecord?.name}-metadata.json`;
-      await createFile({
-         filePath: metadataPath,
-         content: JSON.stringify(metaData, null, 2)
-      });
+
+      if (writeMetaData) {
+         await createFile({
+            filePath: metadataPath,
+            content: JSON.stringify(metaData, null, 2)
+         });
+      }
 
       status = puppeteerResult.status;
       message = 'Download and file operations successful.';
