@@ -170,6 +170,8 @@ Contributions are welcome! Please fork the repository and submit pull requests w
 
 Ensure to update tests as appropriate.
 
+When publishing to npm, the `prepublishOnly` script defined in `package.json` automatically runs `npm run build-cli` to build the CLI.
+
 ## License
 
 Distributed under the ISC License.
