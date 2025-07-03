@@ -62,7 +62,7 @@ npm install itchio-downloader
 yarn add itchio-downloader
 ```
 
-See [docs/CLI.md](docs/CLI.md) for a reference of available command line options.
+See [wiki/CLI.md](wiki/CLI.md) for a reference of available command line options.
 
 ## Usage
 
