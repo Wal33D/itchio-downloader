@@ -55,17 +55,17 @@ await downloadGame({
 
 ### Downloading Multiple Games
 
-To download multiple games, provide an array of parameters for each game. You can mix URL and name/author specifications within the same operation. An optional `concurrency` argument controls how many downloads run at the same time:
+To download multiple games, provide an array of parameters for each game. You can mix URL and name/author specifications within the same operation. An optional `concurrency` argument controls how many downloads run at the same time. Alternatively, set `parallel: true` on any item to run all downloads concurrently using `Promise.all`:
 
 ```javascript
 async function downloadMultipleGames() {
    const gameParams = [
       { name: 'manic-miners', author: 'baraklava' },
       { itchGameUrl: 'https://anotherdev.itch.io/another-game' },
-      { itchGameUrl: 'https://moregames.itch.io/better-game' }
+      { itchGameUrl: 'https://moregames.itch.io/better-game', parallel: true }
    ];
 
-   await downloadGame(gameParams, 2); // up to 2 downloads simultaneously
+   await downloadGame(gameParams, 2); // up to 2 downloads or set parallel to run all at once
 }
 downloadMultipleGames();
 ```
@@ -116,6 +116,8 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 -  `cleanDirectory`: (Optional) Whether to clean the directory before downloading the files.
 -  `concurrency`: (Optional) When providing an array of games, this sets how many downloads occur at once.
 
+  `parallel`: (Optional) If `true` when using an array of games, all downloads run concurrently using `Promise.all`.
+
 ## Types
 
 ```javascript
@@ -125,7 +127,8 @@ export type DownloadGameParams = {
    cleanDirectory?: boolean,
    desiredFileName?: string,
    desiredFileDirectory?: string,
-   itchGameUrl?: string
+   itchGameUrl?: string,
+   parallel?: boolean
 };
 
 export type DownloadGameResponse = {

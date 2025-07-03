@@ -16,6 +16,11 @@ export async function downloadGame(
 ): Promise<DownloadGameResponse | DownloadGameResponse[]> {
    if (Array.isArray(params)) {
       const list = params as DownloadGameParams[];
+      const runParallel = list.some((p) => p.parallel);
+      if (runParallel) {
+         return Promise.all(list.map((p) => downloadGameSingle(p)));
+      }
+
       const limit = Math.max(concurrency, 1);
       const results: DownloadGameResponse[] = new Array(list.length);
       let index = 0;
