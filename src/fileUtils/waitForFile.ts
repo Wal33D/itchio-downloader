@@ -11,7 +11,13 @@ const access = util.promisify(fs.access);
  * @param {{ downloadDirectory: string }} params - Object containing the directory to monitor for downloads.
  * @returns {Promise<{status: boolean, message: string, filePath?: string}>} - Resolves with status, message, and the path of the completed file.
  */
-export async function waitForFile({ downloadDirectory }: { downloadDirectory: string }): Promise<{ status: boolean; message: string; filePath?: string }> {
+export async function waitForFile({
+   downloadDirectory,
+   timeoutMs = 30000
+}: {
+   downloadDirectory: string;
+   timeoutMs?: number;
+}): Promise<{ status: boolean; message: string; filePath?: string }> {
    let message = 'Monitoring for file changes...';
 
    // Get initial list of `.crdownload` files to ignore.
@@ -32,6 +38,7 @@ export async function waitForFile({ downloadDirectory }: { downloadDirectory: st
    };
 
    return new Promise<{ status: boolean; message: string; filePath?: string }>((resolve, reject) => {
+      let resolved = false;
       const watcher = fs.watch(downloadDirectory, async (eventType, filename) => {
          if (!filename || filename.endsWith('.temp') || filename.endsWith('.tmp')) return; // Ignore non-files and `.temp` files
 
@@ -50,13 +57,46 @@ export async function waitForFile({ downloadDirectory }: { downloadDirectory: st
                   message = 'Waiting for the final file to appear...';
                }
             } catch (error: any) {
-               watcher.close();
-               reject({ status: false, message: `Error monitoring file: ${error.message}` });
+               if (!resolved) {
+                  resolved = true;
+                  clearTimeout(timer);
+                  watcher.close();
+                  reject({ status: false, message: `Error monitoring file: ${error.message}` });
+               }
             }
          } else if (!initialFiles.has(fullPath) && eventType === 'rename') {
             // Assume the file appearing after a `.crdownload` disappears is the completed file.
+            if (!resolved) {
+               resolved = true;
+               clearTimeout(timer);
+               watcher.close();
+               resolve({ status: true, message: `Download complete: ${filename}`, filePath: fullPath });
+            }
+         }
+      });
+
+      const timer = setTimeout(() => {
+         if (!resolved) {
+            resolved = true;
             watcher.close();
-            resolve({ status: true, message: `Download complete: ${filename}`, filePath: fullPath });
+            resolve({ status: false, message: 'Timed out waiting for download' });
+         }
+      }, timeoutMs);
+
+      watcher.on('error', (error) => {
+         if (!resolved) {
+            resolved = true;
+            clearTimeout(timer);
+            watcher.close();
+            reject({ status: false, message: `Watcher error: ${error.message}` });
+         }
+      });
+
+      watcher.on('close', () => {
+         if (!resolved) {
+            resolved = true;
+            clearTimeout(timer);
+            resolve({ status: false, message: 'File watch terminated before completion' });
          }
       });
    });
