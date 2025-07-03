@@ -6,16 +6,16 @@
    "bin": {
       "itchio-downloader": "./dist/cli.js"
    },
-   "scripts": {
-      "clean": "rimraf ./dist/",
-      "build": "npm run clean && tsc",
-      "dev": "nodemon --watch src --ext ts --exec \"ts-node ./src/index.ts\"",
-      "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",
-    "prepublishOnly": "npm run build-cli",
-    "test": "jest",
-    "test:downloadSingle": "npm run build && ts-node ./src/tests/downloadSingle.ts",
-    "test:downloadMultiple": "npm run build && ts-node ./src/tests/downloadMultiple.ts"
-   },
+    "scripts": {
+        "clean": "rimraf ./dist/",
+        "build": "npm run clean && tsc",
+        "dev": "nodemon --watch src --ext ts --exec \"ts-node ./src/index.ts\"",
+        "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",
+        "prepublishOnly": "npm run build-cli",
+        "test:downloadSingle": "npm run build && ts-node ./src/tests/downloadSingle.ts",
+        "test:downloadMultiple": "npm run build && ts-node ./src/tests/downloadMultiple.ts",
+        "test:waitForFile": "npm run build && ts-node ./src/tests/waitForFile.test.ts"
+    },
    "author": "Wal33D",
    "license": "ISC",
    "dependencies": {
