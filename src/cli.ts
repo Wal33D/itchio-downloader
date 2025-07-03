@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-import yargs from 'yargs';
+import yargs, { Argv, ArgumentsCamelCase } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { downloadGame } from './itchDownloader/downloadGame';
 import { DownloadGameParams } from './itchDownloader/types';
-
-const argv: any = yargs(hideBin(process.argv))
+import { CLIArgs } from './types/cli';
+const argv: ArgumentsCamelCase<CLIArgs> = (yargs(hideBin(process.argv)) as Argv<CLIArgs>)
    .option('url', {
       describe: 'The full URL to the game on itch.io',
       type: 'string'
@@ -35,7 +35,7 @@ const argv: any = yargs(hideBin(process.argv))
    })
    .help()
    .alias('help', 'h')
-   .parse();
+   .parseSync();
 
 const params: DownloadGameParams = {
    itchGameUrl: argv.url,
