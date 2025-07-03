@@ -29,10 +29,10 @@ const argv = (0, yargs_1.default)((0, helpers_1.hideBin)(process.argv))
     describe: 'The author of the game',
     type: 'string'
 })
-    .option('downloadDir', {
-    describe: 'The filepath where the game will be downloaded',
-    type: 'string'
-})
+    .option('downloadDirectory', {
+        describe: 'The filepath where the game will be downloaded',
+        type: 'string'
+    })
     .check((argv) => {
     // Ensure either URL is provided or both name and author are provided
     if (argv.url) {
@@ -52,7 +52,7 @@ const params = {
     itchGameUrl: argv.url,
     name: argv.name,
     author: argv.author,
-    downloadDirectory: argv.downloadDir
+    downloadDirectory: argv.downloadDirectory
 };
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
