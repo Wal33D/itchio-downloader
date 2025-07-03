@@ -1,6 +1,16 @@
 # Command Line Reference
 
-The CLI allows you to download games directly from a terminal. Build the CLI with `npm run build-cli` before use.
+The CLI allows you to download games directly from a terminal.
+
+Build the executable before running:
+
+```bash
+npm run build-cli
+# or
+yarn build-cli
+```
+
+Then invoke the command:
 
 ```bash
 itchio-downloader [options]
@@ -18,8 +28,12 @@ itchio-downloader [options]
 
 You must provide either a URL or both a name and author.
 
-Example:
+### Examples
 
 ```bash
+# Using a URL
 itchio-downloader --url "https://baraklava.itch.io/manic-miners"
+
+# Using name and author
+itchio-downloader --name "manic miners" --author "baraklava"
 ```
