@@ -140,7 +140,7 @@ export type DownloadGameResponse = {
 };
 ```
 
-## yarn test:downloadSingle --> example response
+## npm run test:downloadSingle --> example response
 
 Single Game Download Result
 
@@ -167,6 +167,8 @@ const response = {
 };
 
 ```
+
+Example scripts used to produce this output are available in the `examples/` directory.
 
 ## Contributing
 

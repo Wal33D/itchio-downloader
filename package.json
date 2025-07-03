@@ -13,9 +13,10 @@
         "dev": "nodemon --watch src --ext ts --exec \"ts-node ./src/index.ts\"",
         "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",
         "prepublishOnly": "npm run build-cli",
-        "test:downloadSingle": "npm run build && ts-node ./src/tests/downloadSingle.ts",
-        "test:downloadMultiple": "npm run build && ts-node ./src/tests/downloadMultiple.ts",
-        "test:waitForFile": "npm run build && ts-node ./src/tests/waitForFile.test.ts"
+        "test": "jest",
+        "test:downloadSingle": "npm run build && ts-node ./examples/downloadSingle.ts",
+        "test:downloadMultiple": "npm run build && ts-node ./examples/downloadMultiple.ts",
+        "test:waitForFile": "npm run build && ts-node ./examples/waitForFile.example.ts"
     },
    "author": "Wal33D",
    "license": "ISC",

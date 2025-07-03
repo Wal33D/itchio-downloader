@@ -1,5 +1,5 @@
-import { downloadGame } from '../itchDownloader/downloadGame';
-import { DownloadGameParams } from '../itchDownloader/types';
+import { downloadGame } from '../src/itchDownloader/downloadGame';
+import { DownloadGameParams } from '../src/itchDownloader/types';
 
 async function downloadSingleGameExample() {
    const params: DownloadGameParams = {
