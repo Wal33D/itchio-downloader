@@ -64,6 +64,7 @@ yarn add itchio-downloader
 ```
 
 See [wiki/CLI.md](wiki/CLI.md) for a reference of available command line options.
+For debugging tips and verbose logging instructions, see [wiki/Debugging.md](wiki/Debugging.md).
 
 ## Usage
 

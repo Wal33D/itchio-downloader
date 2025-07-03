@@ -49,3 +49,4 @@ await downloadGame({
 ```
 
 See the [Examples](Examples.md) page for more sample scripts.
+For troubleshooting and debug logs, see the [Debugging](Debugging.md) guide.
