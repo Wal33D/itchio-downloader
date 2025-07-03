@@ -107,6 +107,9 @@ async function downloadMultipleGames() {
 downloadMultipleGames();
 ```
 
+See [wiki/Advanced-Usage.md](wiki/Advanced-Usage.md) for additional examples of
+concurrency and custom file paths.
+
 ## Command Line Usage
 
 Build the CLI with `npm run build-cli` (or `yarn build-cli`) and then run
