@@ -137,7 +137,7 @@ export type DownloadGameResponse = {
 };
 ```
 
-## yarn test:downloadSingle --> example response
+## yarn example:downloadSingle --> example response
 
 Single Game Download Result
 
