@@ -4,9 +4,26 @@
 
 **npm Package:** [itchio-downloader on npm](https://www.npmjs.com/package/itchio-downloader)
 
-Itchio-Downloader is a Node.js package that enables you to programmatically download games from [itch.io](https://itch.io). This tool allows you to access and download any free game available on itch.io directly through URLs or by specifying the game's name and its author's username, all without the need for an API key, manual interaction, or the itch.io desktop application (GUI) and Butler.
+Itchio-Downloader is a Node.js package for programmatically downloading games from [itch.io](https://itch.io). You can access and download any free game directly through URLs or by specifying the game's name and its author's username—no API key or GUI required.
 
 For a full reference of available functions and types, see the [API documentation](https://github.com/Wal33D/itchio-downloader/wiki).
+
+## Table of Contents
+
+1. [Motivation](#motivation)
+2. [Features](#features)
+3. [Usage Policy](#usage-policy)
+4. [Quick Start](#quick-start)
+5. [Usage](#usage)
+6. [Command Line Usage](#command-line-usage)
+7. [Configuration Options](#configuration-options)
+8. [Types](#types)
+9. [Example Output](#example-output)
+10. [Examples](#examples)
+11. [Contributing](#contributing)
+12. [Release Procedure](#release-procedure)
+13. [Maintenance](#maintenance)
+14. [License](#license)
 
 ## Motivation
 
@@ -24,11 +41,9 @@ I created this tool to build a game launcher/updater for the public/free games t
 
 This tool should only be used to download games that are freely available on itch.io. Use of Itchio-Downloader must comply with the [itch.io Terms of Service](https://itch.io/docs/general/terms). Do not use this tool to circumvent payment requirements or any distribution restrictions.
 
-## Installation
+## Quick Start
 
-### Node.js 18+ Setup
-
-Itchio-Downloader relies on the built-in `fetch` API introduced in **Node 18**. Make sure you are running Node 18 or later:
+This project requires **Node.js 18 or later** because it relies on the built-in `fetch` API. Verify your version and install if necessary:
 
 ```bash
 nvm install 18
@@ -46,6 +61,8 @@ npm install itchio-downloader
 # or
 yarn add itchio-downloader
 ```
+
+See [docs/CLI.md](docs/CLI.md) for a reference of available command line options.
 
 ## Usage
 
@@ -167,9 +184,9 @@ export type DownloadGameResponse = {
 };
 ```
 
-## npm run test:downloadSingle --> example response
+## Example Output
 
-Single Game Download Result
+The following shows an example response from `npm run test:downloadSingle`:
 
 ```bash
 const response = {
@@ -195,11 +212,21 @@ const response = {
 
 ```
 
-Example scripts used to produce this output are available in the `examples/` directory.
+Example scripts used to produce this output are available in the [`examples`](examples) directory.
+
+## Examples
+
+Run the sample scripts with the provided npm commands:
+
+```bash
+npm run test:downloadSingle   # single download example
+npm run test:downloadMultiple # multiple downloads
+npm run test:waitForFile      # waitForFile demo
+```
 
 ## Contributing
 
-Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, open an issue first to discuss what you would like to change.
+Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, open an issue first to discuss what you would like to change. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 Ensure to update tests as appropriate.
 
