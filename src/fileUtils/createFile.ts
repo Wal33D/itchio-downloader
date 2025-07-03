@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import { constants as fsConstants } from 'fs';
 import path from 'path';
 import { verifyFile } from './verifyFile';
 
@@ -59,9 +60,21 @@ export const createFile = async (
             const created = true;
             const existed = verification.exists;
             const overwritten = existed && verification.isFile;
-            const writable = true; // File is read-only
 
-            let message = `File '${filePath}' has been ${created ? 'created' : 'not created'} and set to read-only.`;
+            let writable = true;
+            try {
+               await fs.access(filePath, fsConstants.W_OK);
+               writable = true;
+            } catch {
+               writable = false;
+            }
+
+            let message = `File '${filePath}' has been ${created ? 'created' : 'not created'}`;
+            if (writable) {
+               message += ' and is writable.';
+            } else {
+               message += ' but is read-only.';
+            }
             if (overwritten) {
                message += ` The file was overwritten as it already existed.`;
             }
