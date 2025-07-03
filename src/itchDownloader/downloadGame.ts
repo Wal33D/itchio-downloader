@@ -1,5 +1,6 @@
 import { Browser } from 'puppeteer';
 import { createFile } from '../fileUtils/createFile';
+import { createDirectory } from '../fileUtils/createDirectory';
 import { renameFile } from '../fileUtils/renameFile';
 import { waitForFile } from '../fileUtils/waitForFile';
 import { initiateDownload } from './initiateDownload';
@@ -76,6 +77,8 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
    }
 
    try {
+      await createDirectory({ directory: downloadDirectory });
+
       const gameProfile = await fetchItchGameProfile({ itchGameUrl });
       if (!gameProfile.found) throw new Error('Failed to fetch game profile');
       log('Game profile fetched successfully:', itchGameUrl, gameProfile);

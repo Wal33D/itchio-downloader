@@ -69,4 +69,23 @@ describe('downloadGame', () => {
     expect(result.status).toBe(false);
     expect(result.message).toContain('fail');
   });
+
+  it('creates the download directory when missing', async () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-dir-'));
+    const target = path.join(parent, 'nested');
+
+    const itchRecord = { name: 'game', author: 'user', title: 'Game', itchMetaDataUrl: '', domain: 'itch.io' };
+    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({ found: true, itchRecord, message: 'ok' });
+    const closeMock = jest.fn();
+    jest.spyOn(initBrowser, 'initializeBrowser').mockResolvedValue({ browser: { close: closeMock } as any, status: true, message: 'ok' });
+    jest.spyOn(initiateDownload, 'initiateDownload').mockResolvedValue({ status: true, message: 'ok' });
+    jest.spyOn(waitFile, 'waitForFile').mockResolvedValue({ status: true, message: 'done', filePath: path.join(target, 'game.zip') });
+    jest.spyOn(renameFileModule, 'renameFile').mockResolvedValue({ status: true, message: 'renamed', newFilePath: path.join(target, 'renamed.zip') });
+    jest.spyOn(createFileModule, 'createFile').mockResolvedValue({} as any);
+
+    expect(fs.existsSync(target)).toBe(false);
+    await downloadGame({ name: 'game', author: 'user', desiredFileName: 'renamed', downloadDirectory: target });
+    expect(fs.existsSync(target)).toBe(true);
+    expect(closeMock).toHaveBeenCalled();
+  });
 });
