@@ -12,7 +12,6 @@
       "dev": "nodemon --watch src --ext ts --exec \"ts-node ./src/index.ts\"",
       "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",
       "test:downloadSingle": "npm run build && ts-node ./src/tests/downloadSingle.ts",
-      "test:updateInternetArchive": "npm run build && ts-node ./src/tests/updateInternetArchiveItem.ts",
       "test:downloadMultiple": "npm run build && ts-node ./src/tests/downloadMultiple.ts"
    },
    "author": "Wal33D",
