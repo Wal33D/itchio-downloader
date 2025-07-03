@@ -17,19 +17,12 @@
    "author": "Wal33D",
    "license": "ISC",
    "dependencies": {
-      "express": "^4.19.2",
-      "node-fetch": "^2.6.11",
-      "os": "^0.1.2",
-      "puppeteer": "^22.7.1",
-      "windows-shortcuts": "^0.1.6",
+      "puppeteer": "^24.11.2",
       "yargs": "^17.7.2"
    },
    "devDependencies": {
       "@types/node": "^20.12.7",
-      "@types/node-fetch": "^2.6.11",
-      "@types/puppeteer": "^7.0.4",
       "@types/yargs": "^17.0.32",
-      "fs-extra": "^11.2.0",
       "nodemon": "^3.1.0",
       "rimraf": "^5.0.5",
       "shx": "^0.3.4",

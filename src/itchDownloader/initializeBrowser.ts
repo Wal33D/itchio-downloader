@@ -16,7 +16,10 @@ export const initializeBrowser = async ({
       browser = await puppeteer.launch({
          headless: headless, // Set to false for visual debugging or true for production
          defaultViewport: null, // Use the default screen size of the system
-         args: []
+         args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+         ]
       });
 
       // Create a new page in the browser
