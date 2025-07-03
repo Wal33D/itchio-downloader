@@ -18,7 +18,6 @@ Downloads one or more games from itch.io. When an array of parameter objects is 
   - `itchGameUrl` *(string, optional)* – Direct URL to the game's page.
   - `desiredFileName` *(string, optional)* – Rename the downloaded file.
   - `downloadDirectory` *(string, optional)* – Directory for the downloaded files.
-  - `cleanDirectory` *(boolean, optional)* – Remove existing files in the directory before downloading.
   - `writeMetaData` *(boolean, optional)* – Write a metadata JSON file alongside the download.
   - `parallel` *(boolean, optional)* – When used inside an array, run this download concurrently via `Promise.all`.
 - `concurrency` *(number, optional)* – When `params` is an array and `parallel` is not set, limits how many downloads happen at once. Defaults to `1`.

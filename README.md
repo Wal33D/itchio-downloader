@@ -87,7 +87,6 @@ await downloadGame({
    name: 'manic-miners',
    author: 'baraklava',
    downloadDirectory: 'full file path', // Optional
-   cleanDirectory: true // Optional
 });
 ```
 
@@ -127,7 +126,7 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 -  `itchGameUrl`: (Optional) Direct URL to the game's itch.io page.
 -  `desiredFileName`: (Optional) Specify a custom filename for the downloaded file.
 -  `downloadDirectory`: (Optional) Directory where the downloaded files should be saved.
--  `cleanDirectory`: (Optional) Whether to clean the directory before downloading the files.
+-  `writeMetaData`: (Optional) Save a metadata JSON file alongside the download. Default is `true`.
 -  `concurrency`: (Optional) When providing an array of games, this sets how many downloads occur at once.
 
   `parallel`: (Optional) If `true` when using an array of games, all downloads run concurrently using `Promise.all`.
@@ -138,10 +137,10 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 export type DownloadGameParams = {
    name?: string,
    author?: string,
-   cleanDirectory?: boolean,
    desiredFileName?: string,
    downloadDirectory?: string,
    itchGameUrl?: string,
+   writeMetaData?: boolean,
    parallel?: boolean
 };
 
