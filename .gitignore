@@ -15,7 +15,6 @@ __pycache__/
 *.dat
 
 # Package files
-package-lock.json
 yarn.lock
 
 # Custom additions for specific directories
