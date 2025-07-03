@@ -18,6 +18,10 @@ I created this tool to build a game launcher/updater for the public/free games t
 -  **Simplicity**: Designed to be easy to use, requiring only the game URL or the author's name and game title. This makes it accessible even for those who are not familiar with itch.io’s more complex tools.
 -  **No API Key Required**: Operates without the need for an API key, making it straightforward to set up and start downloading games.
 
+## Usage Policy
+
+This tool should only be used to download games that are freely available on itch.io. Use of Itchio-Downloader must comply with the [itch.io Terms of Service](https://itch.io/docs/general/terms). Do not use this tool to circumvent payment requirements or any distribution restrictions.
+
 ## Installation
 
 To install Itchio-Downloader, ensure you have Node.js and npm (or Yarn) installed on your computer. **Node.js 18 or higher is required.** If you are using an older Node version, you will need to provide a `fetch` polyfill. From your terminal, run:
