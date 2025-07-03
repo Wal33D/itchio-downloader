@@ -81,6 +81,8 @@ To use Itchio-Downloader from the command line:
 1. First, ensure the CLI is built:
 
    ```bash
+   npm run build-cli
+   # or
    yarn build-cli
    ```
 
@@ -179,6 +181,9 @@ Example scripts used to produce this output are available in the `examples/` dir
 Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, open an issue first to discuss what you would like to change.
 
 Ensure to update tests as appropriate.
+
+Run `npm test` or `yarn test` to verify all tests pass, and build the CLI with
+`npm run build-cli` or `yarn build-cli` when needed.
 
 When publishing to npm, the `prepublishOnly` script defined in `package.json` automatically runs `npm run build-cli` to build the CLI.
 
