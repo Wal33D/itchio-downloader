@@ -77,7 +77,7 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
          console.log('File renamed successfully to:', finalFilePath);
       }
       metaData = gameProfile?.itchRecord as IItchRecord;
-      metadataPath = downloadDirectory + `\\${gameProfile?.itchRecord?.name}-metadata.json`;
+      metadataPath = path.join(downloadDirectory, `${gameProfile?.itchRecord?.name}-metadata.json`);
 
       if (writeMetaData) {
          await createFile({
