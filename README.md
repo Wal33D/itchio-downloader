@@ -110,42 +110,10 @@ downloadMultipleGames();
 
 ## Command Line Usage
 
-To use Itchio-Downloader from the command line:
-
-1. First, ensure the CLI is built:
-
-   ```bash
-   npm run build-cli
-   # or
-   yarn build-cli
-   ```
-
-2. Run the command with the required options. For example:
-
-   ```bash
-   itchio-downloader --name "manic miners" --author "baraklava"
-   ```
-
-   *Quick example:* download a game by URL:
-
-   ```bash
-   itchio-downloader --url "https://baraklava.itch.io/manic-miners"
-   ```
-
-   This command will start the download process and provide output similar to:
-
-   ```
-   Starting downloadGameSingle function...
-   Game profile fetched successfully: https://baraklava.itch.io/manic-miners
-   Download directory set C:\Users\Aquataze\AppData\Local\ItchDownloader\manic-miners
-   Downloading...
-   Download and file operations successful.
-   Game Download Result: {
-      status: true,
-      message: 'Download and file operations successful.',
-      filePath: 'C:\\Users\\Aquataze\\AppData\\Local\\ItchDownloader\\manic-miners\\ManicMinersV1.0.zip'
-   }
-   ```
+Build the CLI with `npm run build-cli` (or `yarn build-cli`) and then run
+`itchio-downloader` with the desired options. See
+[wiki/CLI.md](wiki/CLI.md) for complete usage instructions and all available
+flags.
 
 ## Configuration Options
 
