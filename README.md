@@ -63,8 +63,8 @@ npm install itchio-downloader
 yarn add itchio-downloader
 ```
 
-See [wiki/CLI.md](wiki/CLI.md) for a reference of available command line options.
-For debugging tips and verbose logging instructions, see [wiki/Debugging.md](wiki/Debugging.md).
+See [docs/CLI.md](docs/CLI.md) for a reference of available command line options.
+For debugging tips and verbose logging instructions, see [docs/Debugging.md](docs/Debugging.md).
 
 ## Usage
 
@@ -107,14 +107,14 @@ async function downloadMultipleGames() {
 downloadMultipleGames();
 ```
 
-See [wiki/Advanced-Usage.md](wiki/Advanced-Usage.md) for additional examples of
+See [docs/Advanced-Usage.md](docs/Advanced-Usage.md) for additional examples of
 concurrency and custom file paths.
 
 ## Command Line Usage
 
 Build the CLI with `npm run build-cli` (or `yarn build-cli`) and then run
 `itchio-downloader` with the desired options. See
-[wiki/CLI.md](wiki/CLI.md) for complete usage instructions and all available
+[docs/CLI.md](docs/CLI.md) for complete usage instructions and all available
 flags.
 
 ## Configuration Options

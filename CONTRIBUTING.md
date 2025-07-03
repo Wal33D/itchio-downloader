@@ -35,4 +35,4 @@ The example scripts in the `examples/` directory can also be run via the provide
 
 We appreciate any fixes or improvements!
 
-For additional information about how the project works, see the [README](README.md) and the documentation in the `wiki/` folder.
+For additional information about how the project works, see the [README](README.md) and the documentation in the `docs/` folder.
