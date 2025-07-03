@@ -55,7 +55,7 @@ await downloadGame({
 
 ### Downloading Multiple Games
 
-To download multiple games, provide an array of parameters for each game. You can mix URL and name/author specifications within the same operation:
+To download multiple games, provide an array of parameters for each game. You can mix URL and name/author specifications within the same operation. An optional `concurrency` argument controls how many downloads run at the same time:
 
 ```javascript
 async function downloadMultipleGames() {
@@ -65,7 +65,7 @@ async function downloadMultipleGames() {
       { itchGameUrl: 'https://moregames.itch.io/better-game' }
    ];
 
-   await downloadGame(gameParams);
+   await downloadGame(gameParams, 2); // up to 2 downloads simultaneously
 }
 downloadMultipleGames();
 ```
@@ -114,6 +114,7 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 -  `desiredFileName`: (Optional) Specify a custom filename for the downloaded file.
 -  `desiredFileDirectory`: (Optional) Directory where the downloaded files should be saved.
 -  `cleanDirectory`: (Optional) Whether to clean the directory before downloading the files.
+-  `concurrency`: (Optional) When providing an array of games, this sets how many downloads occur at once.
 
 ## Types
 

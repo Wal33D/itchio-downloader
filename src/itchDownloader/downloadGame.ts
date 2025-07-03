@@ -10,13 +10,29 @@ import path from 'path';
 import os from 'os';
 let globalBrowser: Browser | null = null;
 
-export async function downloadGame(params: DownloadGameParams | DownloadGameParams[]): Promise<DownloadGameResponse | DownloadGameResponse[]> {
+export async function downloadGame(
+   params: DownloadGameParams | DownloadGameParams[],
+   concurrency = 1
+): Promise<DownloadGameResponse | DownloadGameResponse[]> {
    if (Array.isArray(params)) {
-      const results: DownloadGameResponse[] = [];
-      for (const param of params) {
-         const result = await downloadGameSingle(param);
-         results.push(result);
+      const list = params as DownloadGameParams[];
+      const limit = Math.max(concurrency, 1);
+      const results: DownloadGameResponse[] = new Array(list.length);
+      let index = 0;
+
+      async function worker() {
+         while (true) {
+            const current = index++;
+            if (current >= list.length) break;
+            results[current] = await downloadGameSingle(list[current]);
+         }
       }
+
+      const workers: Promise<void>[] = [];
+      for (let i = 0; i < Math.min(limit, list.length); i++) {
+         workers.push(worker());
+      }
+      await Promise.all(workers);
       return results;
    } else {
       return downloadGameSingle(params);
