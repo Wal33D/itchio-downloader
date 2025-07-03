@@ -32,5 +32,5 @@ export const parseItchGameUrl = ({ itchGameUrl }: { itchGameUrl: string }): IPar
       message = error.message;
    }
 
-   return { parsed, author, name, domain, message } as IParsedItchGameUrl;
+   return { parsed, author, name, domain, message, itchGameUrl } as IParsedItchGameUrl;
 };
