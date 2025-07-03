@@ -70,6 +70,8 @@ async function downloadMultipleGames() {
 downloadMultipleGames();
 ```
 
+Additional runnable examples can be found in the `examples` directory.
+
 ## Command Line Usage
 
 To use Itchio-Downloader from the command line:
@@ -136,7 +138,7 @@ export type DownloadGameResponse = {
 };
 ```
 
-## yarn test:downloadSingle --> example response
+## yarn test:downloadSingle example output
 
 Single Game Download Result
 
