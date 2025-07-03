@@ -61,6 +61,8 @@ export const createFile = async (
             const existed = verification.exists;
             const overwritten = existed && verification.isFile;
 
+            // Files are created with default permissions allowing writes.
+            // Use createFileReadOnly for read-only files.
             let writable = true;
             try {
                await fs.access(filePath, fsConstants.W_OK);
