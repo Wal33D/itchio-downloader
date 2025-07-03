@@ -8,6 +8,13 @@ import { fetchItchGameProfile } from './fetchItchGameProfile';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 import path from 'path';
 import os from 'os';
+
+function log(...args: any[]) {
+   if (process.env.DEBUG_DOWNLOAD_GAME === 'true') {
+      // eslint-disable-next-line no-console
+      console.log(...args);
+   }
+}
 let globalBrowser: Browser | null = null;
 
 export async function downloadGame(
@@ -50,7 +57,7 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
    if (!itchGameUrl && name && author) {
       itchGameUrl = `https://${author}.itch.io/${name.toLowerCase().replace(/\s+/g, '-')}`;
    }
-   console.log('Starting downloadGameSingle function...');
+   log('Starting downloadGameSingle function...');
    let message = '';
    let status = false;
    let metaData = null;
@@ -59,7 +66,7 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
    let browserInit: { browser: Browser | null; status: boolean; message: string } | null = null;
 
    if (!itchGameUrl || (!name && !author && !itchGameUrl)) {
-      console.log('Invalid input parameters');
+      log('Invalid input parameters');
       return { status: false, message: 'Invalid input: Provide either a URL or both name and author.' };
    }
    if (!downloadDirectory) {
@@ -71,7 +78,7 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
    try {
       const gameProfile = await fetchItchGameProfile({ itchGameUrl });
       if (!gameProfile.found) throw new Error('Failed to fetch game profile');
-      console.log('Game profile fetched successfully:', itchGameUrl, gameProfile);
+      log('Game profile fetched successfully:', itchGameUrl, gameProfile);
 
       browserInit = await initializeBrowser({ downloadDirectory });
       if (!browserInit.status) throw new Error('Browser initialization failed: ' + browserInit.message);
@@ -79,23 +86,23 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
       globalBrowser = browserInit.browser;
 
       const browser: Browser = globalBrowser!;
-      console.log('Starting Download...');
+      log('Starting Download...');
 
       const puppeteerResult = await initiateDownload({ browser, itchGameUrl });
       if (!puppeteerResult.status) throw new Error('Download failed: ' + puppeteerResult.message);
 
-      console.log('Downloading...');
+      log('Downloading...');
       const downloadedFileInfo = await waitForFile({ downloadDirectory });
       if (!downloadedFileInfo.status) throw new Error('Downloaded file not found');
 
       finalFilePath = downloadedFileInfo.filePath as string;
 
       if (desiredFileName) {
-         console.log('Renaming file...');
+         log('Renaming file...');
          const renameResult = await renameFile({ filePath: finalFilePath, desiredFileName });
          if (!renameResult.status) throw new Error('File rename failed: ' + renameResult.message);
          finalFilePath = renameResult.newFilePath as any;
-         console.log('File renamed successfully to:', finalFilePath);
+         log('File renamed successfully to:', finalFilePath);
       }
       metaData = gameProfile?.itchRecord as IItchRecord;
       metadataPath = path.join(downloadDirectory, `${gameProfile?.itchRecord?.name}-metadata.json`);
@@ -109,10 +116,10 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
 
       status = puppeteerResult.status;
       message = 'Download and file operations successful.';
-      console.log(message);
+      log(message);
    } catch (error: any) {
       message = `Setup failed: ${error.message}`;
-      console.log(message);
+      log(message);
       if (finalFilePath) {
          return { status: false, message, filePath: finalFilePath };
       }
@@ -122,7 +129,7 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
          await new Promise((resolve) => setTimeout(resolve, 2000));
 
          await browserInit.browser.close();
-         console.log('Downloader closed successfully');
+         log('Downloader closed successfully');
          globalBrowser = null;
       }
    }
@@ -132,16 +139,16 @@ export async function downloadGameSingle(params: DownloadGameParams): Promise<Do
 
 process.on('exit', cleanUp);
 process.on('SIGINT', () => {
-   console.log('Process interrupted, closing browser...');
+   log('Process interrupted, closing browser...');
    cleanUp();
    process.exit();
 });
 
 function cleanUp() {
-   console.log('Cleaning up resources...');
+   log('Cleaning up resources...');
    if (globalBrowser) {
       globalBrowser.close();
       globalBrowser = null;
-      console.log('Browser closed successfully.');
+      log('Browser closed successfully.');
    }
 }

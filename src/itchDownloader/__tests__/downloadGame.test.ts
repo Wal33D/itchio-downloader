@@ -12,10 +12,13 @@ import * as createFileModule from '../../fileUtils/createFile';
 describe('downloadGame', () => {
   afterEach(() => {
     jest.restoreAllMocks();
+    delete process.env.DEBUG_DOWNLOAD_GAME;
   });
 
-  it('processes a download using mocks', async () => {
+  it('processes a download using mocks with debug logs', async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-test-'));
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    process.env.DEBUG_DOWNLOAD_GAME = 'true';
     const itchRecord = { name: 'game', author: 'user', title: 'Game', itchMetaDataUrl: '', domain: 'itch.io' };
 
     jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({ found: true, itchRecord, message: 'ok' });
@@ -37,6 +40,25 @@ describe('downloadGame', () => {
       content: JSON.stringify(itchRecord, null, 2)
     });
     expect(closeMock).toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalled();
+  });
+
+  it('does not log when debug flag is disabled', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-test-'));
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const itchRecord = { name: 'game', author: 'user', title: 'Game', itchMetaDataUrl: '', domain: 'itch.io' };
+
+    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({ found: true, itchRecord, message: 'ok' });
+    const closeMock = jest.fn();
+    jest.spyOn(initBrowser, 'initializeBrowser').mockResolvedValue({ browser: { close: closeMock } as any, status: true, message: 'ok' });
+    jest.spyOn(initiateDownload, 'initiateDownload').mockResolvedValue({ status: true, message: 'ok' });
+    jest.spyOn(waitFile, 'waitForFile').mockResolvedValue({ status: true, message: 'done', filePath: path.join(tmpDir, 'game.zip') });
+    jest.spyOn(renameFileModule, 'renameFile').mockResolvedValue({ status: true, message: 'renamed', newFilePath: path.join(tmpDir, 'renamed.zip') });
+    jest.spyOn(createFileModule, 'createFile').mockResolvedValue({} as any);
+
+    await downloadGame({ name: 'game', author: 'user', desiredFileName: 'renamed', downloadDirectory: tmpDir });
+
+    expect(logSpy).not.toHaveBeenCalled();
   });
 
   it('handles errors from fetchItchGameProfile', async () => {
