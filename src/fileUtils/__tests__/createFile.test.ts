@@ -29,4 +29,11 @@ describe('createFile', () => {
     expect(fs.existsSync(files[0].filePath)).toBe(true);
     expect(fs.existsSync(files[1].filePath)).toBe(true);
   });
+
+  it('throws when target path is a directory', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'create-file-dir-'));
+    await expect(
+      createFile({ filePath: dir, content: 'x' })
+    ).rejects.toThrow('Operation aborted');
+  });
 });

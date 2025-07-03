@@ -38,4 +38,13 @@ describe('downloadGame', () => {
     });
     expect(closeMock).toHaveBeenCalled();
   });
+
+  it('handles errors from fetchItchGameProfile', async () => {
+    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockRejectedValue(new Error('fail'));
+
+    const result = await downloadGame({ name: 'game', author: 'user' }) as any;
+
+    expect(result.status).toBe(false);
+    expect(result.message).toContain('fail');
+  });
 });
