@@ -20,7 +20,7 @@ I created this tool to build a game launcher/updater for the public/free games t
 
 ## Installation
 
-To install Itchio-Downloader, ensure you have Node.js and npm (or Yarn) installed on your computer. From your terminal, run:
+To install Itchio-Downloader, ensure you have Node.js and npm (or Yarn) installed on your computer. **Node.js 18 or higher is required.** If you are using an older Node version, you will need to provide a `fetch` polyfill. From your terminal, run:
 
 ```bash
 npm install itchio-downloader
