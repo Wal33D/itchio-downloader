@@ -35,7 +35,7 @@ export async function clearDirectory({ directoryPath }: { directoryPath: string 
                throw new Error(result.message);
             }
             // Remove the directory after clearing it
-            await fs.rmdir(curPath);
+            await fs.rm(curPath, { recursive: true, force: true });
          } else {
             // Remove files directly
             await fs.unlink(curPath);
