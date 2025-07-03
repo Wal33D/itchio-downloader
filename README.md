@@ -6,7 +6,7 @@
 
 Itchio-Downloader is a Node.js package for programmatically downloading games from [itch.io](https://itch.io). You can access and download any free game directly through URLs or by specifying the game's name and its author's username—no API key or GUI required.
 
-For a full reference of available functions and types, see the [API documentation](https://github.com/Wal33D/itchio-downloader/wiki).
+For a full reference of available functions and types, see the [API Reference](docs/API-Reference.md).
 
 ## Table of Contents
 
@@ -19,10 +19,11 @@ For a full reference of available functions and types, see the [API documentatio
 7. [Configuration Options](#configuration-options)
 8. [Types](#types)
 9. [Example Output](#example-output)
-10. [Contributing](#contributing)
-11. [Release Procedure](#release-procedure)
-12. [Maintenance](#maintenance)
-13. [License](#license)
+10. [Documentation](#documentation)
+11. [Contributing](#contributing)
+12. [Release Procedure](#release-procedure)
+13. [Maintenance](#maintenance)
+14. [License](#license)
 
 ## Motivation
 
@@ -182,7 +183,17 @@ const response = {
 };
 
 ```
+## Documentation
 
+Additional reference material is available in the repository:
+
+- [docs/Home.md](docs/Home.md) – Overview of the documentation
+- [docs/API-Reference.md](docs/API-Reference.md) – Full API details
+- [docs/CLI.md](docs/CLI.md) – Command line usage
+- [docs/Advanced-Usage.md](docs/Advanced-Usage.md) – Concurrency and custom paths
+- [docs/Debugging.md](docs/Debugging.md) – Troubleshooting tips
+- [CONTRIBUTING.md](CONTRIBUTING.md) – Contribution guidelines
+- [CHANGELOG.md](CHANGELOG.md) – Release history
 
 ## Contributing
 
