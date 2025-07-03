@@ -40,6 +40,7 @@ I created this tool to build a game launcher/updater for the public/free games t
 ## Usage Policy
 
 This tool should only be used to download games that are freely available on itch.io. Use of Itchio-Downloader must comply with the [itch.io Terms of Service](https://itch.io/docs/general/terms). Do not use this tool to circumvent payment requirements or any distribution restrictions.
+This project is not affiliated with or endorsed by itch.io.
 
 ## Quick Start
 
