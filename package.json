@@ -3,6 +3,7 @@
    "version": "0.7.7",
    "description": "Programatically download games from itch.io using Node",
    "main": "./dist/index.js",
+   "types": "./dist/index.d.ts",
    "bin": {
       "itchio-downloader": "./dist/cli.js"
    },
