@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.7.8] - 2025-07-04
 ### Added
 - Comprehensive documentation overhaul
-- New `docs/CLI.md` with command line reference
+- New `wiki/CLI.md` with command line reference
 - Expanded example README and contribution guidelines
 
 ## [0.7.7] - 2025-07-03
