@@ -25,7 +25,6 @@ Format code with Prettier before committing:
 npm run format
 ```
 
-The example scripts in the `examples/` directory can also be run via the provided npm scripts, e.g. `npm run test:downloadSingle`.
 
 ## Submit Pull Requests
 

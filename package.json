@@ -14,9 +14,6 @@
     "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",
     "prepublishOnly": "npm run build-cli",
     "test": "jest",
-    "test:downloadSingle": "npm run build && ts-node ./examples/downloadSingle.ts",
-    "test:downloadMultiple": "npm run build && ts-node ./examples/downloadMultiple.ts",
-    "test:waitForFile": "npm run build && ts-node ./examples/waitForFile.example.ts",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write ."
   },
