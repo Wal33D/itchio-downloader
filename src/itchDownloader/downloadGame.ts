@@ -12,7 +12,6 @@ import os from 'os';
 
 function log(...args: any[]) {
    if (process.env.DEBUG_DOWNLOAD_GAME === 'true') {
-      // eslint-disable-next-line no-console
       console.log(...args);
    }
 }
