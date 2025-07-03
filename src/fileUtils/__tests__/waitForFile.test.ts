@@ -13,7 +13,10 @@ describe('waitForFile', () => {
       fs.renameSync(crdownload, path.join(tmpDir, 'testfile.txt'));
     }, 300);
 
-    const result = await waitForFile({ downloadDirectory: tmpDir, timeoutMs: 2000 });
+    const result = await waitForFile({
+      downloadDirectory: tmpDir,
+      timeoutMs: 2000,
+    });
     expect(result.status).toBe(true);
     expect(result.filePath).toBe(path.join(tmpDir, 'testfile.txt'));
   });
@@ -24,7 +27,10 @@ describe('waitForFile', () => {
     fs.writeFileSync(crdownload, '');
 
     const start = Date.now();
-    const result = await waitForFile({ downloadDirectory: tmpDir, timeoutMs: 500 });
+    const result = await waitForFile({
+      downloadDirectory: tmpDir,
+      timeoutMs: 500,
+    });
     const duration = Date.now() - start;
     expect(result.status).toBe(false);
     expect(duration).toBeGreaterThanOrEqual(500);

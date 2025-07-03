@@ -13,14 +13,14 @@ Downloads one or more games from itch.io. When an array of parameter objects is 
 ### Parameters
 
 - `params` – Either a single `DownloadGameParams` object or an array of them. Each object accepts:
-  - `name` *(string, optional)* – Game name, used with `author`.
-  - `author` *(string, optional)* – Author's username on itch.io.
-  - `itchGameUrl` *(string, optional)* – Direct URL to the game's page.
-  - `desiredFileName` *(string, optional)* – Rename the downloaded file.
-  - `downloadDirectory` *(string, optional)* – Directory for the downloaded files.
-  - `writeMetaData` *(boolean, optional)* – Write a metadata JSON file alongside the download.
-  - `parallel` *(boolean, optional)* – When used inside an array, run this download concurrently via `Promise.all`.
-- `concurrency` *(number, optional)* – When `params` is an array and `parallel` is not set, limits how many downloads happen at once. Defaults to `1`.
+  - `name` _(string, optional)_ – Game name, used with `author`.
+  - `author` _(string, optional)_ – Author's username on itch.io.
+  - `itchGameUrl` _(string, optional)_ – Direct URL to the game's page.
+  - `desiredFileName` _(string, optional)_ – Rename the downloaded file.
+  - `downloadDirectory` _(string, optional)_ – Directory for the downloaded files.
+  - `writeMetaData` _(boolean, optional)_ – Write a metadata JSON file alongside the download.
+  - `parallel` _(boolean, optional)_ – When used inside an array, run this download concurrently via `Promise.all`.
+- `concurrency` _(number, optional)_ – When `params` is an array and `parallel` is not set, limits how many downloads happen at once. Defaults to `1`.
 
 ### Returns
 
@@ -43,7 +43,7 @@ The `metaData` object mirrors the information fetched from the game's `data.json
 ```javascript
 await downloadGame({
   itchGameUrl: 'https://baraklava.itch.io/manic-miners',
-  desiredFileName: 'manic-miners-latest'
+  desiredFileName: 'manic-miners-latest',
 });
 ```
 

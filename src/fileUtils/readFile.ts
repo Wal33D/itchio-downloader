@@ -10,51 +10,57 @@ import fs from 'fs/promises';
  */
 
 export const readFile = async ({
-   filePaths
+  filePaths,
 }: {
-   filePaths: string | string[];
+  filePaths: string | string[];
 }): Promise<
-   { filePath: string; content: string | null; read: boolean; message: string } | { filePath: string; content: string | null; read: boolean; message: string }[]
+  | { filePath: string; content: string | null; read: boolean; message: string }
+  | {
+      filePath: string;
+      content: string | null;
+      read: boolean;
+      message: string;
+    }[]
 > => {
-   // Ensure filePaths is always an array
-   const paths = Array.isArray(filePaths) ? filePaths : [filePaths];
-   const isSinglePath = !Array.isArray(filePaths);
+  // Ensure filePaths is always an array
+  const paths = Array.isArray(filePaths) ? filePaths : [filePaths];
+  const isSinglePath = !Array.isArray(filePaths);
 
-   const readPromises = paths.map((filePath) =>
-      fs
-         .readFile(filePath, 'utf8')
-         .then((content) => ({
-            filePath,
-            read: true,
-            content,
-            message: 'File read successfully.'
-         }))
-         .catch((error) => ({
-            filePath,
-            read: false,
-            content: null,
-            message: `Failed to read file: ${error.message}`
-         }))
-   );
+  const readPromises = paths.map((filePath) =>
+    fs
+      .readFile(filePath, 'utf8')
+      .then((content) => ({
+        filePath,
+        read: true,
+        content,
+        message: 'File read successfully.',
+      }))
+      .catch((error) => ({
+        filePath,
+        read: false,
+        content: null,
+        message: `Failed to read file: ${error.message}`,
+      })),
+  );
 
-   // Wait for all read operations to complete, handling each one's success or failure
-   const results = await Promise.allSettled(readPromises);
+  // Wait for all read operations to complete, handling each one's success or failure
+  const results = await Promise.allSettled(readPromises);
 
-   // Map results to format the final output as required
-   const formattedResults = results.map((result) => {
-      if (result.status === 'fulfilled') {
-         return result.value;
-      } else {
-         // For any unexpected error in the handling code itself, though this should ideally never be triggered
-         return {
-            filePath: result.reason.filePath || 'Unknown file',
-            read: false,
-            content: null,
-            message: result.reason.message || 'An unexpected error occurred'
-         };
-      }
-   });
+  // Map results to format the final output as required
+  const formattedResults = results.map((result) => {
+    if (result.status === 'fulfilled') {
+      return result.value;
+    } else {
+      // For any unexpected error in the handling code itself, though this should ideally never be triggered
+      return {
+        filePath: result.reason.filePath || 'Unknown file',
+        read: false,
+        content: null,
+        message: result.reason.message || 'An unexpected error occurred',
+      };
+    }
+  });
 
-   // Return either an array or a single object based on the input
-   return isSinglePath ? formattedResults[0] : formattedResults;
+  // Return either an array or a single object based on the input
+  return isSinglePath ? formattedResults[0] : formattedResults;
 };

@@ -31,11 +31,11 @@ I built this tool to create a launcher for free games and released it so others 
 
 ## Features
 
--  **Direct Downloads**: Get games by URL or by name and author—no desktop GUI or Butler.
--  **Batch Operations**: Download multiple games in one run.
--  **Customization**: Rename files and choose download directories.
--  **Simplicity**: Only a URL or author and title is required.
--  **No API Key Required**: Works without an API key.
+- **Direct Downloads**: Get games by URL or by name and author—no desktop GUI or Butler.
+- **Batch Operations**: Download multiple games in one run.
+- **Customization**: Rename files and choose download directories.
+- **Simplicity**: Only a URL or author and title is required.
+- **No API Key Required**: Works without an API key.
 
 ## Usage Policy
 
@@ -82,9 +82,9 @@ await downloadGame({ itchGameUrl: 'https://baraklava.itch.io/manic-miners' });
 
 // Using name and author and optional params:
 await downloadGame({
-   name: 'manic-miners',
-   author: 'baraklava',
-   downloadDirectory: 'full file path', // Optional
+  name: 'manic-miners',
+  author: 'baraklava',
+  downloadDirectory: 'full file path', // Optional
 });
 ```
 
@@ -94,13 +94,13 @@ Provide an array to download multiple games. Mix URLs or name/author combination
 
 ```javascript
 async function downloadMultipleGames() {
-   const gameParams = [
-      { name: 'manic-miners', author: 'baraklava' },
-      { itchGameUrl: 'https://anotherdev.itch.io/another-game' },
-      { itchGameUrl: 'https://moregames.itch.io/better-game', parallel: true }
-   ];
+  const gameParams = [
+    { name: 'manic-miners', author: 'baraklava' },
+    { itchGameUrl: 'https://anotherdev.itch.io/another-game' },
+    { itchGameUrl: 'https://moregames.itch.io/better-game', parallel: true },
+  ];
 
-   await downloadGame(gameParams, 2); // up to 2 downloads or set parallel to run all at once
+  await downloadGame(gameParams, 2); // up to 2 downloads or set parallel to run all at once
 }
 downloadMultipleGames();
 ```
@@ -108,19 +108,21 @@ downloadMultipleGames();
 See [docs/Advanced-Usage.md](docs/Advanced-Usage.md) for more concurrency and custom path examples.
 
 ## Command Line Usage
+
 Build the CLI with `npm run build-cli` (or `yarn build-cli`), then run `itchio-downloader` with your options. Full details are in [docs/CLI.md](docs/CLI.md).
+
 ## Configuration Options
 
 The `downloadGame` function accepts the following parameters within `DownloadGameParams`:
 
--  `name`: Game name (use with `author`).
--  `author`: Author's username.
--  `itchGameUrl`: Direct URL to the game.
--  `desiredFileName`: Custom file name.
--  `downloadDirectory`: Where to save files.
--  `writeMetaData`: Save metadata JSON (default `true`).
--  `concurrency`: Number of downloads at once when using an array.
--  `parallel`: If true, run all downloads concurrently with `Promise.all`.
+- `name`: Game name (use with `author`).
+- `author`: Author's username.
+- `itchGameUrl`: Direct URL to the game.
+- `desiredFileName`: Custom file name.
+- `downloadDirectory`: Where to save files.
+- `writeMetaData`: Save metadata JSON (default `true`).
+- `concurrency`: Number of downloads at once when using an array.
+- `parallel`: If true, run all downloads concurrently with `Promise.all`.
 
 ## Types
 
@@ -145,7 +147,9 @@ export type DownloadGameResponse = {
 ```
 
 ## Example Output
+
 Example response:
+
 ```bash
 const response = {
    status: true,
@@ -169,6 +173,7 @@ const response = {
 };
 
 ```
+
 ## Documentation
 
 More documentation:
@@ -188,11 +193,12 @@ Contributions are welcome! Fork the repo and submit a pull request. For major ch
 Update tests as needed.
 Run `npm test` and build the CLI with `npm run build-cli`.
 Publishing runs the `prepublishOnly` script to build the CLI.
+
 ## Release Procedure
+
 1. Update the version in `package.json`.
 2. Document changes in `CHANGELOG.md`.
 3. Run `npm publish` (the `prepublishOnly` script builds the CLI).
-
 
 ## Maintenance
 

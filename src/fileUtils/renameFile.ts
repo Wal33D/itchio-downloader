@@ -13,45 +13,47 @@ const unlink = util.promisify(fs.unlink);
  * @returns {Promise<{status: boolean, message: string, newFilePath?: string}>} - Result of the rename operation.
  */
 export const renameFile = async ({
-   filePath,
-   desiredFileName,
-   desiredFileExt
+  filePath,
+  desiredFileName,
+  desiredFileExt,
 }: {
-   filePath: string;
-   desiredFileName?: string;
-   desiredFileExt?: string;
+  filePath: string;
+  desiredFileName?: string;
+  desiredFileExt?: string;
 }): Promise<{ status: boolean; message: string; newFilePath?: string }> => {
-   let message = '';
+  let message = '';
 
-   if (!desiredFileName && !desiredFileExt) {
-      message = 'Error: newBaseFileName or newBaseFileExt must be provided';
-      return { status: false, message };
-   }
+  if (!desiredFileName && !desiredFileExt) {
+    message = 'Error: newBaseFileName or newBaseFileExt must be provided';
+    return { status: false, message };
+  }
 
-   try {
-      const directory = path.dirname(filePath);
-      const originalBaseName = path.basename(filePath, path.extname(filePath));
-      const originalExtension = path.extname(filePath);
+  try {
+    const directory = path.dirname(filePath);
+    const originalBaseName = path.basename(filePath, path.extname(filePath));
+    const originalExtension = path.extname(filePath);
 
-      const finalBaseName = desiredFileName ? desiredFileName : originalBaseName;
-      const finalExtension = desiredFileExt ? `.${desiredFileExt}` : originalExtension;
-      const finalFileName = `${finalBaseName}${finalExtension}`;
-      const newFilePath = path.join(directory, finalFileName);
+    const finalBaseName = desiredFileName ? desiredFileName : originalBaseName;
+    const finalExtension = desiredFileExt
+      ? `.${desiredFileExt}`
+      : originalExtension;
+    const finalFileName = `${finalBaseName}${finalExtension}`;
+    const newFilePath = path.join(directory, finalFileName);
 
-      await rename(filePath, newFilePath);
+    await rename(filePath, newFilePath);
 
-      // Add a short delay before deleting the original file
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Add a short delay before deleting the original file
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Check if the original file still exists and delete it if necessary
-      if (fs.existsSync(filePath)) {
-         await unlink(filePath);
-      }
+    // Check if the original file still exists and delete it if necessary
+    if (fs.existsSync(filePath)) {
+      await unlink(filePath);
+    }
 
-      message = `File renamed to ${finalFileName}`;
-      return { status: true, message, newFilePath };
-   } catch (error: any) {
-      message = `Failed to rename file: ${error.message}`;
-      return { status: false, message };
-   }
+    message = `File renamed to ${finalFileName}`;
+    return { status: true, message, newFilePath };
+  } catch (error: any) {
+    message = `Failed to rename file: ${error.message}`;
+    return { status: false, message };
+  }
 };

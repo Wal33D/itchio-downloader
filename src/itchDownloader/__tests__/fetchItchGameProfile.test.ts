@@ -14,7 +14,7 @@ describe('fetchItchGameProfile', () => {
       name: 'game',
       domain: 'itch.io',
       itchGameUrl: 'https://author.itch.io/game',
-      message: 'ok'
+      message: 'ok',
     } as any);
 
     jest.spyOn(metadataParser, 'parseItchGameMetadata').mockResolvedValue({
@@ -27,10 +27,12 @@ describe('fetchItchGameProfile', () => {
       id: 1,
       commentsLink: 'c',
       selfLink: 's',
-      itchMetaDataUrl: 'https://author.itch.io/game/data.json'
+      itchMetaDataUrl: 'https://author.itch.io/game/data.json',
     } as any);
 
-    const result = await fetchItchGameProfile({ itchGameUrl: 'https://author.itch.io/game' });
+    const result = await fetchItchGameProfile({
+      itchGameUrl: 'https://author.itch.io/game',
+    });
     expect(result.found).toBe(true);
     expect(result.itchRecord?.author).toBe('author');
     expect(result.itchRecord?.title).toBe('Game');
@@ -40,10 +42,12 @@ describe('fetchItchGameProfile', () => {
     jest.spyOn(urlParser, 'parseItchGameUrl').mockImplementation(() => {
       throw new Error('bad url');
     });
-    jest.spyOn(metadataParser, 'parseItchGameMetadata').mockRejectedValue(new Error('bad meta'));
+    jest
+      .spyOn(metadataParser, 'parseItchGameMetadata')
+      .mockRejectedValue(new Error('bad meta'));
 
     await expect(
-      fetchItchGameProfile({ itchGameUrl: 'https://author.itch.io/game' })
+      fetchItchGameProfile({ itchGameUrl: 'https://author.itch.io/game' }),
     ).rejects.toThrow('Both URL parsing and metadata fetching failed');
   });
 });

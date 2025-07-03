@@ -15,7 +15,7 @@ describe('parseItchGameMetadata', () => {
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockMetadata),
-      })
+      }),
     ) as any;
   });
 
@@ -24,7 +24,9 @@ describe('parseItchGameMetadata', () => {
   });
 
   it('fetches and parses metadata from url', async () => {
-    const result = await parseItchGameMetadata({ itchGameUrl: 'https://author.itch.io/game/data.json' });
+    const result = await parseItchGameMetadata({
+      itchGameUrl: 'https://author.itch.io/game/data.json',
+    });
     expect(result.jsonParsed).toBe(true);
     expect(result.title).toBe(mockMetadata.title);
     expect(result.coverImage).toBe(mockMetadata.cover_image);
@@ -32,7 +34,9 @@ describe('parseItchGameMetadata', () => {
   });
 
   it('returns jsonParsed false for invalid url', async () => {
-    const result = await parseItchGameMetadata({ itchGameUrl: 'https://author.itch.io/game' });
+    const result = await parseItchGameMetadata({
+      itchGameUrl: 'https://author.itch.io/game',
+    });
     expect(result.jsonParsed).toBe(false);
   });
 });

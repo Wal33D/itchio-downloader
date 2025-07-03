@@ -25,7 +25,6 @@ Format code with Prettier before committing:
 npm run format
 ```
 
-
 ## Submit Pull Requests
 
 1. Fork the repository and create a topic branch.

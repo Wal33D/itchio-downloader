@@ -8,7 +8,7 @@ describe('createFile', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'create-file-'));
     const filePath = path.join(tmpDir, 'single.txt');
 
-    const result = await createFile({ filePath, content: 'hello' }) as any;
+    const result = (await createFile({ filePath, content: 'hello' })) as any;
     expect(result.created).toBe(true);
     expect(result.exists).toBe(true);
     expect(fs.existsSync(filePath)).toBe(true);
@@ -20,10 +20,10 @@ describe('createFile', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'create-files-'));
     const files = [
       { filePath: path.join(tmpDir, 'a.txt'), content: 'a' },
-      { filePath: path.join(tmpDir, 'b.txt'), content: 'b' }
+      { filePath: path.join(tmpDir, 'b.txt'), content: 'b' },
     ];
 
-    const results = await createFile(files) as any[];
+    const results = (await createFile(files)) as any[];
     expect(results).toHaveLength(2);
     results.forEach((r) => expect(r.created).toBe(true));
     expect(fs.existsSync(files[0].filePath)).toBe(true);
@@ -32,8 +32,8 @@ describe('createFile', () => {
 
   it('throws when target path is a directory', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'create-file-dir-'));
-    await expect(
-      createFile({ filePath: dir, content: 'x' })
-    ).rejects.toThrow('Operation aborted');
+    await expect(createFile({ filePath: dir, content: 'x' })).rejects.toThrow(
+      'Operation aborted',
+    );
   });
 });

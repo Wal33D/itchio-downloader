@@ -10,7 +10,7 @@ Pass an array of game parameters along with a numeric `concurrency` value. Only 
 const games = [
   { itchGameUrl: 'https://example.itch.io/game-one' },
   { itchGameUrl: 'https://example.itch.io/game-two' },
-  { itchGameUrl: 'https://example.itch.io/game-three' }
+  { itchGameUrl: 'https://example.itch.io/game-three' },
 ];
 
 await downloadGame(games, 2); // at most two downloads at a time
@@ -24,7 +24,7 @@ Set `parallel: true` on individual items to run every download concurrently via 
 await downloadGame([
   { itchGameUrl: 'https://example.itch.io/game-one', parallel: true },
   { itchGameUrl: 'https://example.itch.io/game-two', parallel: true },
-  { itchGameUrl: 'https://example.itch.io/game-three', parallel: true }
+  { itchGameUrl: 'https://example.itch.io/game-three', parallel: true },
 ]);
 ```
 
@@ -36,6 +36,6 @@ Specify `downloadDirectory` and `desiredFileName` to control where each file is 
 await downloadGame({
   itchGameUrl: 'https://example.itch.io/game',
   downloadDirectory: '/path/to/games',
-  desiredFileName: 'my-game.zip'
+  desiredFileName: 'my-game.zip',
 });
 ```
