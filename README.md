@@ -92,7 +92,7 @@ await downloadGame({
 
 ### Downloading Multiple Games
 
-To download multiple games, provide an array of parameters for each game. You can mix URL and name/author specifications within the same operation. An optional `concurrency` argument controls how many downloads run at the same time. Alternatively, set `parallel: true` on any item to run all downloads concurrently using `Promise.all`:
+To download multiple games, provide an array of parameters for each game. You can mix URL and name/author specifications within the same operation. An optional `concurrency` argument controls how many downloads run at the same time. Alternatively, set `parallel: true` on any item to run all downloads concurrently using `Promise.all`. See the [Advanced Usage](wiki/Advanced-Usage.md) page for more concurrency examples and custom file paths:
 
 ```javascript
 async function downloadMultipleGames() {

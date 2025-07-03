@@ -49,3 +49,4 @@ await downloadGame({
 ```
 
 See the [Examples](Examples.md) page for more sample scripts.
+For concurrency and custom path examples, see the [Advanced Usage](Advanced-Usage.md) page.
