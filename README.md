@@ -6,6 +6,8 @@
 
 Itchio-Downloader is a Node.js package that enables you to programmatically download games from [itch.io](https://itch.io). This tool allows you to access and download any free game available on itch.io directly through URLs or by specifying the game's name and its author's username, all without the need for an API key, manual interaction, or the itch.io desktop application (GUI) and Butler.
 
+For a full reference of available functions and types, see the [API documentation](https://github.com/Wal33D/itchio-downloader/wiki).
+
 ## Motivation
 
 I created this tool to build a game launcher/updater for the public/free games that I love. I decided to release this tool so others could use it for similar projects or entirely new ideas. To the best of my knowledge, this is the only programmatic method of downloading itch.io games without requiring an API key, OAuth key, or being the game developer. This makes Itchio-Downloader a unique and useful tool for the community!
@@ -24,7 +26,20 @@ This tool should only be used to download games that are freely available on itc
 
 ## Installation
 
-To install Itchio-Downloader, ensure you have Node.js and npm (or Yarn) installed on your computer. **Node.js 18 or higher is required.** If you are using an older Node version, you will need to provide a `fetch` polyfill. From your terminal, run:
+### Node.js 18+ Setup
+
+Itchio-Downloader relies on the built-in `fetch` API introduced in **Node 18**. Make sure you are running Node 18 or later:
+
+```bash
+nvm install 18
+nvm use 18
+# or install directly from https://nodejs.org and verify
+node -v
+```
+
+If you must use an older Node version, install a `fetch` polyfill such as `node-fetch`.
+
+After Node is ready, install the package:
 
 ```bash
 npm install itchio-downloader
@@ -90,6 +105,12 @@ To use Itchio-Downloader from the command line:
 
    ```bash
    itchio-downloader --name "manic miners" --author "baraklava"
+   ```
+
+   *Quick example:* download a game by URL:
+
+   ```bash
+   itchio-downloader --url "https://baraklava.itch.io/manic-miners"
    ```
 
    This command will start the download process and provide output similar to:
