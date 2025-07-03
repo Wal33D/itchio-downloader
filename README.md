@@ -214,6 +214,10 @@ When publishing to npm, the `prepublishOnly` script defined in `package.json` au
 3. Run `npm publish` (the `prepublishOnly` script builds the CLI).
 
 
+## Maintenance
+
+Dependabot automatically monitors dependencies and opens pull requests for updates.
+
 ## License
 
 Distributed under the ISC License.
