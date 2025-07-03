@@ -4,9 +4,9 @@
 
 **npm Package:** [itchio-downloader on npm](https://www.npmjs.com/package/itchio-downloader)
 
-Itchio-Downloader is a Node.js package for programmatically downloading games from [itch.io](https://itch.io). You can access and download any free game directly through URLs or by specifying the game's name and its author's username—no API key or GUI required.
+Itchio-Downloader downloads free games from [itch.io](https://itch.io) via URL or by name and author—no API key or GUI needed.
 
-For a full reference of available functions and types, see the [API Reference](docs/API-Reference.md).
+See the [API Reference](docs/API-Reference.md) for all functions and types.
 
 ## Table of Contents
 
@@ -27,24 +27,23 @@ For a full reference of available functions and types, see the [API Reference](d
 
 ## Motivation
 
-I created this tool to build a game launcher/updater for the public/free games that I love. I decided to release this tool so others could use it for similar projects or entirely new ideas. To the best of my knowledge, this is the only programmatic method of downloading itch.io games without requiring an API key, OAuth key, or being the game developer. This makes Itchio-Downloader a unique and useful tool for the community!
+I built this tool to create a launcher for free games and released it so others can do the same. It's the only known way to download itch.io games programmatically without an API key or developer access.
 
 ## Features
 
--  **Direct Downloads**: Download games directly from itch.io using either a specific URL or by specifying the game's name and author. No need for the itch.io desktop GUI or Butler.
--  **Batch Operations**: Supports downloading multiple games in a single batch operation, simplifying the process of managing multiple downloads.
--  **Customization**: Offers customizable settings for file renaming and specifying download directories, allowing greater control over how and where your games are saved.
--  **Simplicity**: Designed to be easy to use, requiring only the game URL or the author's name and game title. This makes it accessible even for those who are not familiar with itch.io’s more complex tools.
--  **No API Key Required**: Operates without the need for an API key, making it straightforward to set up and start downloading games.
+-  **Direct Downloads**: Get games by URL or by name and author—no desktop GUI or Butler.
+-  **Batch Operations**: Download multiple games in one run.
+-  **Customization**: Rename files and choose download directories.
+-  **Simplicity**: Only a URL or author and title is required.
+-  **No API Key Required**: Works without an API key.
 
 ## Usage Policy
 
-This tool should only be used to download games that are freely available on itch.io. Use of Itchio-Downloader must comply with the [itch.io Terms of Service](https://itch.io/docs/general/terms). Do not use this tool to circumvent payment requirements or any distribution restrictions.
-This project is not affiliated with or endorsed by itch.io.
+Only download free games and follow the [itch.io Terms of Service](https://itch.io/docs/general/terms). Don't bypass payment restrictions. This project isn't affiliated with or endorsed by itch.io.
 
 ## Quick Start
 
-This project requires **Node.js 18 or later** because it relies on the built-in `fetch` API. Verify your version and install if necessary:
+Requires **Node.js 18+** for the built-in `fetch` API:
 
 ```bash
 nvm install 18
@@ -53,9 +52,9 @@ nvm use 18
 node -v
 ```
 
-If you must use an older Node version, install a `fetch` polyfill such as `node-fetch`.
+If using an older Node, add a `fetch` polyfill like `node-fetch`.
 
-After Node is ready, install the package:
+Install the package:
 
 ```bash
 npm install itchio-downloader
@@ -63,8 +62,7 @@ npm install itchio-downloader
 yarn add itchio-downloader
 ```
 
-See [docs/CLI.md](docs/CLI.md) for a reference of available command line options.
-For debugging tips and verbose logging instructions, see [docs/Debugging.md](docs/Debugging.md).
+See [docs/CLI.md](docs/CLI.md) for CLI options and [docs/Debugging.md](docs/Debugging.md) for verbose logging.
 
 ## Usage
 
@@ -76,7 +74,7 @@ const { downloadGame } = require('itchio-downloader');
 
 ### Downloading a Single Game
 
-You can download a single game by either specifying a URL or a combination of the game's name and its author's username:
+Download a game by URL or by name and author:
 
 ```javascript
 // Using a direct URL:
@@ -92,7 +90,7 @@ await downloadGame({
 
 ### Downloading Multiple Games
 
-To download multiple games, provide an array of parameters for each game. You can mix URL and name/author specifications within the same operation. An optional `concurrency` argument controls how many downloads run at the same time. Alternatively, set `parallel: true` on any item to run all downloads concurrently using `Promise.all`:
+Provide an array to download multiple games. Mix URLs or name/author combinations. Use `concurrency` to limit downloads or set `parallel: true` to run them all concurrently:
 
 ```javascript
 async function downloadMultipleGames() {
@@ -107,32 +105,22 @@ async function downloadMultipleGames() {
 downloadMultipleGames();
 ```
 
-See [docs/Advanced-Usage.md](docs/Advanced-Usage.md) for additional examples of
-concurrency and custom file paths.
+See [docs/Advanced-Usage.md](docs/Advanced-Usage.md) for more concurrency and custom path examples.
 
 ## Command Line Usage
-
-Build the CLI with `npm run build-cli` (or `yarn build-cli`) and then run
-`itchio-downloader` with the desired options. See
-[docs/CLI.md](docs/CLI.md) for complete usage instructions and all available
-flags.
-
+Build the CLI with `npm run build-cli` (or `yarn build-cli`), then run `itchio-downloader` with your options. Full details are in [docs/CLI.md](docs/CLI.md).
 ## Configuration Options
 
 The `downloadGame` function accepts the following parameters within `DownloadGameParams`:
 
--  `name`: (Optional) The name of the game (used in conjunction with `author`).
--  `author`: (Optional) The author's username on itch.io (used with `name`
-
-).
-
--  `itchGameUrl`: (Optional) Direct URL to the game's itch.io page.
--  `desiredFileName`: (Optional) Specify a custom filename for the downloaded file.
--  `downloadDirectory`: (Optional) Directory where the downloaded files should be saved.
--  `writeMetaData`: (Optional) Save a metadata JSON file alongside the download. Default is `true`.
--  `concurrency`: (Optional) When providing an array of games, this sets how many downloads occur at once.
-
-  `parallel`: (Optional) If `true` when using an array of games, all downloads run concurrently using `Promise.all`.
+-  `name`: Game name (use with `author`).
+-  `author`: Author's username.
+-  `itchGameUrl`: Direct URL to the game.
+-  `desiredFileName`: Custom file name.
+-  `downloadDirectory`: Where to save files.
+-  `writeMetaData`: Save metadata JSON (default `true`).
+-  `concurrency`: Number of downloads at once when using an array.
+-  `parallel`: If true, run all downloads concurrently with `Promise.all`.
 
 ## Types
 
@@ -157,9 +145,7 @@ export type DownloadGameResponse = {
 ```
 
 ## Example Output
-
-The following shows an example response from `downloadGame`:
-
+Example response:
 ```bash
 const response = {
    status: true,
@@ -185,7 +171,7 @@ const response = {
 ```
 ## Documentation
 
-Additional reference material is available in the repository:
+More documentation:
 
 - [docs/Home.md](docs/Home.md) – Overview of the documentation
 - [docs/API-Reference.md](docs/API-Reference.md) – Full API details
@@ -197,15 +183,11 @@ Additional reference material is available in the repository:
 
 ## Contributing
 
-Contributions are welcome! Please fork the repository and submit pull requests with any enhancements. For major changes, open an issue first to discuss what you would like to change. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+Contributions are welcome! Fork the repo and submit a pull request. For major changes, open an issue first. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-Ensure to update tests as appropriate.
-
-Run `npm test` or `yarn test` to verify all tests pass, and build the CLI with
-`npm run build-cli` or `yarn build-cli` when needed.
-
-When publishing to npm, the `prepublishOnly` script defined in `package.json` automatically runs `npm run build-cli` to build the CLI.
-
+Update tests as needed.
+Run `npm test` and build the CLI with `npm run build-cli`.
+Publishing runs the `prepublishOnly` script to build the CLI.
 ## Release Procedure
 1. Update the version in `package.json`.
 2. Document changes in `CHANGELOG.md`.
@@ -214,8 +196,8 @@ When publishing to npm, the `prepublishOnly` script defined in `package.json` au
 
 ## Maintenance
 
-Dependabot automatically monitors dependencies and opens pull requests for updates.
+Dependabot monitors dependencies and opens PRs.
 
 ## License
 
-Distributed under the ISC License.
+ISC License.
