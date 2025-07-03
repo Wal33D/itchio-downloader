@@ -14,7 +14,7 @@
     "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",
     "prepublishOnly": "npm run build-cli",
     "test": "jest",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint src --ext .ts",
     "format": "prettier --write ."
   },
   "author": "Wal33D",
