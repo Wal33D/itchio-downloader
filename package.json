@@ -17,6 +17,9 @@
     },
    "author": "Wal33D",
    "license": "ISC",
+   "engines": {
+      "node": ">=18"
+   },
    "dependencies": {
       "puppeteer": "^24.11.2",
       "yargs": "^18.0.0"
