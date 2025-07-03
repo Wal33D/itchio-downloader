@@ -4,7 +4,7 @@ import { DownloadGameParams } from '../itchDownloader/types';
 async function downloadMultipleGamesExample() {
    const gameParams: DownloadGameParams[] = [
       { name: 'eyeless-jack', author: 'tayoodev' },
-      { name: 'manic-miners', author: 'baraklava' }
+      { name: 'manic-miners', author: 'baraklava', parallel: true }
    ];
 
    try {

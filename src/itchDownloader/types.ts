@@ -96,6 +96,8 @@ export type DownloadGameParams = {
    downloadDirectory?: string;
    itchGameUrl?: string;
    writeMetaData?: boolean;
+   /** When part of an array, set to true to run downloads concurrently */
+   parallel?: boolean;
 };
 
 export type DownloadGameResponse = {
