@@ -48,7 +48,7 @@ await downloadGame({ itchGameUrl: 'https://baraklava.itch.io/manic-miners' });
 await downloadGame({
    name: 'manic-miners',
    author: 'baraklava',
-   desiredFileDirectory: 'full file path', // Optional
+   downloadDirectory: 'full file path', // Optional
    cleanDirectory: true // Optional
 });
 ```
@@ -112,7 +112,7 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 
 -  `itchGameUrl`: (Optional) Direct URL to the game's itch.io page.
 -  `desiredFileName`: (Optional) Specify a custom filename for the downloaded file.
--  `desiredFileDirectory`: (Optional) Directory where the downloaded files should be saved.
+-  `downloadDirectory`: (Optional) Directory where the downloaded files should be saved.
 -  `cleanDirectory`: (Optional) Whether to clean the directory before downloading the files.
 -  `concurrency`: (Optional) When providing an array of games, this sets how many downloads occur at once.
 
@@ -126,7 +126,7 @@ export type DownloadGameParams = {
    author?: string,
    cleanDirectory?: boolean,
    desiredFileName?: string,
-   desiredFileDirectory?: string,
+   downloadDirectory?: string,
    itchGameUrl?: string,
    parallel?: boolean
 };

@@ -18,7 +18,7 @@ const argv: ArgumentsCamelCase<CLIArgs> = (yargs(hideBin(process.argv)) as Argv<
       describe: 'The author of the game',
       type: 'string'
    })
-   .option('downloadDir', {
+   .option('downloadDirectory', {
       describe: 'The filepath where the game will be downloaded',
       type: 'string'
    })
@@ -41,7 +41,7 @@ const params: DownloadGameParams = {
    itchGameUrl: argv.url,
    name: argv.name,
    author: argv.author,
-   downloadDirectory: argv.downloadDir
+   downloadDirectory: argv.downloadDirectory
 };
 
 async function run() {
