@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import assert from 'assert';
-import { waitForFile } from '../fileUtils/waitForFile';
+import { waitForFile } from '../src/fileUtils/waitForFile';
 
 async function runTests() {
   // Success scenario
