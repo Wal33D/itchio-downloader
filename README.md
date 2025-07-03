@@ -208,6 +208,12 @@ Run `npm test` or `yarn test` to verify all tests pass, and build the CLI with
 
 When publishing to npm, the `prepublishOnly` script defined in `package.json` automatically runs `npm run build-cli` to build the CLI.
 
+## Release Procedure
+1. Update the version in `package.json`.
+2. Document changes in `CHANGELOG.md`.
+3. Run `npm publish` (the `prepublishOnly` script builds the CLI).
+
+
 ## License
 
 Distributed under the ISC License.
