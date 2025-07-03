@@ -47,6 +47,5 @@ await downloadGame({
 });
 ```
 
-See the [Examples](Examples.md) page for more sample scripts.
 See [Advanced Usage](Advanced-Usage.md) for concurrency and custom path examples.
 For troubleshooting and debug logs, see the [Debugging](Debugging.md) guide.

@@ -19,11 +19,10 @@ For a full reference of available functions and types, see the [API documentatio
 7. [Configuration Options](#configuration-options)
 8. [Types](#types)
 9. [Example Output](#example-output)
-10. [Examples](#examples)
-11. [Contributing](#contributing)
-12. [Release Procedure](#release-procedure)
-13. [Maintenance](#maintenance)
-14. [License](#license)
+10. [Contributing](#contributing)
+11. [Release Procedure](#release-procedure)
+12. [Maintenance](#maintenance)
+13. [License](#license)
 
 ## Motivation
 
@@ -158,7 +157,7 @@ export type DownloadGameResponse = {
 
 ## Example Output
 
-The following shows an example response from `npm run test:downloadSingle`:
+The following shows an example response from `downloadGame`:
 
 ```bash
 const response = {
@@ -184,17 +183,6 @@ const response = {
 
 ```
 
-Example scripts used to produce this output are available in the [`examples`](examples) directory.
-
-## Examples
-
-Run the sample scripts with the provided npm commands:
-
-```bash
-npm run test:downloadSingle   # single download example
-npm run test:downloadMultiple # multiple downloads
-npm run test:waitForFile      # waitForFile demo
-```
 
 ## Contributing
 
