@@ -26,7 +26,6 @@ yarn.lock
 /testOutput/*
 *.zip
 
-# Exclude examples and tests from the published package
-examples/
+# Exclude tests from the published package
 src/**/__tests__/
 
