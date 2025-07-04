@@ -13,7 +13,6 @@ Switching to a reusable cookie will reduce the overhead of launching Puppeteer f
 
 This approach allows most downloads to run without opening a headless browser while still remaining compatible with itch.io's authentication.
 
-
 ## Configuration File Support
 
 Add the ability for the CLI to read a JSON or YAML file containing a list of games and default options. The steps involve:
