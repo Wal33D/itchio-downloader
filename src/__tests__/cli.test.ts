@@ -69,12 +69,15 @@ describe('cli', () => {
       '/tmp',
     ]);
 
-    expect(mock).toHaveBeenCalledWith({
-      itchGameUrl: 'https://author.itch.io/game',
-      name: undefined,
-      author: undefined,
-      downloadDirectory: '/tmp',
-    });
+    expect(mock).toHaveBeenCalledWith(
+      {
+        itchGameUrl: 'https://author.itch.io/game',
+        name: undefined,
+        author: undefined,
+        downloadDirectory: '/tmp',
+      },
+      1,
+    );
     expect(logSpy).toHaveBeenCalledWith('Game Download Result:', 'ok');
   });
 
@@ -86,12 +89,15 @@ describe('cli', () => {
 
     await run(['node', 'cli.ts', '--name', 'game', '--author', 'user']);
 
-    expect(mock).toHaveBeenCalledWith({
-      itchGameUrl: undefined,
-      name: 'game',
-      author: 'user',
-      downloadDirectory: undefined,
-    });
+    expect(mock).toHaveBeenCalledWith(
+      {
+        itchGameUrl: undefined,
+        name: 'game',
+        author: 'user',
+        downloadDirectory: undefined,
+      },
+      1,
+    );
     expect(logSpy).toHaveBeenCalled();
   });
 
@@ -112,14 +118,44 @@ describe('cli', () => {
       '100',
     ]);
 
-    expect(mock).toHaveBeenCalledWith({
-      itchGameUrl: 'https://author.itch.io/game',
-      name: undefined,
-      author: undefined,
-      downloadDirectory: undefined,
-      retries: 2,
-      retryDelayMs: 100,
-    });
+    expect(mock).toHaveBeenCalledWith(
+      {
+        itchGameUrl: 'https://author.itch.io/game',
+        name: undefined,
+        author: undefined,
+        downloadDirectory: undefined,
+        retries: 2,
+        retryDelayMs: 100,
+      },
+      1,
+    );
+    expect(logSpy).toHaveBeenCalled();
+  });
+
+  it('forwards concurrency option', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue('ok' as any);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--concurrency',
+      '3',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      {
+        itchGameUrl: 'https://author.itch.io/game',
+        name: undefined,
+        author: undefined,
+        downloadDirectory: undefined,
+      },
+      3,
+    );
     expect(logSpy).toHaveBeenCalled();
   });
 

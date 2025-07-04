@@ -5,4 +5,5 @@ export interface CLIArgs {
   downloadDirectory?: string;
   retries?: number;
   retryDelay?: number;
+  concurrency?: number;
 }

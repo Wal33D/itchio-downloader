@@ -107,7 +107,12 @@ See [docs/Advanced-Usage.md](docs/Advanced-Usage.md) for more concurrency and cu
 
 ## Command Line Usage
 
-Build the CLI with `pnpm run build-cli`, then run `itchio-downloader` with your options. Full details are in [docs/CLI.md](docs/CLI.md).
+Build the CLI with `pnpm run build-cli`, then run `itchio-downloader` with your options. The `--concurrency` flag limits how many downloads run at once when supplying a list of games. Full details are in [docs/CLI.md](docs/CLI.md).
+
+```bash
+# Example limiting concurrency
+itchio-downloader --url "https://baraklava.itch.io/manic-miners" --concurrency 2
+```
 
 ## Configuration Options
 
