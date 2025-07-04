@@ -34,7 +34,11 @@ export const parseItchGameMetadata = async ({
   try {
     const response = await fetch(itchGameUrl);
     if (!response.ok) {
-      throw new Error(`HTTP error! jsonParsed: ${response.status}`);
+      return {
+        jsonParsed: false,
+        statusCode: response.status,
+        message: `HTTP error! status: ${response.status}`,
+      };
     }
     const json = await response.json();
 
@@ -58,6 +62,7 @@ export const parseItchGameMetadata = async ({
   } catch (error: any) {
     return {
       jsonParsed: false,
+      statusCode: error.statusCode,
       message: `Failed to fetch or parse metadata: ${error.message}`,
     };
   }

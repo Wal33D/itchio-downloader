@@ -95,6 +95,34 @@ describe('cli', () => {
     expect(logSpy).toHaveBeenCalled();
   });
 
+  it('passes retry options', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue('ok' as any);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--retries',
+      '2',
+      '--retryDelay',
+      '100',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith({
+      itchGameUrl: 'https://author.itch.io/game',
+      name: undefined,
+      author: undefined,
+      downloadDirectory: undefined,
+      retries: 2,
+      retryDelayMs: 100,
+    });
+    expect(logSpy).toHaveBeenCalled();
+  });
+
   it('exits when required arguments are missing', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     const exitSpy = jest.spyOn(process, 'exit').mockImplementation(((

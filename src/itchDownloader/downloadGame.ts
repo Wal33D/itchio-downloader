@@ -9,6 +9,7 @@ import { fetchItchGameProfile } from './fetchItchGameProfile';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 import path from 'path';
 import os from 'os';
+import fs from 'fs';
 
 function log(...args: any[]) {
   if (process.env.DEBUG_DOWNLOAD_GAME === 'true') {
@@ -54,14 +55,21 @@ export async function downloadGame(
 export async function downloadGameSingle(
   params: DownloadGameParams,
 ): Promise<DownloadGameResponse> {
-  let {
+  const {
     name,
     author,
     desiredFileName,
-    downloadDirectory,
-    itchGameUrl,
+    downloadDirectory: inputDirectory,
+    itchGameUrl: inputUrl,
     writeMetaData = true,
+    retries = 0,
+    retryDelayMs = 500,
   } = params;
+
+  let downloadDirectory: string = inputDirectory
+    ? path.resolve(inputDirectory)
+    : path.resolve(os.homedir(), 'downloads');
+  let itchGameUrl: string | undefined = inputUrl;
 
   if (!itchGameUrl && name && author) {
     itchGameUrl = `https://${author}.itch.io/${name.toLowerCase().replace(/\s+/g, '-')}`;
@@ -85,84 +93,109 @@ export async function downloadGameSingle(
       message: 'Invalid input: Provide either a URL or both name and author.',
     };
   }
-  if (!downloadDirectory) {
-    downloadDirectory = path.resolve(os.homedir(), 'downloads');
-  } else {
-    downloadDirectory = path.resolve(downloadDirectory);
-  }
 
-  try {
-    await createDirectory({ directory: downloadDirectory });
 
-    const gameProfile = await fetchItchGameProfile({ itchGameUrl });
-    if (!gameProfile.found) throw new Error('Failed to fetch game profile');
-    log('Game profile fetched successfully:', itchGameUrl, gameProfile);
+  async function attemptOnce(): Promise<DownloadGameResponse> {
+    try {
+      await createDirectory({ directory: downloadDirectory });
 
-    browserInit = await initializeBrowser({ downloadDirectory });
-    if (!browserInit.status)
-      throw new Error('Browser initialization failed: ' + browserInit.message);
+      const gameProfile = await fetchItchGameProfile({ itchGameUrl });
+      if (!gameProfile.found) throw new Error('Failed to fetch game profile');
+      log('Game profile fetched successfully:', itchGameUrl, gameProfile);
 
-    globalBrowser = browserInit.browser;
+      browserInit = await initializeBrowser({ downloadDirectory });
+      if (!browserInit.status)
+        throw new Error('Browser initialization failed: ' + browserInit.message);
 
-    const browser: Browser = globalBrowser!;
-    log('Starting Download...');
+      globalBrowser = browserInit.browser;
 
-    const puppeteerResult = await initiateDownload({ browser, itchGameUrl });
-    if (!puppeteerResult.status)
-      throw new Error('Download failed: ' + puppeteerResult.message);
+      const browser: Browser = globalBrowser!;
+      log('Starting Download...');
 
-    log('Downloading...');
-    const downloadedFileInfo = await waitForFile({ downloadDirectory });
-    if (!downloadedFileInfo.status)
-      throw new Error('Downloaded file not found');
+      const puppeteerResult = await initiateDownload({ browser, itchGameUrl: itchGameUrl! });
+      if (!puppeteerResult.status)
+        throw new Error('Download failed: ' + puppeteerResult.message);
 
-    finalFilePath = downloadedFileInfo.filePath as string;
+      log('Downloading...');
+      const downloadedFileInfo = await waitForFile({ downloadDirectory });
+      if (!downloadedFileInfo.status)
+        throw new Error('Downloaded file not found');
 
-    if (desiredFileName) {
-      log('Renaming file...');
-      const renameResult = await renameFile({
+      finalFilePath = downloadedFileInfo.filePath as string;
+
+      const originalBase = desiredFileName
+        ? desiredFileName
+        : path.basename(finalFilePath, path.extname(finalFilePath));
+      const ext = path.extname(finalFilePath);
+      let uniqueBase = originalBase;
+      let targetPath = path.join(downloadDirectory, uniqueBase + ext);
+      let counter = 1;
+      while (fs.existsSync(targetPath)) {
+        uniqueBase = `${originalBase}-${counter}`;
+        targetPath = path.join(downloadDirectory, uniqueBase + ext);
+        counter++;
+      }
+      if (uniqueBase !== path.basename(finalFilePath, ext) || desiredFileName) {
+        const renameResult = await renameFile({
+          filePath: finalFilePath,
+          desiredFileName: uniqueBase,
+        });
+        if (!renameResult.status)
+          throw new Error('File rename failed: ' + renameResult.message);
+        finalFilePath = renameResult.newFilePath as any;
+        log('File renamed successfully to:', finalFilePath);
+      }
+
+      metaData = gameProfile?.itchRecord as IItchRecord;
+      metadataPath = path.join(
+        downloadDirectory,
+        `${gameProfile?.itchRecord?.name}-metadata.json`,
+      );
+
+      if (writeMetaData) {
+        await createFile({
+          filePath: metadataPath,
+          content: JSON.stringify(metaData, null, 2),
+        });
+      }
+
+      status = puppeteerResult.status;
+      message = 'Download and file operations successful.';
+      log(message);
+      return {
+        status,
+        message,
+        metadataPath,
         filePath: finalFilePath,
-        desiredFileName,
-      });
-      if (!renameResult.status)
-        throw new Error('File rename failed: ' + renameResult.message);
-      finalFilePath = renameResult.newFilePath as any;
-      log('File renamed successfully to:', finalFilePath);
-    }
-    metaData = gameProfile?.itchRecord as IItchRecord;
-    metadataPath = path.join(
-      downloadDirectory,
-      `${gameProfile?.itchRecord?.name}-metadata.json`,
-    );
-
-    if (writeMetaData) {
-      await createFile({
-        filePath: metadataPath,
-        content: JSON.stringify(metaData, null, 2),
-      });
-    }
-
-    status = puppeteerResult.status;
-    message = 'Download and file operations successful.';
-    log(message);
-  } catch (error: any) {
-    message = `Setup failed: ${error.message}`;
-    log(message);
-    if (finalFilePath) {
-      return { status: false, message, filePath: finalFilePath };
-    }
-    return { status: false, message };
-  } finally {
-    if (browserInit && browserInit.browser) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      await browserInit.browser.close();
-      log('Downloader closed successfully');
-      globalBrowser = null;
+        metaData,
+      };
+    } catch (error: any) {
+      message = `Setup failed: ${error.message}`;
+      log(message);
+      const httpStatus = error.statusCode;
+      if (finalFilePath) {
+        return { status: false, message, httpStatus, filePath: finalFilePath };
+      }
+      return { status: false, message, httpStatus };
+    } finally {
+      if (browserInit && browserInit.browser) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await browserInit.browser.close();
+        log('Downloader closed successfully');
+        globalBrowser = null;
+      }
     }
   }
 
-  return { status, message, metadataPath, filePath: finalFilePath, metaData };
+  let attempt = 0;
+  let result: DownloadGameResponse = await attemptOnce();
+  while (!result.status && attempt < retries) {
+    await new Promise((r) => setTimeout(r, retryDelayMs * Math.pow(2, attempt)));
+    attempt++;
+    result = await attemptOnce();
+  }
+
+  return result;
 }
 
 process.on('exit', cleanUp);

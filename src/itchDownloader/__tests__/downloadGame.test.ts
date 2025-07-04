@@ -1,7 +1,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { downloadGame } from '../downloadGame';
+import * as downloadGameModule from '../downloadGame';
+const { downloadGame } = downloadGameModule;
 import * as fetchProfile from '../fetchItchGameProfile';
 import * as initBrowser from '../initializeBrowser';
 import * as initiateDownload from '../initiateDownload';
@@ -175,5 +176,82 @@ describe('downloadGame', () => {
     });
     expect(fs.existsSync(target)).toBe(true);
     expect(closeMock).toHaveBeenCalled();
+  });
+
+  it('retries failed downloads with exponential backoff', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-retry-'));
+    let attempts = 0;
+    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockImplementation(async () => {
+      attempts++;
+      if (attempts < 3) {
+        const err: any = new Error('fail');
+        err.statusCode = 500;
+        throw err;
+      }
+      return { found: true, itchRecord: { name: 'g' }, message: 'ok' } as any;
+    });
+    jest.spyOn(initBrowser, 'initializeBrowser').mockResolvedValue({
+      browser: { close: jest.fn() } as any,
+      status: true,
+      message: 'ok',
+    });
+    jest
+      .spyOn(initiateDownload, 'initiateDownload')
+      .mockResolvedValue({ status: true, message: 'ok' });
+    jest.spyOn(waitFile, 'waitForFile').mockResolvedValue({
+      status: true,
+      message: 'done',
+      filePath: path.join(tmpDir, 'game.zip'),
+    });
+    jest.spyOn(renameFileModule, 'renameFile').mockResolvedValue({
+      status: true,
+      message: 'renamed',
+      newFilePath: path.join(tmpDir, 'game.zip'),
+    });
+    jest.spyOn(createFileModule, 'createFile').mockResolvedValue({} as any);
+
+    const result = (await downloadGame({
+      name: 'game',
+      author: 'user',
+      downloadDirectory: tmpDir,
+      retries: 2,
+      retryDelayMs: 10,
+    })) as any;
+
+    expect(result.status).toBe(true);
+    expect(attempts).toBe(3);
+  });
+
+  it('runs downloads concurrently respecting limit', async () => {
+    jest
+      .spyOn(fetchProfile, 'fetchItchGameProfile')
+      .mockResolvedValue({ found: true, itchRecord: {}, message: 'ok' });
+    jest.spyOn(initBrowser, 'initializeBrowser').mockResolvedValue({
+      browser: { close: jest.fn() } as any,
+      status: true,
+      message: 'ok',
+    });
+    jest
+      .spyOn(initiateDownload, 'initiateDownload')
+      .mockResolvedValue({ status: true, message: 'ok' });
+    jest.spyOn(waitFile, 'waitForFile').mockImplementation(async () => {
+      await new Promise((r) => setTimeout(r, 50));
+      return { status: true, message: 'done', filePath: 'x' } as any;
+    });
+    jest.spyOn(renameFileModule, 'renameFile').mockResolvedValue({
+      status: true,
+      message: 'renamed',
+      newFilePath: 'x',
+    });
+    jest.spyOn(createFileModule, 'createFile').mockResolvedValue({} as any);
+
+    const start = Date.now();
+    await downloadGame([
+      { name: 'a', author: 'u' },
+      { name: 'b', author: 'u' },
+      { name: 'c', author: 'u' },
+    ], 2);
+    const duration = Date.now() - start;
+    expect(duration).toBeGreaterThanOrEqual(100);
   });
 });

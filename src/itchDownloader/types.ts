@@ -58,6 +58,7 @@ export type IParsedItchGameUrl = {
 export interface IParsedItchGameMetadata {
   jsonParsed?: boolean;
   message?: string;
+  statusCode?: number;
   title?: string;
   coverImage?: string;
   authors?: { url: string; name: string }[];
@@ -96,6 +97,8 @@ export type DownloadGameParams = {
   downloadDirectory?: string;
   itchGameUrl?: string;
   writeMetaData?: boolean;
+  retries?: number;
+  retryDelayMs?: number;
   /** When part of an array, set to true to run downloads concurrently */
   parallel?: boolean;
 };
@@ -103,6 +106,7 @@ export type DownloadGameParams = {
 export type DownloadGameResponse = {
   status: boolean;
   message: string;
+  httpStatus?: number;
   metaData?: IItchRecord;
   metadataPath?: string;
   filePath?: string;
