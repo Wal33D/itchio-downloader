@@ -46,3 +46,6 @@ itchio-downloader --url "https://baraklava.itch.io/manic-miners" --concurrency 2
 ```
 
 If you have the package installed locally without `-g`, run the examples with `npx itchio-downloader` or `pnpm dlx itchio-downloader`.
+
+During downloads the CLI prints a progress percentage in the terminal so you can
+track how many bytes have been received.

@@ -2,6 +2,7 @@ import {
   DownloadGameParams,
   DownloadGameResponse,
   IItchRecord,
+  DownloadProgress,
 } from './itchDownloader/types';
 
 import { downloadGame } from './itchDownloader/downloadGame';
@@ -13,5 +14,6 @@ export {
   DownloadGameParams,
   DownloadGameResponse,
   IItchRecord,
+  DownloadProgress,
   CLIArgs,
 };

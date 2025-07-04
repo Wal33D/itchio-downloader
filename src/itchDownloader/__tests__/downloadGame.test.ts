@@ -181,15 +181,17 @@ describe('downloadGame', () => {
   it('retries failed downloads with exponential backoff', async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-retry-'));
     let attempts = 0;
-    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockImplementation(async () => {
-      attempts++;
-      if (attempts < 3) {
-        const err: any = new Error('fail');
-        err.statusCode = 500;
-        throw err;
-      }
-      return { found: true, itchRecord: { name: 'g' }, message: 'ok' } as any;
-    });
+    jest
+      .spyOn(fetchProfile, 'fetchItchGameProfile')
+      .mockImplementation(async () => {
+        attempts++;
+        if (attempts < 3) {
+          const err: any = new Error('fail');
+          err.statusCode = 500;
+          throw err;
+        }
+        return { found: true, itchRecord: { name: 'g' }, message: 'ok' } as any;
+      });
     jest.spyOn(initBrowser, 'initializeBrowser').mockResolvedValue({
       browser: { close: jest.fn() } as any,
       status: true,
@@ -246,12 +248,65 @@ describe('downloadGame', () => {
     jest.spyOn(createFileModule, 'createFile').mockResolvedValue({} as any);
 
     const start = Date.now();
-    await downloadGame([
-      { name: 'a', author: 'u' },
-      { name: 'b', author: 'u' },
-      { name: 'c', author: 'u' },
-    ], 2);
+    await downloadGame(
+      [
+        { name: 'a', author: 'u' },
+        { name: 'b', author: 'u' },
+        { name: 'c', author: 'u' },
+      ],
+      2,
+    );
     const duration = Date.now() - start;
     expect(duration).toBeGreaterThanOrEqual(100);
+  });
+
+  it('forwards download progress events', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-prog-'));
+    const onProgress = jest.fn();
+
+    jest
+      .spyOn(fetchProfile, 'fetchItchGameProfile')
+      .mockResolvedValue({ found: true, itchRecord: {}, message: 'ok' });
+    jest
+      .spyOn(initBrowser, 'initializeBrowser')
+      .mockImplementation(async ({ onProgress: cb }) => {
+        if (cb) {
+          cb({ bytesReceived: 10, totalBytes: 100, fileName: 'file.zip' });
+          cb({ bytesReceived: 50, totalBytes: 100, fileName: 'file.zip' });
+        }
+        return {
+          browser: { close: jest.fn() } as any,
+          status: true,
+          message: 'ok',
+        };
+      });
+    jest
+      .spyOn(initiateDownload, 'initiateDownload')
+      .mockResolvedValue({ status: true, message: 'ok' });
+    jest.spyOn(waitFile, 'waitForFile').mockResolvedValue({
+      status: true,
+      message: 'done',
+      filePath: path.join(tmpDir, 'file.zip'),
+    });
+    jest.spyOn(renameFileModule, 'renameFile').mockResolvedValue({
+      status: true,
+      message: 'renamed',
+      newFilePath: path.join(tmpDir, 'file.zip'),
+    });
+    jest.spyOn(createFileModule, 'createFile').mockResolvedValue({} as any);
+
+    await downloadGame({
+      name: 'a',
+      author: 'u',
+      downloadDirectory: tmpDir,
+      onProgress,
+    });
+
+    expect(onProgress).toHaveBeenCalled();
+    expect(onProgress).toHaveBeenCalledWith({
+      bytesReceived: 10,
+      totalBytes: 100,
+      fileName: 'file.zip',
+    });
   });
 });
