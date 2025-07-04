@@ -6,11 +6,11 @@ import { downloadGame } from './itchDownloader/downloadGame';
 import { DownloadGameParams } from './itchDownloader/types';
 import { CLIArgs } from './types/cli';
 
-async function run() {
+export async function run(argvInput: string[] = process.argv) {
   const yargs = (await import('yargs')).default;
 
   const argv: ArgumentsCamelCase<CLIArgs> = (
-    yargs(hideBin(process.argv)) as Argv<CLIArgs>
+    yargs(hideBin(argvInput)) as Argv<CLIArgs>
   )
     .option('url', {
       describe: 'The full URL to the game on itch.io',
@@ -57,4 +57,7 @@ async function run() {
   }
 }
 
-run();
+if (require.main === module) {
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  run();
+}
