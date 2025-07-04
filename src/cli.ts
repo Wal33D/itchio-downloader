@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 import type { Argv, ArgumentsCamelCase } from 'yargs';
-import { hideBin } from 'yargs/helpers';
 import { downloadGame } from './itchDownloader/downloadGame';
 import { DownloadGameParams } from './itchDownloader/types';
 import { CLIArgs } from './types/cli';
 
 export async function run(argvInput: string[] = process.argv) {
   const yargs = (await import('yargs')).default;
+  const hideBin = (args: string[]) => args.slice(2);
 
   const argv: ArgumentsCamelCase<CLIArgs> = (
     yargs(hideBin(argvInput)) as Argv<CLIArgs>
