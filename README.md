@@ -195,6 +195,24 @@ Update tests as needed.
 Run `npm test` and build the CLI with `npm run build-cli`.
 Publishing runs the `prepublishOnly` script to build the CLI.
 
+## Development Setup
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/Wal33D/itchio-downloader.git
+cd itchio-downloader
+npm install
+```
+
+`npm install` installs `ts-jest` and other dev dependencies required for the test suite. Running tests without installing these packages will result in a "Preset ts-jest not found" error.
+
+Run the tests with:
+
+```bash
+npm test
+```
+
 ## Release Procedure
 
 1. Update the version in `package.json`.
