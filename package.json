@@ -1,6 +1,6 @@
 {
   "name": "itchio-downloader",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Programatically download games from itch.io using Node",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
