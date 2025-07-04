@@ -1,6 +1,7 @@
 # Itchio-Downloader
 
-Itchio-Downloader is a Node.js library for downloading free games directly from [itch.io](https://itch.io). The package exposes an API for programmatic downloads and a small command line interface.
+Itchio-Downloader is a Node.js library and CLI for downloading free games directly from [itch.io](https://itch.io).
+The [README](../README.md) explains installation and provides several examples.
 
 ## Links
 
@@ -8,5 +9,6 @@ Itchio-Downloader is a Node.js library for downloading free games directly from 
 - [CLI Usage](CLI.md)
 - [Advanced Usage](Advanced-Usage.md)
 - [Debugging](Debugging.md)
+- [Project README](../README.md)
 
-The project requires **Node.js 18 or later** because it relies on the built in `fetch` API. See the repository [README](../README.md) for a full quick start guide and additional documentation.
+The project requires **Node.js 18 or later** because it relies on the built-in `fetch` API.
