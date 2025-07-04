@@ -4,9 +4,9 @@
 
 **npm Package:** [itchio-downloader on npm](https://www.npmjs.com/package/itchio-downloader)
 
-Itchio-Downloader provides a small CLI and library for downloading free games from [itch.io](https://itch.io).  Games can be fetched by URL or by name and author—no API key or GUI is required.
+Itchio-Downloader downloads free games from [itch.io](https://itch.io) via URL or by name and author—no API key or GUI needed.
 
-See the [API Reference](docs/API-Reference.md) for all functions and types.  Additional guides live in the [docs/](docs/) folder.
+See the [API Reference](docs/API-Reference.md) for all functions and types.
 
 ## Table of Contents
 
@@ -58,16 +58,8 @@ Install the package:
 
 ```bash
 pnpm add itchio-downloader
-# or install globally for the CLI
-pnpm add -g itchio-downloader
 # or
 yarn add itchio-downloader
-```
-
-If installed globally you can run the command directly:
-
-```bash
-itchio-downloader --help
 ```
 
 See [docs/CLI.md](docs/CLI.md) for CLI options and [docs/Debugging.md](docs/Debugging.md) for verbose logging.

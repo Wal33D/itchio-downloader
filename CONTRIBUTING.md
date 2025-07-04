@@ -33,4 +33,4 @@ pnpm run format
 
 We appreciate any fixes or improvements!
 
-For additional information about how the project works, see the [README](README.md) and the documentation in the `docs/` folder. The [Debugging guide](docs/Debugging.md) lists common troubleshooting steps.
+For additional information about how the project works, see the [README](README.md) and the documentation in the `docs/` folder.
