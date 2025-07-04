@@ -1,6 +1,7 @@
 # API Reference
 
-Itchio-Downloader exposes a single main function `downloadGame` along with related TypeScript types. Import it from the package root:
+Itchio-Downloader exposes a single main function `downloadGame` along with related TypeScript types. Import it from the package root.
+The library requires **Node.js 18+** for the native `fetch` API:
 
 ```javascript
 const { downloadGame } = require('itchio-downloader');

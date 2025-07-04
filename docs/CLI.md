@@ -1,8 +1,11 @@
 # Command Line Reference
 
-The CLI allows you to download games directly from a terminal.
+For installation instructions see [Installation](Installation.md).
 
-Build the executable before running:
+The CLI allows you to download games directly from a terminal.  It requires **Node.js 18 or later**.
+
+If you installed the package globally you can run `itchio-downloader` immediately.
+When working from a clone of the repository, build the executable first:
 
 ```bash
 pnpm run build-cli
@@ -37,3 +40,6 @@ itchio-downloader --url "https://baraklava.itch.io/manic-miners"
 # Using name and author
 itchio-downloader --name "manic miners" --author "baraklava"
 ```
+
+If you have the package installed locally without `-g`, run the examples with `npx itchio-downloader` or `pnpm dlx itchio-downloader`.
+

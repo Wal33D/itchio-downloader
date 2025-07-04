@@ -1,6 +1,6 @@
 # Advanced Usage
 
-This page covers more complex scenarios for `downloadGame`. These examples show how to control concurrency, run downloads in parallel, and save files to custom locations.
+This page covers more complex scenarios for `downloadGame`. These examples show how to control concurrency, run downloads in parallel, and save files to custom locations. For installation instructions see the [README](../README.md).
 
 ## Controlled concurrency
 
