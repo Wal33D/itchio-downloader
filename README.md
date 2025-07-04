@@ -4,9 +4,8 @@
 
 **npm Package:** [itchio-downloader on npm](https://www.npmjs.com/package/itchio-downloader)
 
-Itchio-Downloader downloads free games from [itch.io](https://itch.io) via URL or by name and author—no API key or GUI needed.
-
-See the [API Reference](docs/API-Reference.md) for all functions and types.
+Itchio-Downloader provides a small CLI and library for downloading free games from [itch.io](https://itch.io).  Games can be fetched by URL or by name and author—no API key or GUI is required.
+See the [API Reference](docs/API-Reference.md) for all functions and types. More guides are available in [docs/README.md](docs/README.md).
 
 ## Table of Contents
 
@@ -43,23 +42,22 @@ Only download free games and follow the [itch.io Terms of Service](https://itch.
 
 ## Quick Start
 
-Requires **Node.js 18+** for the built-in `fetch` API:
-
-```bash
-nvm install 18
-nvm use 18
-# or install directly from https://nodejs.org and verify
-node -v
-```
-
-If using an older Node, add a `fetch` polyfill like `node-fetch`.
+Requires **Node.js 18+**. For a full setup guide see [docs/Installation.md](docs/Installation.md).
 
 Install the package:
 
 ```bash
 pnpm add itchio-downloader
+# or install globally for the CLI
+pnpm add -g itchio-downloader
 # or
 yarn add itchio-downloader
+```
+
+If installed globally you can run the command directly:
+
+```bash
+itchio-downloader --help
 ```
 
 See [docs/CLI.md](docs/CLI.md) for CLI options and [docs/Debugging.md](docs/Debugging.md) for verbose logging.
@@ -178,7 +176,8 @@ const response = {
 
 More documentation:
 
-- [docs/Home.md](docs/Home.md) – Overview of the documentation
+- [docs/README.md](docs/README.md) – Overview
+- [docs/Installation.md](docs/Installation.md) – Setup requirements
 - [docs/API-Reference.md](docs/API-Reference.md) – Full API details
 - [docs/CLI.md](docs/CLI.md) – Command line usage
 - [docs/Advanced-Usage.md](docs/Advanced-Usage.md) – Concurrency and custom paths
