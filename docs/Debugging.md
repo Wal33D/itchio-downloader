@@ -1,6 +1,7 @@
 # Debugging
 
 This page covers ways to diagnose issues when using **Itchio-Downloader**.
+Ensure you are running **Node.js 18 or later** so that the built-in `fetch` API is available.
 
 ## Enable verbose logs
 
