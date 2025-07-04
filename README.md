@@ -183,6 +183,7 @@ More documentation:
 - [docs/CLI.md](docs/CLI.md) – Command line usage
 - [docs/Advanced-Usage.md](docs/Advanced-Usage.md) – Concurrency and custom paths
 - [docs/Debugging.md](docs/Debugging.md) – Troubleshooting tips
+- [docs/Roadmap.md](docs/Roadmap.md) – Future development plans
 - [CONTRIBUTING.md](CONTRIBUTING.md) – Contribution guidelines
 - [CHANGELOG.md](CHANGELOG.md) – Release history
 
