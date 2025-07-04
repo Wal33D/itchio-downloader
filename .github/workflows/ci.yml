@@ -18,10 +18,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npm test -- --coverage
+          cache: 'pnpm'
+      - run: corepack enable
+      - run: pnpm install
+      - run: pnpm run lint
+      - run: pnpm run build
+      - run: pnpm test -- --coverage
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
@@ -37,7 +39,9 @@ jobs:
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
-      - run: npm publish
+          cache: 'pnpm'
+      - run: corepack enable
+      - run: pnpm install
+      - run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
