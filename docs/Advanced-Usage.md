@@ -39,3 +39,19 @@ await downloadGame({
   desiredFileName: 'my-game.zip',
 });
 ```
+
+## Progress callback
+
+Provide an `onProgress` function to receive byte counts during a download:
+
+```javascript
+await downloadGame({
+  itchGameUrl: 'https://example.itch.io/game',
+  onProgress: ({ bytesReceived, totalBytes }) => {
+    if (totalBytes) {
+      const pct = ((bytesReceived / totalBytes) * 100).toFixed(1);
+      console.log(`Progress: ${pct}%`);
+    }
+  },
+});
+```

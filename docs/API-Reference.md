@@ -21,6 +21,7 @@ Downloads one or more games from itch.io. When an array of parameter objects is 
   - `downloadDirectory` _(string, optional)_ – Directory for the downloaded files.
   - `writeMetaData` _(boolean, optional)_ – Write a metadata JSON file alongside the download.
   - `parallel` _(boolean, optional)_ – When used inside an array, run this download concurrently via `Promise.all`.
+  - `onProgress` _(function, optional)_ – Receives `{ bytesReceived, totalBytes, fileName }` as the download proceeds.
 - `concurrency` _(number, optional)_ – When `params` is an array and `parallel` is not set, limits how many downloads happen at once. Defaults to `1`.
 
 ### Returns
@@ -35,6 +36,17 @@ type DownloadGameResponse = {
   metadataPath?: string;
   filePath?: string;
 };
+```
+
+Progress information is delivered via the `DownloadProgress` interface when
+`onProgress` is provided:
+
+```javascript
+interface DownloadProgress {
+  bytesReceived: number;
+  totalBytes?: number;
+  fileName?: string;
+}
 ```
 
 The `metaData` object mirrors the information fetched from the game's `data.json` file.

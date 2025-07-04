@@ -105,6 +105,24 @@ downloadMultipleGames();
 
 See [docs/Advanced-Usage.md](docs/Advanced-Usage.md) for more concurrency and custom path examples.
 
+### Tracking Progress
+
+Provide an `onProgress` callback to monitor download progress:
+
+```javascript
+await downloadGame({
+  itchGameUrl: 'https://baraklava.itch.io/manic-miners',
+  onProgress: ({ bytesReceived, totalBytes }) => {
+    if (totalBytes) {
+      const pct = ((bytesReceived / totalBytes) * 100).toFixed(1);
+      console.log(`Progress: ${pct}%`);
+    }
+  },
+});
+```
+
+The CLI displays similar progress automatically when run directly.
+
 ## Command Line Usage
 
 Build the CLI with `pnpm run build-cli`, then run `itchio-downloader` with your options. The `--concurrency` flag limits how many downloads run at once when supplying a list of games. Full details are in [docs/CLI.md](docs/CLI.md).
@@ -126,6 +144,7 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 - `writeMetaData`: Save metadata JSON (default `true`).
 - `concurrency`: Number of downloads at once when using an array.
 - `parallel`: If true, run all downloads concurrently with `Promise.all`.
+- `onProgress`: Callback invoked with download progress information.
 
 ## Types
 
@@ -138,6 +157,7 @@ export type DownloadGameParams = {
    itchGameUrl?: string,
    writeMetaData?: boolean,
    parallel?: boolean
+   onProgress?: (info: DownloadProgress) => void
 };
 
 export type DownloadGameResponse = {
