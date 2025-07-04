@@ -21,4 +21,3 @@ yarn add itchio-downloader
 ```
 
 If you installed the package globally, you can run `itchio-downloader` right away. When installed locally, use `npx itchio-downloader` or `pnpm dlx itchio-downloader`.
-

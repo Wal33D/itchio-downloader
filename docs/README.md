@@ -11,4 +11,3 @@ Welcome! This folder contains additional guides for using **Itchio-Downloader**.
 - [Debugging](Debugging.md)
 
 The project requires **Node.js 18 or later** because it relies on the built-in `fetch` API.
-
