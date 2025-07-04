@@ -10,6 +10,15 @@ describe('parseItchGameUrl', () => {
     expect(result.itchGameUrl).toBe(url);
   });
 
+  it('parses the Break Like A Baby url', () => {
+    const url = 'https://kimyalastname.itch.io/break-like-a-baby';
+    const result = parseItchGameUrl({ itchGameUrl: url });
+    expect(result.parsed).toBe(true);
+    expect(result.author).toBe('kimyalastname');
+    expect(result.name).toBe('break-like-a-baby');
+    expect(result.itchGameUrl).toBe(url);
+  });
+
   it('returns parsed false for invalid url', () => {
     const url = 'https://example.com/game';
     const result = parseItchGameUrl({ itchGameUrl: url });
