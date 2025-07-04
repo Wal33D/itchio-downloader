@@ -27,6 +27,7 @@ itchio-downloader [options]
 | `--name`              | Name of the game to download (used with `--author`) |
 | `--author`            | Username of the game's author                       |
 | `--downloadDirectory` | Directory where the file should be saved            |
+| `--concurrency`       | Max downloads at once when using an array           |
 | `-h, --help`          | Display usage information                           |
 
 You must provide either a URL or both a name and author.
@@ -39,6 +40,9 @@ itchio-downloader --url "https://baraklava.itch.io/manic-miners"
 
 # Using name and author
 itchio-downloader --name "manic miners" --author "baraklava"
+
+# Limiting concurrency
+itchio-downloader --url "https://baraklava.itch.io/manic-miners" --concurrency 2
 ```
 
 If you have the package installed locally without `-g`, run the examples with `npx itchio-downloader` or `pnpm dlx itchio-downloader`.

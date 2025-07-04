@@ -3,4 +3,5 @@ export interface CLIArgs {
   name?: string;
   author?: string;
   downloadDirectory?: string;
+  concurrency?: number;
 }

@@ -60,6 +60,12 @@ If installed globally you can run the command directly:
 itchio-downloader --help
 ```
 
+Limit concurrent downloads when using an array of games:
+
+```bash
+itchio-downloader --concurrency 2 --url "https://baraklava.itch.io/manic-miners"
+```
+
 See [docs/CLI.md](docs/CLI.md) for CLI options and [docs/Debugging.md](docs/Debugging.md) for verbose logging.
 
 ## Usage

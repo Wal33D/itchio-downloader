@@ -28,6 +28,12 @@ export async function run(argvInput: string[] = process.argv) {
       describe: 'The filepath where the game will be downloaded',
       type: 'string',
     })
+    .option('concurrency', {
+      describe:
+        'Maximum number of simultaneous downloads when passing an array of games',
+      type: 'number',
+      default: 1,
+    })
     .check((args) => {
       // Ensure either URL is provided or both name and author are provided
       if (args.url) {
@@ -49,8 +55,10 @@ export async function run(argvInput: string[] = process.argv) {
     downloadDirectory: argv.downloadDirectory,
   };
 
+  const concurrency = Number(argv.concurrency ?? 1);
+
   try {
-    const result = await downloadGame(params);
+    const result = await downloadGame(params, concurrency);
     console.log('Game Download Result:', result);
   } catch (error) {
     console.error('Error downloading game:', error);
