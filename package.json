@@ -48,5 +48,6 @@
     "type": "git",
     "url": "https://github.com/Wal33D/itchio-downloader.git"
   },
-  "homepage": "https://github.com/Wal33D/itchio-downloader"
+  "homepage": "https://github.com/Wal33D/itchio-downloader",
+  "packageManager": "pnpm@9.15.4"
 }

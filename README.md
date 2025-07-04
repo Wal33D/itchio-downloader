@@ -60,6 +60,8 @@ Install the package:
 npm install itchio-downloader
 # or
 yarn add itchio-downloader
+# or
+pnpm add itchio-downloader
 ```
 
 See [docs/CLI.md](docs/CLI.md) for CLI options and [docs/Debugging.md](docs/Debugging.md) for verbose logging.
@@ -109,7 +111,7 @@ See [docs/Advanced-Usage.md](docs/Advanced-Usage.md) for more concurrency and cu
 
 ## Command Line Usage
 
-Build the CLI with `npm run build-cli` (or `yarn build-cli`), then run `itchio-downloader` with your options. Full details are in [docs/CLI.md](docs/CLI.md).
+Build the CLI with `pnpm run build-cli` (or `npm run build-cli` or `yarn build-cli`), then run `itchio-downloader` with your options. Full details are in [docs/CLI.md](docs/CLI.md).
 
 ## Configuration Options
 
@@ -192,14 +194,32 @@ More documentation:
 Contributions are welcome! Fork the repo and submit a pull request. For major changes, open an issue first. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 Update tests as needed.
-Run `npm test` and build the CLI with `npm run build-cli`.
+Run `pnpm test` and build the CLI with `pnpm run build-cli`.
 Publishing runs the `prepublishOnly` script to build the CLI.
+
+## Development Setup
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/Wal33D/itchio-downloader.git
+cd itchio-downloader
+pnpm install
+```
+
+`pnpm install` installs `ts-jest` and other dev dependencies required for the test suite. Running tests without installing these packages will result in a "Preset ts-jest not found" error.
+
+Run the tests with:
+
+```bash
+pnpm test
+```
 
 ## Release Procedure
 
 1. Update the version in `package.json`.
 2. Document changes in `CHANGELOG.md`.
-3. Run `npm publish` (the `prepublishOnly` script builds the CLI).
+3. Run `pnpm publish` (the `prepublishOnly` script builds the CLI).
 
 ## Maintenance
 

@@ -5,6 +5,8 @@ The CLI allows you to download games directly from a terminal.
 Build the executable before running:
 
 ```bash
+pnpm run build-cli
+# or
 npm run build-cli
 # or
 yarn build-cli
