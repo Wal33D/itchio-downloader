@@ -39,6 +39,8 @@ describe('fetchItchGameProfile', () => {
   });
 
   it('throws when both parsers fail', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     jest.spyOn(urlParser, 'parseItchGameUrl').mockImplementation(() => {
       throw new Error('bad url');
     });
@@ -49,5 +51,6 @@ describe('fetchItchGameProfile', () => {
     await expect(
       fetchItchGameProfile({ itchGameUrl: 'https://author.itch.io/game' }),
     ).rejects.toThrow('Both URL parsing and metadata fetching failed');
+    expect(errorSpy).toHaveBeenCalled();
   });
 });
