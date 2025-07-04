@@ -3,4 +3,6 @@ export interface CLIArgs {
   name?: string;
   author?: string;
   downloadDirectory?: string;
+  retries?: number;
+  retryDelay?: number;
 }

@@ -28,6 +28,16 @@ export async function run(argvInput: string[] = process.argv) {
       describe: 'The filepath where the game will be downloaded',
       type: 'string',
     })
+    .option('retries', {
+      describe: 'Number of retry attempts on failure',
+      type: 'number',
+      default: 0,
+    })
+    .option('retryDelay', {
+      describe: 'Base delay in ms for exponential backoff',
+      type: 'number',
+      default: 500,
+    })
     .check((args) => {
       // Ensure either URL is provided or both name and author are provided
       if (args.url) {
@@ -47,6 +57,9 @@ export async function run(argvInput: string[] = process.argv) {
     name: argv.name,
     author: argv.author,
     downloadDirectory: argv.downloadDirectory,
+    retries: argv.retries !== undefined ? Number(argv.retries) : undefined,
+    retryDelayMs:
+      argv.retryDelay !== undefined ? Number(argv.retryDelay) : undefined,
   };
 
   try {

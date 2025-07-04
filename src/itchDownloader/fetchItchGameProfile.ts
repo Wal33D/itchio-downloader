@@ -32,6 +32,7 @@ export const fetchItchGameProfile = async ({
   let metaData: IParsedItchGameMetadata | null = null;
   let urlError: Error | null = null;
   let metadataError: Error | null = null;
+  let statusCode: number | undefined = undefined;
 
   try {
     urlData = parseItchGameUrl({ itchGameUrl });
@@ -50,6 +51,7 @@ export const fetchItchGameProfile = async ({
       metadataError = new Error(
         'Metadata fetching failed: ' + metaData.message,
       );
+      if (metaData.statusCode) statusCode = metaData.statusCode;
     }
   } catch (error: any) {
     metadataError = new Error('Metadata fetching exception: ' + error.message);
@@ -68,12 +70,14 @@ export const fetchItchGameProfile = async ({
       urlError,
       metadataError,
     );
-    throw new Error(
+    const err: any = new Error(
       'Both URL parsing and metadata fetching failed. ' +
         urlError?.message +
         ' ' +
         metadataError?.message,
     );
+    if (statusCode) err.statusCode = statusCode;
+    throw err;
   }
 
   if (!urlData || !metaData) {
@@ -81,10 +85,12 @@ export const fetchItchGameProfile = async ({
       'One of the parsing operations failed:',
       urlError?.message || metadataError?.message,
     );
-    throw new Error(
+    const err: any = new Error(
       'One of the parsing operations failed: ' +
         (urlError?.message || metadataError?.message),
     );
+    if (statusCode) err.statusCode = statusCode;
+    throw err;
   }
 
   const itchRecord: IItchRecord = {
