@@ -90,6 +90,12 @@ export interface IItchRecord {
   itchMetaDataUrl?: string;
 }
 
+export interface DownloadProgress {
+  bytesReceived: number;
+  totalBytes?: number;
+  fileName?: string;
+}
+
 export type DownloadGameParams = {
   name?: string;
   author?: string;
@@ -101,6 +107,7 @@ export type DownloadGameParams = {
   retryDelayMs?: number;
   /** When part of an array, set to true to run downloads concurrently */
   parallel?: boolean;
+  onProgress?: (info: DownloadProgress) => void;
 };
 
 export type DownloadGameResponse = {

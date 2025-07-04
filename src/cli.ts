@@ -2,10 +2,13 @@
 
 import type { Argv, ArgumentsCamelCase } from 'yargs';
 import { downloadGame } from './itchDownloader/downloadGame';
-import { DownloadGameParams } from './itchDownloader/types';
+import { DownloadGameParams, DownloadProgress } from './itchDownloader/types';
 import { CLIArgs } from './types/cli';
 
-export async function run(argvInput: string[] = process.argv) {
+export async function run(
+  argvInput: string[] = process.argv,
+  onProgress?: (info: DownloadProgress) => void,
+) {
   const yargs = (await import('yargs')).default;
   const hideBin = (args: string[]) => args.slice(2);
 
@@ -67,6 +70,9 @@ export async function run(argvInput: string[] = process.argv) {
     retryDelayMs:
       argv.retryDelay !== undefined ? Number(argv.retryDelay) : undefined,
   };
+  if (onProgress) {
+    params.onProgress = onProgress;
+  }
 
   const concurrency =
     argv.concurrency !== undefined ? Number(argv.concurrency) : 1;
@@ -81,5 +87,12 @@ export async function run(argvInput: string[] = process.argv) {
 
 if (require.main === module) {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  run();
+  run(process.argv, ({ bytesReceived, totalBytes }) => {
+    if (totalBytes) {
+      const percent = ((bytesReceived / totalBytes) * 100).toFixed(2);
+      process.stdout.write(`Download progress: ${percent}%\r`);
+    } else {
+      process.stdout.write(`Downloaded ${bytesReceived} bytes\r`);
+    }
+  });
 }

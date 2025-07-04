@@ -1,12 +1,15 @@
 import path from 'path';
 import puppeteer, { Browser } from 'puppeteer';
+import { DownloadProgress } from './types';
 
 export const initializeBrowser = async ({
   downloadDirectory,
   headless = true,
+  onProgress,
 }: {
   downloadDirectory: string;
   headless?: boolean;
+  onProgress?: (info: DownloadProgress) => void;
 }): Promise<{ browser: Browser | null; status: boolean; message: string }> => {
   let message = '';
   let status = false;
@@ -41,6 +44,23 @@ export const initializeBrowser = async ({
     await client.send('Page.setDownloadBehavior', {
       behavior: 'allow',
       downloadPath: path.resolve(downloadDirectory),
+    });
+    await client.send('Browser.enable' as any);
+    let totalBytes = 0;
+    let fileName = '';
+    client.on('Browser.downloadWillBegin', (event: any) => {
+      totalBytes = event.totalBytes || 0;
+      fileName = event.suggestedFilename || '';
+      if (onProgress) {
+        onProgress({ bytesReceived: 0, totalBytes, fileName });
+      }
+    });
+    client.on('Browser.downloadProgress', (event: any) => {
+      if (event.totalBytes) totalBytes = event.totalBytes;
+      const bytes = event.receivedBytes || 0;
+      if (onProgress) {
+        onProgress({ bytesReceived: bytes, totalBytes, fileName });
+      }
     });
     status = true;
     message = 'Browser initialized successfully with enhanced settings.';

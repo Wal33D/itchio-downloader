@@ -64,6 +64,7 @@ export async function downloadGameSingle(
     writeMetaData = true,
     retries = 0,
     retryDelayMs = 500,
+    onProgress,
   } = params;
 
   let downloadDirectory: string = inputDirectory
@@ -94,7 +95,6 @@ export async function downloadGameSingle(
     };
   }
 
-
   async function attemptOnce(): Promise<DownloadGameResponse> {
     try {
       await createDirectory({ directory: downloadDirectory });
@@ -103,16 +103,21 @@ export async function downloadGameSingle(
       if (!gameProfile.found) throw new Error('Failed to fetch game profile');
       log('Game profile fetched successfully:', itchGameUrl, gameProfile);
 
-      browserInit = await initializeBrowser({ downloadDirectory });
+      browserInit = await initializeBrowser({ downloadDirectory, onProgress });
       if (!browserInit.status)
-        throw new Error('Browser initialization failed: ' + browserInit.message);
+        throw new Error(
+          'Browser initialization failed: ' + browserInit.message,
+        );
 
       globalBrowser = browserInit.browser;
 
       const browser: Browser = globalBrowser!;
       log('Starting Download...');
 
-      const puppeteerResult = await initiateDownload({ browser, itchGameUrl: itchGameUrl! });
+      const puppeteerResult = await initiateDownload({
+        browser,
+        itchGameUrl: itchGameUrl!,
+      });
       if (!puppeteerResult.status)
         throw new Error('Download failed: ' + puppeteerResult.message);
 
@@ -190,7 +195,9 @@ export async function downloadGameSingle(
   let attempt = 0;
   let result: DownloadGameResponse = await attemptOnce();
   while (!result.status && attempt < retries) {
-    await new Promise((r) => setTimeout(r, retryDelayMs * Math.pow(2, attempt)));
+    await new Promise((r) =>
+      setTimeout(r, retryDelayMs * Math.pow(2, attempt)),
+    );
     attempt++;
     result = await attemptOnce();
   }
