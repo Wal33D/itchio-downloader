@@ -4,10 +4,10 @@ Thank you for taking the time to contribute! This project uses **Node.js 18 or n
 
 ## Install Dependencies
 
-Use npm to install development dependencies:
+Use pnpm to install development dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## Run Tests
@@ -15,14 +15,14 @@ npm install
 Run the lint and Jest test suite before opening a pull request:
 
 ```bash
-npm run lint
-npm test
+pnpm run lint
+pnpm test
 ```
 
 Format code with Prettier before committing:
 
 ```bash
-npm run format
+pnpm run format
 ```
 
 ## Submit Pull Requests

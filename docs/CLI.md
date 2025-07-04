@@ -7,8 +7,6 @@ Build the executable before running:
 ```bash
 pnpm run build-cli
 # or
-npm run build-cli
-# or
 yarn build-cli
 ```
 

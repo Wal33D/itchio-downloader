@@ -57,11 +57,9 @@ If using an older Node, add a `fetch` polyfill like `node-fetch`.
 Install the package:
 
 ```bash
-npm install itchio-downloader
+pnpm add itchio-downloader
 # or
 yarn add itchio-downloader
-# or
-pnpm add itchio-downloader
 ```
 
 See [docs/CLI.md](docs/CLI.md) for CLI options and [docs/Debugging.md](docs/Debugging.md) for verbose logging.
@@ -111,7 +109,7 @@ See [docs/Advanced-Usage.md](docs/Advanced-Usage.md) for more concurrency and cu
 
 ## Command Line Usage
 
-Build the CLI with `pnpm run build-cli` (or `npm run build-cli` or `yarn build-cli`), then run `itchio-downloader` with your options. Full details are in [docs/CLI.md](docs/CLI.md).
+Build the CLI with `pnpm run build-cli`, then run `itchio-downloader` with your options. Full details are in [docs/CLI.md](docs/CLI.md).
 
 ## Configuration Options
 

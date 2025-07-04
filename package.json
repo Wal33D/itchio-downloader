@@ -9,10 +9,10 @@
   },
   "scripts": {
     "clean": "shx rm -rf ./dist/",
-    "build": "npm run clean && tsc",
+    "build": "pnpm run clean && tsc",
     "dev": "nodemon --watch src --ext ts --exec \"ts-node ./src/index.ts\"",
-    "build-cli": "npm run clean && tsc && shx chmod +x ./dist/cli.js",
-    "prepublishOnly": "npm run build-cli",
+    "build-cli": "pnpm run clean && tsc && shx chmod +x ./dist/cli.js",
+    "prepublishOnly": "pnpm run build-cli",
     "test": "jest",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write ."
