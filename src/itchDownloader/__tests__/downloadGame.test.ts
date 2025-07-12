@@ -309,4 +309,34 @@ describe('downloadGame', () => {
       fileName: 'file.zip',
     });
   });
+
+  it('downloads using the itch API when apiKey is provided', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-api-'));
+    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({
+      found: true,
+      itchRecord: { id: 1, name: 'game', author: 'user' },
+      message: 'ok',
+    });
+    const { Readable } = require('stream');
+    const data = Buffer.from('abc');
+    global.fetch = jest.fn();
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ uploads: [{ id: 2, filename: 'game.zip' }] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => data.length.toString() },
+        arrayBuffer: async () => data,
+        text: async () => '',
+      });
+
+    const result = (await downloadGame({
+      name: 'game',
+      author: 'user',
+      apiKey: 'key',
+      downloadDirectory: tmpDir,
+    })) as any;
+    expect(result.status).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, 'game-1.zip'))).toBe(true);
+    (global.fetch as any).mockRestore?.();
+  });
 });
