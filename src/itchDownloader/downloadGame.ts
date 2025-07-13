@@ -1,4 +1,5 @@
 import { Browser } from 'puppeteer';
+import 'dotenv/config';
 import { createFile } from '../fileUtils/createFile';
 import { createDirectory } from '../fileUtils/createDirectory';
 import { renameFile } from '../fileUtils/renameFile';
@@ -6,6 +7,7 @@ import { waitForFile } from '../fileUtils/waitForFile';
 import { initiateDownload } from './initiateDownload';
 import { initializeBrowser } from './initializeBrowser';
 import { fetchItchGameProfile } from './fetchItchGameProfile';
+import { downloadGameViaApi } from './downloadGameApi';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 import path from 'path';
 import os from 'os';
@@ -61,6 +63,7 @@ export async function downloadGameSingle(
     desiredFileName,
     downloadDirectory: inputDirectory,
     itchGameUrl: inputUrl,
+    apiKey,
     writeMetaData = true,
     retries = 0,
     retryDelayMs = 500,
@@ -74,6 +77,15 @@ export async function downloadGameSingle(
 
   if (!itchGameUrl && name && author) {
     itchGameUrl = `https://${author}.itch.io/${name.toLowerCase().replace(/\s+/g, '-')}`;
+  }
+  const key = apiKey || process.env.ITCH_API_KEY;
+  if (key) {
+    return downloadGameViaApi({
+      ...params,
+      apiKey: key,
+      itchGameUrl,
+      downloadDirectory,
+    });
   }
   log('Starting downloadGameSingle function...');
   let message = '';

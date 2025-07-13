@@ -101,6 +101,8 @@ export type DownloadGameParams = {
   author?: string;
   desiredFileName?: string;
   downloadDirectory?: string;
+  /** Optional itch.io API key to use for authenticated downloads */
+  apiKey?: string;
   itchGameUrl?: string;
   writeMetaData?: boolean;
   retries?: number;

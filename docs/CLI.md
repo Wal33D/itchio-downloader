@@ -26,11 +26,15 @@ itchio-downloader [options]
 | `--url`               | Full URL to the game on itch.io                     |
 | `--name`              | Name of the game to download (used with `--author`) |
 | `--author`            | Username of the game's author                       |
+| `--apiKey`            | itch.io API key for authenticated downloads (defaults to `ITCH_API_KEY`) |
 | `--downloadDirectory` | Directory where the file should be saved            |
 | `--concurrency`       | Max simultaneous downloads when using a list        |
 | `-h, --help`          | Display usage information                           |
 
 You must provide either a URL or both a name and author.
+
+You can set the API key in an `.env` file or environment variable `ITCH_API_KEY`
+so the `--apiKey` flag is optional.
 
 ### Examples
 

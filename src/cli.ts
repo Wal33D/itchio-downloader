@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import type { Argv, ArgumentsCamelCase } from 'yargs';
+import 'dotenv/config';
 import { downloadGame } from './itchDownloader/downloadGame';
 import { DownloadGameParams, DownloadProgress } from './itchDownloader/types';
 import { CLIArgs } from './types/cli';
@@ -26,6 +27,11 @@ export async function run(
     .option('author', {
       describe: 'The author of the game',
       type: 'string',
+    })
+    .option('apiKey', {
+      describe: 'itch.io API key for authenticated downloads',
+      type: 'string',
+      default: process.env.ITCH_API_KEY,
     })
     .option('downloadDirectory', {
       describe: 'The filepath where the game will be downloaded',
@@ -61,10 +67,12 @@ export async function run(
     .alias('help', 'h')
     .parseSync();
 
+  const apiKey = argv.apiKey ?? process.env.ITCH_API_KEY;
   const params: DownloadGameParams = {
     itchGameUrl: argv.url,
     name: argv.name,
     author: argv.author,
+    apiKey,
     downloadDirectory: argv.downloadDirectory,
     retries: argv.retries !== undefined ? Number(argv.retries) : undefined,
     retryDelayMs:
