@@ -37,6 +37,10 @@ export async function run(
       describe: 'The filepath where the game will be downloaded',
       type: 'string',
     })
+    .option('memory', {
+      describe: 'Store the downloaded file in memory instead of writing to disk',
+      type: 'boolean',
+    })
     .option('retries', {
       describe: 'Number of retry attempts on failure',
       type: 'number',
@@ -72,12 +76,12 @@ export async function run(
     itchGameUrl: argv.url,
     name: argv.name,
     author: argv.author,
-    apiKey,
-    downloadDirectory: argv.downloadDirectory,
-    retries: argv.retries !== undefined ? Number(argv.retries) : undefined,
-    retryDelayMs:
-      argv.retryDelay !== undefined ? Number(argv.retryDelay) : undefined,
   };
+  if (apiKey) params.apiKey = apiKey;
+  if (argv.downloadDirectory) params.downloadDirectory = argv.downloadDirectory;
+  if (argv.memory) params.inMemory = true;
+  if (argv.retries !== undefined) params.retries = Number(argv.retries);
+  if (argv.retryDelay !== undefined) params.retryDelayMs = Number(argv.retryDelay);
   if (onProgress) {
     params.onProgress = onProgress;
   }

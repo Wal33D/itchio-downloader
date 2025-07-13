@@ -104,6 +104,8 @@ export type DownloadGameParams = {
   /** Optional itch.io API key to use for authenticated downloads */
   apiKey?: string;
   itchGameUrl?: string;
+  /** Store the downloaded file in memory instead of writing to disk */
+  inMemory?: boolean;
   writeMetaData?: boolean;
   retries?: number;
   retryDelayMs?: number;
@@ -119,4 +121,6 @@ export type DownloadGameResponse = {
   metaData?: IItchRecord;
   metadataPath?: string;
   filePath?: string;
+  /** Buffer containing the downloaded file when inMemory is used */
+  fileBuffer?: Buffer;
 };

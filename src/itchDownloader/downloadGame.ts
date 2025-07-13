@@ -69,10 +69,6 @@ export async function downloadGameSingle(
     retryDelayMs = 500,
     onProgress,
   } = params;
-
-  let downloadDirectory: string = inputDirectory
-    ? path.resolve(inputDirectory)
-    : path.resolve(os.homedir(), 'downloads');
   let itchGameUrl: string | undefined = inputUrl;
 
   if (!itchGameUrl && name && author) {
@@ -84,9 +80,12 @@ export async function downloadGameSingle(
       ...params,
       apiKey: key,
       itchGameUrl,
-      downloadDirectory,
+      downloadDirectory: inputDirectory ? path.resolve(inputDirectory) : undefined,
     });
   }
+  const downloadDirectory: string = inputDirectory
+    ? path.resolve(inputDirectory)
+    : path.resolve(os.homedir(), 'downloads');
   log('Starting downloadGameSingle function...');
   let message = '';
   let status = false;

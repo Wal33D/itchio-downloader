@@ -12,9 +12,13 @@ import * as createFileModule from '../../fileUtils/createFile';
 import { Readable } from 'stream';
 
 describe('downloadGame', () => {
+  beforeEach(() => {
+    delete process.env.ITCH_API_KEY;
+  });
   afterEach(() => {
     jest.restoreAllMocks();
     delete process.env.DEBUG_DOWNLOAD_GAME;
+    delete process.env.ITCH_API_KEY;
   });
 
   it('processes a download using mocks with debug logs', async () => {
@@ -367,6 +371,35 @@ describe('downloadGame', () => {
     expect(result.status).toBe(true);
     expect(fs.existsSync(path.join(tmpDir, 'game2-1.zip'))).toBe(true);
     delete process.env.ITCH_API_KEY;
+    (global.fetch as any).mockRestore?.();
+  });
+
+  it('returns a buffer when inMemory is true', async () => {
+    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({
+      found: true,
+      itchRecord: { id: 3, name: 'bufgame', author: 'user' },
+      message: 'ok',
+    });
+    const data = Buffer.from('buf');
+    global.fetch = jest.fn();
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ uploads: [{ id: 9, filename: 'g.zip' }] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => data.length.toString() },
+        body: Readable.from(data),
+        text: async () => '',
+      });
+
+    const result = (await downloadGame({
+      name: 'bufgame',
+      author: 'user',
+      apiKey: 'key',
+      inMemory: true,
+    })) as any;
+
+    expect(result.fileBuffer).toEqual(data);
+    expect(result.filePath).toBeUndefined();
     (global.fetch as any).mockRestore?.();
   });
 });

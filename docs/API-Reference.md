@@ -21,6 +21,7 @@ Downloads one or more games from itch.io. When an array of parameter objects is 
   - `downloadDirectory` _(string, optional)_ – Directory for the downloaded files.
   - `apiKey` _(string, optional)_ – itch.io API key for authenticated downloads.
     If omitted, the library checks the `ITCH_API_KEY` environment variable.
+  - `inMemory` _(boolean, optional)_ – Store the downloaded file in memory and return it as a Buffer. When a `downloadDirectory` is provided the file is also written to disk.
   - `writeMetaData` _(boolean, optional)_ – Write a metadata JSON file alongside the download.
   - `parallel` _(boolean, optional)_ – When used inside an array, run this download concurrently via `Promise.all`.
   - `onProgress` _(function, optional)_ – Receives `{ bytesReceived, totalBytes, fileName }` as the download proceeds.
@@ -37,6 +38,7 @@ type DownloadGameResponse = {
   metaData?: IItchRecord;
   metadataPath?: string;
   filePath?: string;
+  fileBuffer?: Buffer;
 };
 ```
 
