@@ -9,6 +9,7 @@ import * as initiateDownload from '../initiateDownload';
 import * as waitFile from '../../fileUtils/waitForFile';
 import * as renameFileModule from '../../fileUtils/renameFile';
 import * as createFileModule from '../../fileUtils/createFile';
+import { Readable } from 'stream';
 
 describe('downloadGame', () => {
   afterEach(() => {
@@ -308,5 +309,64 @@ describe('downloadGame', () => {
       totalBytes: 100,
       fileName: 'file.zip',
     });
+  });
+
+  it('downloads using the itch API when apiKey is provided', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-api-'));
+    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({
+      found: true,
+      itchRecord: { id: 1, name: 'game', author: 'user' },
+      message: 'ok',
+    });
+    const data = Buffer.from('abc');
+    global.fetch = jest.fn();
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ uploads: [{ id: 2, filename: 'game.zip' }] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => data.length.toString() },
+        body: Readable.from(data),
+        text: async () => '',
+      });
+
+    const result = (await downloadGame({
+      name: 'game',
+      author: 'user',
+      apiKey: 'key',
+      downloadDirectory: tmpDir,
+    })) as any;
+    expect(result.status).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, 'game-1.zip'))).toBe(true);
+    (global.fetch as any).mockRestore?.();
+  });
+
+  it('uses ITCH_API_KEY env var when apiKey param is missing', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-env-'));
+    process.env.ITCH_API_KEY = 'envkey';
+    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({
+      found: true,
+      itchRecord: { id: 2, name: 'game2', author: 'user2' },
+      message: 'ok',
+    });
+    const data = Buffer.from('xyz');
+    global.fetch = jest.fn();
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ uploads: [{ id: 5, filename: 'game2.zip' }] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => data.length.toString() },
+        body: Readable.from(data),
+        text: async () => '',
+      });
+
+    const result = (await downloadGame({
+      name: 'game2',
+      author: 'user2',
+      downloadDirectory: tmpDir,
+    })) as any;
+    expect(result.status).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, 'game2-1.zip'))).toBe(true);
+    delete process.env.ITCH_API_KEY;
+    (global.fetch as any).mockRestore?.();
   });
 });

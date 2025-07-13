@@ -81,6 +81,57 @@ describe('cli', () => {
     expect(logSpy).toHaveBeenCalledWith('Game Download Result:', 'ok');
   });
 
+  it('passes apiKey argument', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue('ok' as any);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--apiKey',
+      '123',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      {
+        itchGameUrl: 'https://author.itch.io/game',
+        name: undefined,
+        author: undefined,
+        apiKey: '123',
+        downloadDirectory: undefined,
+      },
+      1,
+    );
+    expect(logSpy).toHaveBeenCalled();
+  });
+
+  it('uses ITCH_API_KEY env var when --apiKey is omitted', async () => {
+    process.env.ITCH_API_KEY = 'abc';
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue('ok' as any);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run(['node', 'cli.ts', '--url', 'https://author.itch.io/game']);
+
+    expect(mock).toHaveBeenCalledWith(
+      {
+        itchGameUrl: 'https://author.itch.io/game',
+        name: undefined,
+        author: undefined,
+        apiKey: 'abc',
+        downloadDirectory: undefined,
+      },
+      1,
+    );
+    expect(logSpy).toHaveBeenCalled();
+    delete process.env.ITCH_API_KEY;
+  });
+
   it('passes name and author arguments', async () => {
     const mock = jest
       .spyOn(downloadGameModule, 'downloadGame')
