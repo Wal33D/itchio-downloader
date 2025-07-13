@@ -26,3 +26,4 @@ yarn.lock
 /installations/
 /testOutput/*
 *.zip
+.env
