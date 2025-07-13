@@ -28,6 +28,7 @@ itchio-downloader [options]
 | `--author`            | Username of the game's author                       |
 | `--apiKey`            | itch.io API key for authenticated downloads (defaults to `ITCH_API_KEY`) |
 | `--downloadDirectory` | Directory where the file should be saved            |
+| `--memory`            | Store the downloaded file in memory                 |
 | `--concurrency`       | Max simultaneous downloads when using a list        |
 | `-h, --help`          | Display usage information                           |
 

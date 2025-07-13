@@ -7,4 +7,5 @@ export interface CLIArgs {
   retries?: number;
   retryDelay?: number;
   concurrency?: number;
+  memory?: boolean;
 }

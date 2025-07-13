@@ -19,6 +19,7 @@ export async function downloadGameViaApi(
     downloadDirectory: inputDirectory,
     itchGameUrl: inputUrl,
     apiKey,
+    inMemory,
     writeMetaData = true,
     onProgress,
   } = params;
@@ -28,9 +29,11 @@ export async function downloadGameViaApi(
     return { status: false, message: 'API key is required.' };
   }
 
-  let downloadDirectory: string = inputDirectory
+  let downloadDirectory: string | undefined = inputDirectory
     ? path.resolve(inputDirectory)
-    : path.resolve(os.homedir(), 'downloads');
+    : inMemory
+      ? undefined
+      : path.resolve(os.homedir(), 'downloads');
   let itchGameUrl: string | undefined = inputUrl;
 
   if (!itchGameUrl && name && author) {
@@ -45,7 +48,9 @@ export async function downloadGameViaApi(
   }
 
   try {
-    await createDirectory({ directory: downloadDirectory });
+    if (downloadDirectory) {
+      await createDirectory({ directory: downloadDirectory });
+    }
     const profile = await fetchItchGameProfile({ itchGameUrl });
     if (!profile.found || !profile.itchRecord?.id) {
       throw new Error('Failed to fetch game profile');
@@ -60,33 +65,58 @@ export async function downloadGameViaApi(
     }
     const upload = uploadsData.uploads[0];
     const fileName = upload.filename || `${record.name}.zip`;
-    const targetPath = path.join(downloadDirectory, fileName);
+    const targetPath = downloadDirectory ? path.join(downloadDirectory, fileName) : undefined;
+    let fileBuffer: Buffer | undefined;
 
-    await client.download(`/uploads/${upload.id}/download`, targetPath, onProgress);
+    if (inMemory) {
+      fileBuffer = await client.downloadToBuffer(
+        `/uploads/${upload.id}/download`,
+        onProgress,
+        fileName,
+      );
+      if (targetPath) {
+        const fsPromises = await import('fs/promises');
+        await fsPromises.writeFile(targetPath, fileBuffer);
+      }
+    } else {
+      if (!targetPath) {
+        throw new Error('downloadDirectory is required when not using memory mode');
+      }
+      await client.download(`/uploads/${upload.id}/download`, targetPath, onProgress);
+    }
 
-    let finalFilePath = targetPath;
+    let finalFilePath = targetPath || '';
     const originalBase = desiredFileName ? desiredFileName : path.basename(finalFilePath, path.extname(finalFilePath));
     const ext = path.extname(finalFilePath);
     let uniqueBase = originalBase;
-    let uniquePath = path.join(downloadDirectory, uniqueBase + ext);
+    let uniquePath = downloadDirectory ? path.join(downloadDirectory, uniqueBase + ext) : '';
     let counter = 1;
-    while (fs.existsSync(uniquePath)) {
+    while (downloadDirectory && fs.existsSync(uniquePath)) {
       uniqueBase = `${originalBase}-${counter}`;
       uniquePath = path.join(downloadDirectory, uniqueBase + ext);
       counter++;
     }
-    if (uniquePath !== finalFilePath || desiredFileName) {
+    if (downloadDirectory && (uniquePath !== finalFilePath || desiredFileName)) {
       const renameResult = await renameFile({ filePath: finalFilePath, desiredFileName: uniqueBase });
       if (!renameResult.status) throw new Error('File rename failed: ' + renameResult.message);
       finalFilePath = renameResult.newFilePath as string;
     }
 
-    const metadataPath = path.join(downloadDirectory, `${record.name}-metadata.json`);
-    if (writeMetaData) {
+    const metadataPath = downloadDirectory
+      ? path.join(downloadDirectory, `${record.name}-metadata.json`)
+      : undefined;
+    if (writeMetaData && metadataPath) {
       await createFile({ filePath: metadataPath, content: JSON.stringify(record, null, 2) });
     }
 
-    return { status: true, message: 'Download successful.', filePath: finalFilePath, metadataPath, metaData: record };
+    return {
+      status: true,
+      message: 'Download successful.',
+      filePath: downloadDirectory ? finalFilePath : undefined,
+      metadataPath,
+      metaData: record,
+      fileBuffer,
+    };
   } catch (error: any) {
     return { status: false, message: error.message, httpStatus: error.statusCode };
   }

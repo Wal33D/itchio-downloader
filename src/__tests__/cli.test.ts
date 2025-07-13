@@ -50,8 +50,12 @@ import * as downloadGameModule from '../itchDownloader/downloadGame';
 import { run } from '../cli';
 
 describe('cli', () => {
+  beforeEach(() => {
+    delete process.env.ITCH_API_KEY;
+  });
   afterEach(() => {
     jest.restoreAllMocks();
+    delete process.env.ITCH_API_KEY;
   });
 
   it('passes url argument to downloadGame', async () => {
@@ -206,6 +210,27 @@ describe('cli', () => {
         downloadDirectory: undefined,
       },
       3,
+    );
+    expect(logSpy).toHaveBeenCalled();
+  });
+
+  it('passes memory flag', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue('ok' as any);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run(['node', 'cli.ts', '--url', 'https://author.itch.io/game', '--memory']);
+
+    expect(mock).toHaveBeenCalledWith(
+      {
+        itchGameUrl: 'https://author.itch.io/game',
+        name: undefined,
+        author: undefined,
+        downloadDirectory: undefined,
+        inMemory: true,
+      },
+      1,
     );
     expect(logSpy).toHaveBeenCalled();
   });

@@ -65,4 +65,40 @@ export class ItchApiClient {
     });
     await pipeline(readable, writeStream);
   }
+
+  async downloadToBuffer(
+    endpoint: string,
+    onProgress?: (info: { bytesReceived: number; totalBytes?: number; fileName?: string }) => void,
+    fileName?: string,
+  ): Promise<Buffer> {
+    const url = this.buildUrl(endpoint);
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err: any = new Error(`Download failed with status ${res.status}`);
+      err.statusCode = res.status;
+      err.body = await res.text().catch(() => '');
+      throw err;
+    }
+    const total = Number(res.headers.get('content-length') || '0') || undefined;
+    const { Readable } = await import('stream');
+    let readable: import('stream').Readable;
+    if (res.body && typeof (res.body as any).getReader === 'function') {
+      readable = Readable.fromWeb(res.body as any);
+    } else if (res.body) {
+      readable = res.body as any as import('stream').Readable;
+    } else {
+      readable = Readable.from(Buffer.alloc(0));
+    }
+    const chunks: Buffer[] = [];
+    let bytes = 0;
+    for await (const chunk of readable) {
+      const buf = Buffer.from(chunk);
+      chunks.push(buf);
+      bytes += buf.length;
+      if (onProgress) {
+        onProgress({ bytesReceived: bytes, totalBytes: total, fileName });
+      }
+    }
+    return Buffer.concat(chunks);
+  }
 }
