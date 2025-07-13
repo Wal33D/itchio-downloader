@@ -32,6 +32,7 @@ I built this tool to create a launcher for free games and released it so others 
 
 - **Direct Downloads**: Get games by URL or by name and author—no desktop GUI or Butler.
 - **Batch Operations**: Download multiple games in one run.
+- **Collection Downloads**: Fetch every game from a collection URL.
 - **Customization**: Rename files and choose download directories.
 - **Simplicity**: Only a URL or author and title is required.
 - **API Key Optional**: Use an itch.io API key for authenticated downloads.
@@ -130,6 +131,9 @@ Build the CLI with `pnpm run build-cli`, then run `itchio-downloader` with your 
 ```bash
 # Example limiting concurrency
 itchio-downloader --url "https://baraklava.itch.io/manic-miners" --concurrency 2
+
+# Download an entire collection
+itchio-downloader --collection "https://itch.io/c/123/example"
 ```
 
 ## Configuration Options
