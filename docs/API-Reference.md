@@ -19,7 +19,6 @@ Downloads one or more games from itch.io. When an array of parameter objects is 
   - `itchGameUrl` _(string, optional)_ – Direct URL to the game's page.
   - `desiredFileName` _(string, optional)_ – Rename the downloaded file.
   - `downloadDirectory` _(string, optional)_ – Directory for the downloaded files.
-  - `apiKey` _(string, optional)_ – itch.io API key for authenticated downloads.
   - `writeMetaData` _(boolean, optional)_ – Write a metadata JSON file alongside the download.
   - `parallel` _(boolean, optional)_ – When used inside an array, run this download concurrently via `Promise.all`.
   - `onProgress` _(function, optional)_ – Receives `{ bytesReceived, totalBytes, fileName }` as the download proceeds.

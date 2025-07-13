@@ -34,7 +34,7 @@ I built this tool to create a launcher for free games and released it so others 
 - **Batch Operations**: Download multiple games in one run.
 - **Customization**: Rename files and choose download directories.
 - **Simplicity**: Only a URL or author and title is required.
-- **API Key Optional**: Use an itch.io API key for authenticated downloads.
+- **No API Key Required**: Works without an API key.
 
 ## Usage Policy
 
@@ -141,7 +141,6 @@ The `downloadGame` function accepts the following parameters within `DownloadGam
 - `itchGameUrl`: Direct URL to the game.
 - `desiredFileName`: Custom file name.
 - `downloadDirectory`: Where to save files.
-- `apiKey`: itch.io API key for authenticated downloads.
 - `writeMetaData`: Save metadata JSON (default `true`).
 - `concurrency`: Number of downloads at once when using an array.
 - `parallel`: If true, run all downloads concurrently with `Promise.all`.
@@ -155,7 +154,6 @@ export type DownloadGameParams = {
    author?: string,
    desiredFileName?: string,
    downloadDirectory?: string,
-   apiKey?: string,
    itchGameUrl?: string,
    writeMetaData?: boolean,
    parallel?: boolean

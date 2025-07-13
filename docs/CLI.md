@@ -26,7 +26,6 @@ itchio-downloader [options]
 | `--url`               | Full URL to the game on itch.io                     |
 | `--name`              | Name of the game to download (used with `--author`) |
 | `--author`            | Username of the game's author                       |
-| `--apiKey`            | itch.io API key for authenticated downloads         |
 | `--downloadDirectory` | Directory where the file should be saved            |
 | `--concurrency`       | Max simultaneous downloads when using a list        |
 | `-h, --help`          | Display usage information                           |

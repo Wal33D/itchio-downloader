@@ -27,10 +27,6 @@ export async function run(
       describe: 'The author of the game',
       type: 'string',
     })
-    .option('apiKey', {
-      describe: 'itch.io API key for authenticated downloads',
-      type: 'string',
-    })
     .option('downloadDirectory', {
       describe: 'The filepath where the game will be downloaded',
       type: 'string',
@@ -69,7 +65,6 @@ export async function run(
     itchGameUrl: argv.url,
     name: argv.name,
     author: argv.author,
-    apiKey: argv.apiKey,
     downloadDirectory: argv.downloadDirectory,
     retries: argv.retries !== undefined ? Number(argv.retries) : undefined,
     retryDelayMs:
