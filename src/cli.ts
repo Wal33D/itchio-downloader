@@ -3,7 +3,12 @@
 import type { Argv, ArgumentsCamelCase } from 'yargs';
 import 'dotenv/config';
 import { downloadGame } from './itchDownloader/downloadGame';
-import { DownloadGameParams, DownloadProgress } from './itchDownloader/types';
+import { downloadCollection } from './itchDownloader/downloadCollection';
+import {
+  DownloadGameParams,
+  DownloadGameResponse,
+  DownloadProgress,
+} from './itchDownloader/types';
 import { CLIArgs } from './types/cli';
 
 export async function run(
@@ -18,6 +23,10 @@ export async function run(
   )
     .option('url', {
       describe: 'The full URL to the game on itch.io',
+      type: 'string',
+    })
+    .option('collection', {
+      describe: 'URL to an itch.io collection page',
       type: 'string',
     })
     .option('name', {
@@ -38,7 +47,8 @@ export async function run(
       type: 'string',
     })
     .option('memory', {
-      describe: 'Store the downloaded file in memory instead of writing to disk',
+      describe:
+        'Store the downloaded file in memory instead of writing to disk',
       type: 'boolean',
     })
     .option('retries', {
@@ -58,20 +68,40 @@ export async function run(
       default: 1,
     })
     .check((args) => {
-      // Ensure either URL is provided or both name and author are provided
-      if (args.url) {
+      // Ensure a game or collection source is provided
+      if (args.collection) {
+        return true;
+      } else if (args.url) {
         return true;
       } else if (args.name && args.author) {
         return true;
-      } else {
-        throw new Error('Please provide either a URL or both name and author.');
       }
+      throw new Error(
+        'Please provide either a collection URL, a game URL, or both name and author.',
+      );
     })
     .help()
     .alias('help', 'h')
     .parseSync();
 
   const apiKey = argv.apiKey ?? process.env.ITCH_API_KEY;
+  const concurrency =
+    argv.concurrency !== undefined ? Number(argv.concurrency) : 1;
+
+  if (argv.collection) {
+    try {
+      const result = await downloadCollection(argv.collection, apiKey, {
+        downloadDirectory: argv.downloadDirectory,
+        concurrency,
+        onProgress,
+      });
+      console.log('Collection Download Result:', result);
+    } catch (error) {
+      console.error('Error downloading collection:', error);
+    }
+    return;
+  }
+
   const params: DownloadGameParams = {
     itchGameUrl: argv.url,
     name: argv.name,
@@ -81,13 +111,11 @@ export async function run(
   if (argv.downloadDirectory) params.downloadDirectory = argv.downloadDirectory;
   if (argv.memory) params.inMemory = true;
   if (argv.retries !== undefined) params.retries = Number(argv.retries);
-  if (argv.retryDelay !== undefined) params.retryDelayMs = Number(argv.retryDelay);
+  if (argv.retryDelay !== undefined)
+    params.retryDelayMs = Number(argv.retryDelay);
   if (onProgress) {
     params.onProgress = onProgress;
   }
-
-  const concurrency =
-    argv.concurrency !== undefined ? Number(argv.concurrency) : 1;
 
   try {
     const result = await downloadGame(params, concurrency);

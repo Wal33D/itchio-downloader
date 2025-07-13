@@ -47,6 +47,7 @@ jest.mock('yargs', () => {
 });
 
 import * as downloadGameModule from '../itchDownloader/downloadGame';
+import * as downloadCollectionModule from '../itchDownloader/downloadCollection';
 import { run } from '../cli';
 
 describe('cli', () => {
@@ -220,7 +221,13 @@ describe('cli', () => {
       .mockResolvedValue('ok' as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
-    await run(['node', 'cli.ts', '--url', 'https://author.itch.io/game', '--memory']);
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--memory',
+    ]);
 
     expect(mock).toHaveBeenCalledWith(
       {
@@ -233,6 +240,29 @@ describe('cli', () => {
       1,
     );
     expect(logSpy).toHaveBeenCalled();
+  });
+
+  it('handles collection option', async () => {
+    const mock = jest
+      .spyOn(downloadCollectionModule, 'downloadCollection')
+      .mockResolvedValue('col' as any);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--collection',
+      'https://itch.io/c/1/test',
+      '--concurrency',
+      '2',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith('https://itch.io/c/1/test', undefined, {
+      downloadDirectory: undefined,
+      concurrency: 2,
+      onProgress: undefined,
+    });
+    expect(logSpy).toHaveBeenCalledWith('Collection Download Result:', 'col');
   });
 
   it('exits when required arguments are missing', async () => {
