@@ -42,13 +42,14 @@ export const makeWritable = async ({
     } else {
       await fs.chmod(dirPath, 0o666); // Make file writable if it's not a directory
     }
-  } catch (error: any) {
-    exists = error.code !== 'ENOENT'; // Update exists based on specific error code
+  } catch (error: unknown) {
+    const isNodeError = (e: unknown): e is NodeJS.ErrnoException => e instanceof Error && 'code' in e;
+    exists = isNodeError(error) ? error.code !== 'ENOENT' : true; // Update exists based on specific error code
     writable = false; // Set writable to false if any error occurs
     return {
       exists,
       writable,
-      message: `Failed to make writable: ${dirPath}, Reason: ${error.message}`,
+      message: `Failed to make writable: ${dirPath}, Reason: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 

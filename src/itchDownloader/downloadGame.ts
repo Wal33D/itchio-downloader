@@ -13,7 +13,7 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs';
 
-function log(...args: any[]) {
+function log(...args: unknown[]) {
   if (process.env.DEBUG_DOWNLOAD_GAME === 'true') {
     console.log(...args);
   }
@@ -158,7 +158,7 @@ export async function downloadGameSingle(
         });
         if (!renameResult.status)
           throw new Error('File rename failed: ' + renameResult.message);
-        finalFilePath = renameResult.newFilePath as any;
+        finalFilePath = renameResult.newFilePath as string;
         log('File renamed successfully to:', finalFilePath);
       }
 
@@ -185,10 +185,10 @@ export async function downloadGameSingle(
         filePath: finalFilePath,
         metaData,
       };
-    } catch (error: any) {
-      message = `Setup failed: ${error.message}`;
+    } catch (error: unknown) {
+      message = `Setup failed: ${error instanceof Error ? error.message : String(error)}`;
       log(message);
-      const httpStatus = error.statusCode;
+      const httpStatus = (error as Record<string, unknown>).statusCode as number | undefined;
       if (finalFilePath) {
         return { status: false, message, httpStatus, filePath: finalFilePath };
       }

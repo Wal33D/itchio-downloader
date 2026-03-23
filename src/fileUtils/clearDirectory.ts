@@ -53,10 +53,10 @@ export async function clearDirectory({
       clean: true,
       message: 'Directory and all contents successfully cleared.',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       clean: false,
-      message: `Failed to clear directory: ${error.message}`,
+      message: `Failed to clear directory: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }

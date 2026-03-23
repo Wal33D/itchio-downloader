@@ -6,7 +6,6 @@ import { downloadGame } from './itchDownloader/downloadGame';
 import { downloadCollection } from './itchDownloader/downloadCollection';
 import {
   DownloadGameParams,
-  DownloadGameResponse,
   DownloadProgress,
 } from './itchDownloader/types';
 import { CLIArgs } from './types/cli';
@@ -126,8 +125,7 @@ export async function run(
 }
 
 if (require.main === module) {
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  run(process.argv, ({ bytesReceived, totalBytes }) => {
+  void run(process.argv, ({ bytesReceived, totalBytes }) => {
     if (totalBytes) {
       const percent = ((bytesReceived / totalBytes) * 100).toFixed(2);
       process.stdout.write(`Download progress: ${percent}%\r`);

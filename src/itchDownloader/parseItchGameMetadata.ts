@@ -59,11 +59,11 @@ export const parseItchGameMetadata = async ({
       itchMetaDataUrl: itchGameUrl,
     };
     return metadata;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       jsonParsed: false,
-      statusCode: error.statusCode,
-      message: `Failed to fetch or parse metadata: ${error.message}`,
+      statusCode: (error as Record<string, unknown>).statusCode as number | undefined,
+      message: `Failed to fetch or parse metadata: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 };

@@ -22,7 +22,7 @@ export class ItchApiClient {
     const url = this.buildUrl(endpoint, params);
     const res = await fetch(url, { headers: this.headers });
     if (!res.ok) {
-      const err: any = new Error(`Request failed with status ${res.status}`);
+      const err = new Error(`Request failed with status ${res.status}`) as Error & { statusCode: number; body: string };
       err.statusCode = res.status;
       err.body = await res.text().catch(() => '');
       throw err;
@@ -38,7 +38,7 @@ export class ItchApiClient {
     const url = this.buildUrl(endpoint);
     const res = await fetch(url, { headers: this.headers });
     if (!res.ok) {
-      const err: any = new Error(`Download failed with status ${res.status}`);
+      const err = new Error(`Download failed with status ${res.status}`) as Error & { statusCode: number; body: string };
       err.statusCode = res.status;
       err.body = await res.text().catch(() => '');
       throw err;
@@ -52,10 +52,10 @@ export class ItchApiClient {
     const { Readable } = await import('stream');
     const writeStream = fs.createWriteStream(filePath);
     let readable: import('stream').Readable;
-    if (res.body && typeof (res.body as any).getReader === 'function') {
-      readable = Readable.fromWeb(res.body as any);
+    if (res.body && typeof (res.body as ReadableStream).getReader === 'function') {
+      readable = Readable.fromWeb(res.body as import('stream/web').ReadableStream);
     } else if (res.body) {
-      readable = res.body as any as import('stream').Readable;
+      readable = res.body as unknown as import('stream').Readable;
     } else {
       readable = Readable.from(Buffer.alloc(0));
     }
@@ -77,7 +77,7 @@ export class ItchApiClient {
     const url = this.buildUrl(endpoint);
     const res = await fetch(url, { headers: this.headers });
     if (!res.ok) {
-      const err: any = new Error(`Download failed with status ${res.status}`);
+      const err = new Error(`Download failed with status ${res.status}`) as Error & { statusCode: number; body: string };
       err.statusCode = res.status;
       err.body = await res.text().catch(() => '');
       throw err;
@@ -85,10 +85,10 @@ export class ItchApiClient {
     const total = Number(res.headers.get('content-length') || '0') || undefined;
     const { Readable } = await import('stream');
     let readable: import('stream').Readable;
-    if (res.body && typeof (res.body as any).getReader === 'function') {
-      readable = Readable.fromWeb(res.body as any);
+    if (res.body && typeof (res.body as ReadableStream).getReader === 'function') {
+      readable = Readable.fromWeb(res.body as import('stream/web').ReadableStream);
     } else if (res.body) {
-      readable = res.body as any as import('stream').Readable;
+      readable = res.body as unknown as import('stream').Readable;
     } else {
       readable = Readable.from(Buffer.alloc(0));
     }

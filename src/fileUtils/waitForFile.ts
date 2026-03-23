@@ -18,8 +18,6 @@ export async function waitForFile({
   downloadDirectory: string;
   timeoutMs?: number;
 }): Promise<{ status: boolean; message: string; filePath?: string }> {
-  let message = 'Monitoring for file changes...';
-
   // Get initial list of `.crdownload` files to ignore.
   const initialFiles = new Set(
     (await readdir(downloadDirectory))
@@ -31,8 +29,9 @@ export async function waitForFile({
     try {
       await access(filePath, fs.constants.F_OK);
       return true; // File still exists
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
+    } catch (error: unknown) {
+      const isNodeError = (e: unknown): e is NodeJS.ErrnoException => e instanceof Error && 'code' in e;
+      if (isNodeError(error) && error.code === 'ENOENT') {
         return false; // File does not exist
       }
       throw error; // Re-throw unexpected errors
@@ -64,16 +63,15 @@ export async function waitForFile({
               const exists = await checkFileExistence(fullPath);
               if (!exists) {
                 // Once `.crdownload` disappears, wait for next file creation.
-                message = 'Waiting for the final file to appear...';
               }
-            } catch (error: any) {
+            } catch (error: unknown) {
               if (!resolved) {
                 resolved = true;
                 clearTimeout(timer);
                 watcher.close();
                 reject({
                   status: false,
-                  message: `Error monitoring file: ${error.message}`,
+                  message: `Error monitoring file: ${error instanceof Error ? error.message : String(error)}`,
                 });
               }
             }

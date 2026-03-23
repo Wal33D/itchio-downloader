@@ -104,9 +104,9 @@ export const createFile = async (
           hasParentDirectory,
           message,
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         throw new Error(
-          `Failed to write to the file '${filePath}' due to: ${error.message}`,
+          `Failed to write to the file '${filePath}' due to: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }),

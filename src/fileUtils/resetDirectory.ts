@@ -23,7 +23,6 @@ export const resetDirectory = async ({
   let existed = false;
   let destroyed = false;
   let created = false;
-  let message = '';
   try {
     // Attempt to destroy the directory first
     destroyed = (await destroy({ pathToDestroy: directoryPath })).destroyed;
@@ -32,19 +31,6 @@ export const resetDirectory = async ({
     const createResults = await createDirectory({ directory: directoryPath });
     existed = createResults.existed;
     created = createResults.created;
-
-    // Determine the appropriate message
-    if (created && !existed && !destroyed) {
-      message =
-        'The directory did not exist and was created successfully; no reset was necessary.';
-    } else if (destroyed && created) {
-      message = 'Directory reset successfully.';
-    } else if (!destroyed && created && existed) {
-      message = 'The directory already existed and was successfully recreated.';
-    } else {
-      message =
-        'Directory reset failed. Check individual statuses for details.';
-    }
 
     //set reset to true if destroyed and created were true or if created was true and existed was false.
     reset = (destroyed && created) || (created && !existed && !destroyed);
@@ -57,13 +43,13 @@ export const resetDirectory = async ({
         ? 'Directory reset successfully.'
         : 'Directory reset failed. Check individual statuses for details.',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       reset,
       destroyed,
       created,
       existed,
-      message: `Error during directory reset: ${error.message}`,
+      message: `Error during directory reset: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 };

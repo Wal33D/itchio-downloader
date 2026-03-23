@@ -15,10 +15,10 @@ export const readAndParseJsonFiles = async ({
 }: {
   filePaths: string | string[];
 }): Promise<
-  | { filePath: string; content: any | null; status: boolean; message: string }
+  | { filePath: string; content: unknown; status: boolean; message: string }
   | {
       filePath: string;
-      content: any | null;
+      content: unknown;
       status: boolean;
       message: string;
     }[]

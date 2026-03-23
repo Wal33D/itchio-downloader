@@ -8,7 +8,7 @@ export interface ChromeProfileInfo {
 }
 
 export interface ChromeProfileInfoCache {
-  [profileKey: string]: ChromeProfileInfo | any;
+  [profileKey: string]: ChromeProfileInfo | unknown;
 }
 
 export interface ChromeProfile {
@@ -37,7 +37,7 @@ export interface ChromeOperationResult {
   modified: boolean;
   userDataDir: string;
   downloadDirPath: string;
-  verificationResults: any;
+  verificationResults: unknown;
 }
 
 export interface ChromeDirectoryOptions {

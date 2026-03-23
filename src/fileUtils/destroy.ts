@@ -62,14 +62,14 @@ export async function destroy({
         ? 'Destruction completed successfully.'
         : 'Destruction failed. Some components could not be removed.',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       destroyed: writableStatus && clearStatus && deleteStatus,
       writableStatus,
       clearStatus,
       deleteStatus,
       path: pathToDestroy,
-      message: `Error during destruction of ${pathToDestroy}: ${error.message}`,
+      message: `Error during destruction of ${pathToDestroy}: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }

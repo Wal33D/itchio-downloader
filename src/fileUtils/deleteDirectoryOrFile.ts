@@ -24,10 +24,10 @@ export async function deleteDirectoryOrFile({
       await fs.unlink(directoryPath);
       return { deleted: true, message: 'File removed successfully.' };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       deleted: false,
-      message: `Failed to remove path: ${error.message}`,
+      message: `Failed to remove path: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }

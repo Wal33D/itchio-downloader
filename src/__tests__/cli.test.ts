@@ -35,7 +35,7 @@ jest.mock('yargs', () => {
             return result;
           } catch (err) {
             // mimic yargs exiting the process on validation error
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             (process.exit as any)(1);
             throw err;
           }

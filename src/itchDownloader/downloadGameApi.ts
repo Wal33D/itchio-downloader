@@ -29,7 +29,7 @@ export async function downloadGameViaApi(
     return { status: false, message: 'API key is required.' };
   }
 
-  let downloadDirectory: string | undefined = inputDirectory
+  const downloadDirectory: string | undefined = inputDirectory
     ? path.resolve(inputDirectory)
     : inMemory
       ? undefined
@@ -121,7 +121,12 @@ export async function downloadGameViaApi(
       metaData: record,
       fileBuffer,
     };
-  } catch (error: any) {
-    return { status: false, message: error.message, httpStatus: error.statusCode };
+  } catch (error: unknown) {
+    const err = error as Record<string, unknown>;
+    return {
+      status: false,
+      message: error instanceof Error ? error.message : String(error),
+      httpStatus: err.statusCode as number | undefined,
+    };
   }
 }

@@ -45,27 +45,32 @@ export const initializeBrowser = async ({
       behavior: 'allow',
       downloadPath: path.resolve(downloadDirectory),
     });
-    await client.send('Browser.enable' as any);
+    // These are Chrome DevTools Protocol events not typed by puppeteer
+    const cdpClient = client as unknown as {
+      send(method: string, params?: Record<string, unknown>): Promise<unknown>;
+      on(event: string, handler: (params: Record<string, unknown>) => void): void;
+    };
+    await cdpClient.send('Browser.enable');
     let totalBytes = 0;
     let fileName = '';
-    client.on('Browser.downloadWillBegin', (event: any) => {
-      totalBytes = event.totalBytes || 0;
-      fileName = event.suggestedFilename || '';
+    cdpClient.on('Browser.downloadWillBegin', (event: Record<string, unknown>) => {
+      totalBytes = (event.totalBytes as number) || 0;
+      fileName = (event.suggestedFilename as string) || '';
       if (onProgress) {
         onProgress({ bytesReceived: 0, totalBytes, fileName });
       }
     });
-    client.on('Browser.downloadProgress', (event: any) => {
-      if (event.totalBytes) totalBytes = event.totalBytes;
-      const bytes = event.receivedBytes || 0;
+    cdpClient.on('Browser.downloadProgress', (event: Record<string, unknown>) => {
+      if (event.totalBytes) totalBytes = event.totalBytes as number;
+      const bytes = (event.receivedBytes as number) || 0;
       if (onProgress) {
         onProgress({ bytesReceived: bytes, totalBytes, fileName });
       }
     });
     status = true;
     message = 'Browser initialized successfully with enhanced settings.';
-  } catch (error: any) {
-    message = `Failed to initialize browser: ${error.message}`;
+  } catch (error: unknown) {
+    message = `Failed to initialize browser: ${error instanceof Error ? error.message : String(error)}`;
     browser = null;
   }
 

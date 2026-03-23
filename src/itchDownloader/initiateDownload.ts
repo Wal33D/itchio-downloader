@@ -66,8 +66,8 @@ export const initiateDownload = async ({
     }
 
     status = downloadInitiated;
-  } catch (error: any) {
-    message = `Error encountered during download: ${error.message}`;
+  } catch (error: unknown) {
+    message = `Error encountered during download: ${error instanceof Error ? error.message : String(error)}`;
     status = false;
   }
 

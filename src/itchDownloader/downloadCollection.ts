@@ -25,9 +25,9 @@ async function fetchGameUrls(
     if (apiKey) reqUrl.searchParams.set('api_key', apiKey);
     const res = await fetch(reqUrl.toString());
     if (!res.ok) {
-      const err: any = new Error(
+      const err = new Error(
         `Failed to fetch collection page ${page}: ${res.status}`,
-      );
+      ) as Error & { statusCode: number };
       err.statusCode = res.status;
       throw err;
     }

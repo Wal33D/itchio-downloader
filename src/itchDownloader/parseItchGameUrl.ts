@@ -13,7 +13,7 @@ export const parseItchGameUrl = ({
 }): IParsedItchGameUrl => {
   let author: string | undefined = undefined;
   let name: string | undefined = undefined;
-  let domain = '.itch.io'; // Setting the domain statically to .itch.io
+  const domain = '.itch.io'; // Setting the domain statically to .itch.io
   let parsed = false;
   let message = 'Initialization of URL parsing.';
 
@@ -30,10 +30,10 @@ export const parseItchGameUrl = ({
     } else {
       throw new Error('URL does not match expected format.');
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     author = undefined;
     name = undefined;
-    message = error.message;
+    message = error instanceof Error ? error.message : String(error);
   }
 
   return {

@@ -39,8 +39,8 @@ export const fetchItchGameProfile = async ({
     if (!urlData.parsed) {
       urlError = new Error('URL parsing failed: ' + urlData.message);
     }
-  } catch (error: any) {
-    urlError = new Error('URL parsing exception: ' + error.message);
+  } catch (error: unknown) {
+    urlError = new Error('URL parsing exception: ' + (error instanceof Error ? error.message : String(error)));
   }
 
   try {
@@ -53,8 +53,8 @@ export const fetchItchGameProfile = async ({
       );
       if (metaData.statusCode) statusCode = metaData.statusCode;
     }
-  } catch (error: any) {
-    metadataError = new Error('Metadata fetching exception: ' + error.message);
+  } catch (error: unknown) {
+    metadataError = new Error('Metadata fetching exception: ' + (error instanceof Error ? error.message : String(error)));
   }
 
   const successfulOperations =
@@ -70,12 +70,12 @@ export const fetchItchGameProfile = async ({
       urlError,
       metadataError,
     );
-    const err: any = new Error(
+    const err = new Error(
       'Both URL parsing and metadata fetching failed. ' +
         urlError?.message +
         ' ' +
         metadataError?.message,
-    );
+    ) as Error & { statusCode?: number };
     if (statusCode) err.statusCode = statusCode;
     throw err;
   }
@@ -85,10 +85,10 @@ export const fetchItchGameProfile = async ({
       'One of the parsing operations failed:',
       urlError?.message || metadataError?.message,
     );
-    const err: any = new Error(
+    const err = new Error(
       'One of the parsing operations failed: ' +
         (urlError?.message || metadataError?.message),
-    );
+    ) as Error & { statusCode?: number };
     if (statusCode) err.statusCode = statusCode;
     throw err;
   }

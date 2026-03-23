@@ -24,12 +24,15 @@ module.exports = [
   prettier,
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
-      'prefer-const': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+      'prefer-const': 'warn',
       'no-inner-declarations': 'off',
-      'no-empty': 'off',
-      'no-constant-condition': 'off',
+      'no-empty': 'warn',
+      'no-constant-condition': 'warn',
     },
   },
   {
@@ -37,6 +40,12 @@ module.exports = [
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-var-requires': 'off',
+    },
+  },
+  {
+    files: ['**/__tests__/**', '**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 ];
