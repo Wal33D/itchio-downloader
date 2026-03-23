@@ -12,9 +12,11 @@ import { Browser } from 'puppeteer';
 export const initiateDownload = async ({
   browser,
   itchGameUrl,
+  navigationTimeoutMs = 30000,
 }: {
   browser: Browser;
   itchGameUrl: string;
+  navigationTimeoutMs?: number;
 }): Promise<{ status: boolean; message: string }> => {
   let message = '';
   let status = false;
@@ -30,7 +32,7 @@ export const initiateDownload = async ({
     });
 
     // Navigate to the game's page
-    await page.goto(itchGameUrl, { waitUntil: 'networkidle2' });
+    await page.goto(itchGameUrl, { waitUntil: 'networkidle2', timeout: navigationTimeoutMs });
 
     // Calculate a random delay to simulate human interaction before clicking the download button
     const randomDelay = Math.floor(Math.random() * 3000) + 1000;

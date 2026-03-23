@@ -68,8 +68,19 @@ export async function downloadGameSingle(
     writeMetaData = true,
     retries = 0,
     retryDelayMs = 500,
+    navigationTimeoutMs = 30000,
+    fileWaitTimeoutMs = 30000,
     onProgress,
   } = params;
+
+  // Validate desiredFileName — prevent path traversal
+  if (desiredFileName && (desiredFileName.includes('/') || desiredFileName.includes('\\'))) {
+    return {
+      status: false,
+      message: 'Invalid desiredFileName: must not contain path separators.',
+    };
+  }
+
   let itchGameUrl: string | undefined = inputUrl;
 
   if (!itchGameUrl && name && author) {
@@ -128,12 +139,16 @@ export async function downloadGameSingle(
       const puppeteerResult = await initiateDownload({
         browser,
         itchGameUrl: itchGameUrl!,
+        navigationTimeoutMs,
       });
       if (!puppeteerResult.status)
         throw new Error('Download failed: ' + puppeteerResult.message);
 
       log('Downloading...');
-      const downloadedFileInfo = await waitForFile({ downloadDirectory });
+      const downloadedFileInfo = await waitForFile({
+        downloadDirectory,
+        timeoutMs: fileWaitTimeoutMs,
+      });
       if (!downloadedFileInfo.status)
         throw new Error('Downloaded file not found');
 

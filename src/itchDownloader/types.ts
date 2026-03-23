@@ -109,6 +109,10 @@ export type DownloadGameParams = {
   writeMetaData?: boolean;
   retries?: number;
   retryDelayMs?: number;
+  /** Timeout in ms for Puppeteer page navigation (default: 30000) */
+  navigationTimeoutMs?: number;
+  /** Timeout in ms for waiting for the downloaded file to appear (default: 30000) */
+  fileWaitTimeoutMs?: number;
   /** When part of an array, set to true to run downloads concurrently */
   parallel?: boolean;
   onProgress?: (info: DownloadProgress) => void;

@@ -24,6 +24,10 @@ export async function downloadGameViaApi(
     onProgress,
   } = params;
 
+  if (desiredFileName && (desiredFileName.includes('/') || desiredFileName.includes('\\'))) {
+    return { status: false, message: 'Invalid desiredFileName: must not contain path separators.' };
+  }
+
   const key = apiKey || process.env.ITCH_API_KEY;
   if (!key) {
     return { status: false, message: 'API key is required.' };
