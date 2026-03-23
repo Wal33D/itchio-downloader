@@ -6,9 +6,58 @@ import { downloadGame } from './itchDownloader/downloadGame';
 import { downloadCollection } from './itchDownloader/downloadCollection';
 import {
   DownloadGameParams,
+  DownloadGameResponse,
   DownloadProgress,
 } from './itchDownloader/types';
 import { CLIArgs } from './types/cli';
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+}
+
+function renderProgressBar(info: DownloadProgress): void {
+  const { bytesReceived, totalBytes, fileName } = info;
+  const cols = Math.min(process.stdout.columns || 80, 100);
+  const label = fileName ? fileName.slice(0, 20) : 'download';
+
+  if (totalBytes && totalBytes > 0) {
+    const pct = Math.min(bytesReceived / totalBytes, 1);
+    const barWidth = Math.max(cols - 45, 10);
+    const filled = Math.round(barWidth * pct);
+    const bar = '\u2588'.repeat(filled) + '\u2591'.repeat(barWidth - filled);
+    const pctStr = (pct * 100).toFixed(1).padStart(5);
+    process.stdout.write(
+      `\r  ${label.padEnd(20)} ${bar} ${pctStr}% ${formatBytes(bytesReceived)}/${formatBytes(totalBytes)}`,
+    );
+  } else {
+    process.stdout.write(
+      `\r  ${label.padEnd(20)} ${formatBytes(bytesReceived)} downloaded...`,
+    );
+  }
+}
+
+function printResult(
+  label: string,
+  result: DownloadGameResponse | DownloadGameResponse[],
+): void {
+  const results = Array.isArray(result) ? result : [result];
+
+  for (const r of results) {
+    if (r.status) {
+      console.log(`\n  \u2714 ${r.message}`);
+      if (r.filePath) console.log(`    File: ${r.filePath}`);
+      if (r.metadataPath) console.log(`    Metadata: ${r.metadataPath}`);
+      if (r.metaData?.title) console.log(`    Title: ${r.metaData.title}`);
+      if (r.fileBuffer) console.log(`    Buffer: ${formatBytes(r.fileBuffer.length)}`);
+    } else {
+      console.error(`\n  \u2718 ${r.message}`);
+      if (r.httpStatus) console.error(`    HTTP Status: ${r.httpStatus}`);
+    }
+  }
+}
 
 export async function run(
   argvInput: string[] = process.argv,
@@ -67,7 +116,6 @@ export async function run(
       default: 1,
     })
     .check((args) => {
-      // Ensure a game or collection source is provided
       if (args.collection) {
         return true;
       } else if (args.url) {
@@ -89,14 +137,18 @@ export async function run(
 
   if (argv.collection) {
     try {
+      console.log(`\n  Downloading collection: ${argv.collection}\n`);
       const result = await downloadCollection(argv.collection, apiKey, {
         downloadDirectory: argv.downloadDirectory,
         concurrency,
         onProgress,
       });
-      console.log('Collection Download Result:', result);
+      printResult('Collection', result as DownloadGameResponse);
     } catch (error) {
-      console.error('Error downloading collection:', error);
+      console.error(
+        `\n  \u2718 Collection download failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      process.exitCode = 1;
     }
     return;
   }
@@ -117,20 +169,19 @@ export async function run(
   }
 
   try {
+    console.log(
+      `\n  Downloading: ${params.itchGameUrl || `${params.author}/${params.name}`}\n`,
+    );
     const result = await downloadGame(params, concurrency);
-    console.log('Game Download Result:', result);
+    printResult('Game', result);
   } catch (error) {
-    console.error('Error downloading game:', error);
+    console.error(
+      `\n  \u2718 Download failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    process.exitCode = 1;
   }
 }
 
 if (require.main === module) {
-  void run(process.argv, ({ bytesReceived, totalBytes }) => {
-    if (totalBytes) {
-      const percent = ((bytesReceived / totalBytes) * 100).toFixed(2);
-      process.stdout.write(`Download progress: ${percent}%\r`);
-    } else {
-      process.stdout.write(`Downloaded ${bytesReceived} bytes\r`);
-    }
-  });
+  void run(process.argv, renderProgressBar);
 }

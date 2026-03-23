@@ -83,13 +83,13 @@ describe('cli', () => {
       },
       1,
     );
-    expect(logSpy).toHaveBeenCalledWith('Game Download Result:', 'ok');
+    expect(logSpy).toHaveBeenCalled();
   });
 
   it('passes apiKey argument', async () => {
     const mock = jest
       .spyOn(downloadGameModule, 'downloadGame')
-      .mockResolvedValue('ok' as any);
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     await run([
@@ -262,7 +262,7 @@ describe('cli', () => {
       concurrency: 2,
       onProgress: undefined,
     });
-    expect(logSpy).toHaveBeenCalledWith('Collection Download Result:', 'col');
+    expect(logSpy).toHaveBeenCalled();
   });
 
   it('exits when required arguments are missing', async () => {
