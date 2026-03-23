@@ -18,7 +18,8 @@ function log(...args: any[]) {
     console.log(...args);
   }
 }
-let globalBrowser: Browser | null = null;
+// Track active browsers for cleanup on process exit
+const activeBrowsers = new Set<Browser>();
 
 export async function downloadGame(
   params: DownloadGameParams | DownloadGameParams[],
@@ -115,14 +116,13 @@ export async function downloadGameSingle(
       log('Game profile fetched successfully:', itchGameUrl, gameProfile);
 
       browserInit = await initializeBrowser({ downloadDirectory, onProgress });
-      if (!browserInit.status)
+      if (!browserInit.status || !browserInit.browser)
         throw new Error(
           'Browser initialization failed: ' + browserInit.message,
         );
 
-      globalBrowser = browserInit.browser;
-
-      const browser: Browser = globalBrowser!;
+      activeBrowsers.add(browserInit.browser);
+      const browser: Browser = browserInit.browser;
       log('Starting Download...');
 
       const puppeteerResult = await initiateDownload({
@@ -194,11 +194,14 @@ export async function downloadGameSingle(
       }
       return { status: false, message, httpStatus };
     } finally {
-      if (browserInit && browserInit.browser) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        await browserInit.browser.close();
+      if (browserInit?.browser) {
+        try {
+          await browserInit.browser.close();
+        } catch {
+          // Browser may already be closed
+        }
+        activeBrowsers.delete(browserInit.browser);
         log('Downloader closed successfully');
-        globalBrowser = null;
       }
     }
   }
@@ -216,18 +219,26 @@ export async function downloadGameSingle(
   return result;
 }
 
-process.on('exit', cleanUp);
-process.on('SIGINT', () => {
-  log('Process interrupted, closing browser...');
-  cleanUp();
-  process.exit();
-});
+let cleanupRegistered = false;
+function registerCleanup() {
+  if (cleanupRegistered) return;
+  cleanupRegistered = true;
 
-function cleanUp() {
-  log('Cleaning up resources...');
-  if (globalBrowser) {
-    globalBrowser.close();
-    globalBrowser = null;
-    log('Browser closed successfully.');
+  function cleanUp() {
+    for (const browser of activeBrowsers) {
+      try {
+        browser.close();
+      } catch {
+        // Best-effort cleanup
+      }
+    }
+    activeBrowsers.clear();
   }
+
+  process.on('exit', cleanUp);
+  process.on('SIGINT', () => {
+    cleanUp();
+    process.exit();
+  });
 }
+registerCleanup();

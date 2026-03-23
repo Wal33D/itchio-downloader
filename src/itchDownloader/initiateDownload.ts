@@ -43,7 +43,9 @@ export const initiateDownload = async ({
       await page.click(downloadLinkSelector);
       downloadInitiated = true;
       message = 'Download initiated successfully from main page.';
-    } catch (error: any) {}
+    } catch {
+      // Main download button not found — fall through to donation wall
+    }
 
     // If the main download button is not found, try the donation wall
     if (!downloadInitiated) {

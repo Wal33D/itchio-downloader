@@ -340,7 +340,7 @@ describe('downloadGame', () => {
       downloadDirectory: tmpDir,
     })) as any;
     expect(result.status).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, 'game-1.zip'))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, 'game.zip'))).toBe(true);
     (global.fetch as any).mockRestore?.();
   });
 
@@ -369,7 +369,7 @@ describe('downloadGame', () => {
       downloadDirectory: tmpDir,
     })) as any;
     expect(result.status).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, 'game2-1.zip'))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, 'game2.zip'))).toBe(true);
     delete process.env.ITCH_API_KEY;
     (global.fetch as any).mockRestore?.();
   });

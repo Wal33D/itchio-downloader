@@ -86,20 +86,24 @@ export async function downloadGameViaApi(
     }
 
     let finalFilePath = targetPath || '';
-    const originalBase = desiredFileName ? desiredFileName : path.basename(finalFilePath, path.extname(finalFilePath));
-    const ext = path.extname(finalFilePath);
-    let uniqueBase = originalBase;
-    let uniquePath = downloadDirectory ? path.join(downloadDirectory, uniqueBase + ext) : '';
-    let counter = 1;
-    while (downloadDirectory && fs.existsSync(uniquePath)) {
-      uniqueBase = `${originalBase}-${counter}`;
-      uniquePath = path.join(downloadDirectory, uniqueBase + ext);
-      counter++;
-    }
-    if (downloadDirectory && (uniquePath !== finalFilePath || desiredFileName)) {
-      const renameResult = await renameFile({ filePath: finalFilePath, desiredFileName: uniqueBase });
-      if (!renameResult.status) throw new Error('File rename failed: ' + renameResult.message);
-      finalFilePath = renameResult.newFilePath as string;
+
+    // Only do rename/dedup when downloading to disk
+    if (downloadDirectory && finalFilePath) {
+      const originalBase = desiredFileName || path.basename(finalFilePath, path.extname(finalFilePath));
+      const ext = path.extname(finalFilePath);
+      let uniqueBase = originalBase;
+      let uniquePath = path.join(downloadDirectory, uniqueBase + ext);
+      let counter = 1;
+      while (fs.existsSync(uniquePath) && uniquePath !== finalFilePath) {
+        uniqueBase = `${originalBase}-${counter}`;
+        uniquePath = path.join(downloadDirectory, uniqueBase + ext);
+        counter++;
+      }
+      if (uniqueBase !== path.basename(finalFilePath, ext) || desiredFileName) {
+        const renameResult = await renameFile({ filePath: finalFilePath, desiredFileName: uniqueBase });
+        if (!renameResult.status) throw new Error('File rename failed: ' + renameResult.message);
+        finalFilePath = renameResult.newFilePath as string;
+      }
     }
 
     const metadataPath = downloadDirectory

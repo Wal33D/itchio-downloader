@@ -1,16 +1,10 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
-import util from 'util';
-
-const rename = util.promisify(fs.rename);
-const unlink = util.promisify(fs.unlink);
 
 /**
- * Renames a downloaded file with a new base name and/or extension. At least one of newBaseFileName or newBaseFileExt must be provided.
- * @param {string} filePath - The current path of the file.
- * @param {string} [newBaseFileName] - The new base name for the file without the extension.
- * @param {string} [newBaseFileExt] - The new extension for the file, without a dot (e.g., 'txt' instead of '.txt').
- * @returns {Promise<{status: boolean, message: string, newFilePath?: string}>} - Result of the rename operation.
+ * Renames a file with a new base name and/or extension.
+ * Uses fs.rename which is atomic on the same filesystem — no need for
+ * separate delete of the original file.
  */
 export const renameFile = async ({
   filePath,
@@ -21,11 +15,11 @@ export const renameFile = async ({
   desiredFileName?: string;
   desiredFileExt?: string;
 }): Promise<{ status: boolean; message: string; newFilePath?: string }> => {
-  let message = '';
-
   if (!desiredFileName && !desiredFileExt) {
-    message = 'Error: newBaseFileName or newBaseFileExt must be provided';
-    return { status: false, message };
+    return {
+      status: false,
+      message: 'Error: desiredFileName or desiredFileExt must be provided',
+    };
   }
 
   try {
@@ -33,27 +27,25 @@ export const renameFile = async ({
     const originalBaseName = path.basename(filePath, path.extname(filePath));
     const originalExtension = path.extname(filePath);
 
-    const finalBaseName = desiredFileName ? desiredFileName : originalBaseName;
+    const finalBaseName = desiredFileName || originalBaseName;
     const finalExtension = desiredFileExt
       ? `.${desiredFileExt}`
       : originalExtension;
     const finalFileName = `${finalBaseName}${finalExtension}`;
     const newFilePath = path.join(directory, finalFileName);
 
-    await rename(filePath, newFilePath);
+    // fs.rename is atomic on the same filesystem — the original path
+    // ceases to exist as part of the rename operation.
+    await fs.rename(filePath, newFilePath);
 
-    // Add a short delay before deleting the original file
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Check if the original file still exists and delete it if necessary
-    if (fs.existsSync(filePath)) {
-      await unlink(filePath);
-    }
-
-    message = `File renamed to ${finalFileName}`;
-    return { status: true, message, newFilePath };
-  } catch (error: any) {
-    message = `Failed to rename file: ${error.message}`;
-    return { status: false, message };
+    return {
+      status: true,
+      message: `File renamed to ${finalFileName}`,
+      newFilePath,
+    };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown rename error';
+    return { status: false, message: `Failed to rename file: ${message}` };
   }
 };
