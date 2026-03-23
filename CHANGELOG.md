@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2026-03-23
+
+### Security
+
+- **API key moved from URL query params to Authorization Bearer header** — prevents exposure in logs, browser history, and referrer headers
+- Path traversal guard on `desiredFileName` — rejects paths containing `/` or `\`
+
+### Fixed
+
+- **Browser race condition** — replaced global singleton with per-download browser instances; concurrent downloads no longer share or fight over a single browser
+- **CDP compatibility** — updated from deprecated `Browser.enable`/`Browser.downloadWillBegin` to `Page.download*` events (Chrome 120+ compatible)
+- **File rename race condition** — removed dangerous 2-second delay + unlink after rename; `fs.rename` is already atomic
+- **Memory mode crash** — guarded path operations that ran `path.basename('')` when downloading to buffer only
+- **Empty catch blocks** — all silently swallowed errors now documented or properly handled
+- Flaky `waitForFile` tests stabilized
+
+### Added
+
+- `navigationTimeoutMs` param — configurable timeout for Puppeteer page navigation (default: 30s)
+- `fileWaitTimeoutMs` param — configurable timeout for download file detection (default: 30s)
+- 14 new edge case tests (42 → 56 total): path traversal, retry mechanism, API client auth, URL parsing, file rename edge cases
+- New `itchApiClient.test.ts` test file
+
+### Changed
+
+- **ESLint rules re-enabled** — `no-explicit-any`, `no-unused-vars`, `prefer-const`, `no-empty`, `no-constant-condition` all enforced in source (relaxed in tests)
+- All 100 lint violations fixed across 21 source files — `any` replaced with `unknown` and proper types throughout
+- Updated Chrome user agent string to v141
+- Process cleanup handlers only register once (prevents duplicate registration)
+
 ## [0.7.8] - 2025-07-04
 
 ### Added
