@@ -7,6 +7,12 @@
   "bin": {
     "itchio-downloader": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "clean": "shx rm -rf ./dist/",
     "build": "pnpm run clean && tsc",

@@ -1,259 +1,182 @@
 # Itchio-Downloader
 
-**GitHub Repository:** [itchio-downloader on GitHub](https://github.com/Wal33D/itchio-downloader)
+[![npm version](https://img.shields.io/npm/v/itchio-downloader.svg)](https://www.npmjs.com/package/itchio-downloader)
+[![CI](https://github.com/Wal33D/itchio-downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/Wal33D/itchio-downloader/actions/workflows/ci.yml)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE.md)
 
-**npm Package:** [itchio-downloader on npm](https://www.npmjs.com/package/itchio-downloader)
+A small CLI and Node.js library for downloading free games from [itch.io](https://itch.io). Fetch games by URL or by name and author — no API key or GUI required.
 
-Itchio-Downloader provides a small CLI and library for downloading free games from [itch.io](https://itch.io). Games can be fetched by URL or by name and author—no API key or GUI is required.
-See the [API Reference](docs/API-Reference.md) for all functions and types. More guides are available in [docs/README.md](docs/README.md).
-
-## Table of Contents
-
-1. [Motivation](#motivation)
-2. [Features](#features)
-3. [Usage Policy](#usage-policy)
-4. [Quick Start](#quick-start)
-5. [Usage](#usage)
-6. [Command Line Usage](#command-line-usage)
-7. [Configuration Options](#configuration-options)
-8. [Types](#types)
-9. [Example Output](#example-output)
-10. [Documentation](#documentation)
-11. [Contributing](#contributing)
-12. [Release Procedure](#release-procedure)
-13. [Maintenance](#maintenance)
-14. [License](#license)
-
-## Motivation
-
-I built this tool to create a launcher for free games and released it so others can do the same. It's the only known way to download itch.io games programmatically without an API key or developer access.
+**[API Reference](docs/API-Reference.md)** · **[CLI Docs](docs/CLI.md)** · **[Advanced Usage](docs/Advanced-Usage.md)** · **[Changelog](CHANGELOG.md)**
 
 ## Features
 
-- **Direct Downloads**: Get games by URL or by name and author—no desktop GUI or Butler.
-- **Batch Operations**: Download multiple games in one run.
-- **Collection Downloads**: Fetch every game from a collection URL.
-- **Customization**: Rename files and choose download directories.
-- **Simplicity**: Only a URL or author and title is required.
-- **API Key Optional**: Use an itch.io API key for authenticated downloads.
-
-## Usage Policy
-
-Only download free games and follow the [itch.io Terms of Service](https://itch.io/docs/general/terms). Don't bypass payment restrictions. This project isn't affiliated with or endorsed by itch.io.
+- **Direct Downloads** — by URL or name + author, no desktop GUI or Butler needed
+- **API Key Support** — optional itch.io API key for authenticated downloads
+- **Batch & Concurrent** — download multiple games with configurable concurrency
+- **Collection Downloads** — fetch every game from a collection URL
+- **In-Memory Mode** — download to a Buffer instead of disk
+- **Progress Tracking** — `onProgress` callback for real-time download status
+- **Retries** — automatic retry with exponential backoff on failure
+- **Configurable Timeouts** — separate timeouts for navigation and file detection
+- **Metadata** — saves game metadata JSON alongside downloads
 
 ## Quick Start
 
-Requires **Node.js 18+**. For a full setup guide see [docs/Installation.md](docs/Installation.md).
-
-Install the package:
+Requires **Node.js 18+**.
 
 ```bash
 pnpm add itchio-downloader
-# or install globally for the CLI
+# or globally for the CLI
 pnpm add -g itchio-downloader
-# or
-yarn add itchio-downloader
 ```
-
-If installed globally you can run the command directly:
-
-```bash
-itchio-downloader --help
-```
-
-See [docs/CLI.md](docs/CLI.md) for CLI options and [docs/Debugging.md](docs/Debugging.md) for verbose logging.
 
 ## Usage
 
-### Importing the package
-
 ```javascript
 const { downloadGame } = require('itchio-downloader');
-```
 
-### Downloading a Single Game
+// By URL
+const result = await downloadGame({
+  itchGameUrl: 'https://baraklava.itch.io/manic-miners',
+});
 
-Download a game by URL or by name and author:
-
-```javascript
-// Using a direct URL:
-await downloadGame({ itchGameUrl: 'https://baraklava.itch.io/manic-miners' });
-
-// Using name and author and optional params:
-await downloadGame({
+// By name and author
+const result = await downloadGame({
   name: 'manic-miners',
   author: 'baraklava',
-  downloadDirectory: 'full file path', // Optional
+  downloadDirectory: './downloads',
 });
-```
 
-### Downloading Multiple Games
+// With API key and retries
+const result = await downloadGame({
+  itchGameUrl: 'https://baraklava.itch.io/manic-miners',
+  apiKey: 'your-itch-api-key',
+  retries: 3,
+  retryDelayMs: 1000,
+});
 
-Provide an array to download multiple games. Mix URLs or name/author combinations. Use `concurrency` to limit downloads or set `parallel: true` to run them all concurrently:
+// In-memory download
+const result = await downloadGame({
+  itchGameUrl: 'https://baraklava.itch.io/manic-miners',
+  apiKey: 'your-key',
+  inMemory: true,
+});
+console.log(result.fileBuffer); // Buffer
 
-```javascript
-async function downloadMultipleGames() {
-  const gameParams = [
-    { name: 'manic-miners', author: 'baraklava' },
-    { itchGameUrl: 'https://anotherdev.itch.io/another-game' },
-    { itchGameUrl: 'https://moregames.itch.io/better-game', parallel: true },
-  ];
-
-  await downloadGame(gameParams, 2); // up to 2 downloads or set parallel to run all at once
-}
-downloadMultipleGames();
-```
-
-See [docs/Advanced-Usage.md](docs/Advanced-Usage.md) for more concurrency and custom path examples.
-
-### Tracking Progress
-
-Provide an `onProgress` callback to monitor download progress:
-
-```javascript
+// With progress tracking
 await downloadGame({
   itchGameUrl: 'https://baraklava.itch.io/manic-miners',
-  onProgress: ({ bytesReceived, totalBytes }) => {
+  onProgress: ({ bytesReceived, totalBytes, fileName }) => {
     if (totalBytes) {
-      const pct = ((bytesReceived / totalBytes) * 100).toFixed(1);
-      console.log(`Progress: ${pct}%`);
+      console.log(`${fileName}: ${((bytesReceived / totalBytes) * 100).toFixed(1)}%`);
     }
   },
 });
 ```
 
-The CLI displays similar progress automatically when run directly.
+### Batch Downloads
 
-## Command Line Usage
-
-Build the CLI with `pnpm run build-cli`, then run `itchio-downloader` with your options. The `--concurrency` flag limits how many downloads run at once when supplying a list of games. Full details are in [docs/CLI.md](docs/CLI.md).
-
-```bash
-# Example limiting concurrency
-itchio-downloader --url "https://baraklava.itch.io/manic-miners" --concurrency 2
-
-# Download an entire collection
-itchio-downloader --collection "https://itch.io/c/123/example"
+```javascript
+await downloadGame([
+  { name: 'manic-miners', author: 'baraklava' },
+  { itchGameUrl: 'https://dev.itch.io/game' },
+], 2); // concurrency limit
 ```
 
-## Configuration Options
+## CLI
 
-The `downloadGame` function accepts the following parameters within `DownloadGameParams`:
+```bash
+itchio-downloader --url "https://baraklava.itch.io/manic-miners"
+itchio-downloader --name "manic-miners" --author "baraklava" --downloadDirectory ./games
+itchio-downloader --collection "https://itch.io/c/123/my-collection" --concurrency 3
+itchio-downloader --url "https://dev.itch.io/game" --apiKey "your-key" --retries 3
+itchio-downloader --url "https://dev.itch.io/game" --memory  # in-memory mode
+```
 
-- `name`: Game name (use with `author`).
-- `author`: Author's username.
-- `itchGameUrl`: Direct URL to the game.
-- `desiredFileName`: Custom file name.
-- `downloadDirectory`: Where to save files.
-- `apiKey`: itch.io API key for authenticated downloads. If omitted, the library
-  reads `ITCH_API_KEY` from the environment (load a `.env` file if needed).
-- `writeMetaData`: Save metadata JSON (default `true`).
-- `concurrency`: Number of downloads at once when using an array.
-- `parallel`: If true, run all downloads concurrently with `Promise.all`.
-- `onProgress`: Callback invoked with download progress information.
+See [docs/CLI.md](docs/CLI.md) for all options.
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `itchGameUrl` | `string` | — | Direct URL to the game |
+| `name` | `string` | — | Game name (use with `author`) |
+| `author` | `string` | — | Author's username |
+| `apiKey` | `string` | `ITCH_API_KEY` env | API key for authenticated downloads |
+| `downloadDirectory` | `string` | `~/downloads` | Where to save files |
+| `desiredFileName` | `string` | — | Custom file name (no path separators) |
+| `inMemory` | `boolean` | `false` | Download to Buffer instead of disk |
+| `writeMetaData` | `boolean` | `true` | Save metadata JSON alongside download |
+| `retries` | `number` | `0` | Retry attempts on failure |
+| `retryDelayMs` | `number` | `500` | Base delay for exponential backoff (ms) |
+| `navigationTimeoutMs` | `number` | `30000` | Puppeteer page navigation timeout (ms) |
+| `fileWaitTimeoutMs` | `number` | `30000` | Download file detection timeout (ms) |
+| `parallel` | `boolean` | `false` | Run all downloads concurrently |
+| `onProgress` | `function` | — | Progress callback `({ bytesReceived, totalBytes, fileName })` |
 
 ## Types
 
-```javascript
-export type DownloadGameParams = {
-   name?: string,
-   author?: string,
-   desiredFileName?: string,
-   downloadDirectory?: string,
-   apiKey?: string,
-   itchGameUrl?: string,
-   writeMetaData?: boolean,
-   parallel?: boolean
-   onProgress?: (info: DownloadProgress) => void
+```typescript
+type DownloadGameParams = {
+  name?: string;
+  author?: string;
+  desiredFileName?: string;
+  downloadDirectory?: string;
+  apiKey?: string;
+  itchGameUrl?: string;
+  inMemory?: boolean;
+  writeMetaData?: boolean;
+  retries?: number;
+  retryDelayMs?: number;
+  navigationTimeoutMs?: number;
+  fileWaitTimeoutMs?: number;
+  parallel?: boolean;
+  onProgress?: (info: DownloadProgress) => void;
 };
 
-export type DownloadGameResponse = {
-   status: boolean,
-   message: string,
-   metaData?: IItchRecord,
-   metadataPath?: string,
-   filePath?: string
+type DownloadGameResponse = {
+  status: boolean;
+  message: string;
+  httpStatus?: number;
+  metaData?: IItchRecord;
+  metadataPath?: string;
+  filePath?: string;
+  fileBuffer?: Buffer; // when inMemory is true
 };
+
+interface DownloadProgress {
+  bytesReceived: number;
+  totalBytes?: number;
+  fileName?: string;
+}
 ```
 
-## Example Output
+## Usage Policy
 
-Example response:
+Only download free games and follow the [itch.io Terms of Service](https://itch.io/docs/general/terms). Don't bypass payment restrictions. This project isn't affiliated with or endorsed by itch.io.
 
-```bash
-const response = {
-   status: true,
-   message: 'Download and file operations successful.',
-   metadataPath: 'C:\\Users\\Aquataze\\Desktop\\itchDownloader\\testOutput\\manic-miners\\manic-miners-metadata.json',
-   filePath: 'C:\\Users\\Aquataze\\Desktop\\itchDownloader\\testOutput\\manic-miners\\ManicMinersV1.0.zip',
-   metaData: {
-      title: 'Manic Miners: A LEGO Rock Raiders remake',
-      coverImage: 'https://img.itch.zone/aW1nLzEzMTQ1NzA1LnBuZw==/315x250%23c/i%2BJ4qs.png',
-      authors: [[Object]],
-      tags: [],
-      id: 598634,
-      commentsLink: 'https://baraklava.itch.io/manic-miners/comments',
-      selfLink: 'https://baraklava.itch.io/manic-miners',
-      author: 'baraklava',
-      name: 'manic-miners',
-      domain: '.itch.io',
-      itchGameUrl: 'https://baraklava.itch.io/manic-miners',
-      itchMetaDataUrl: 'https://baraklava.itch.io/manic-miners/data.json'
-   }
-};
-
-```
-
-## Documentation
-
-More documentation:
-
-- [docs/README.md](docs/README.md) – Overview
-- [docs/Installation.md](docs/Installation.md) – Setup requirements
-- [docs/API-Reference.md](docs/API-Reference.md) – Full API details
-- [docs/CLI.md](docs/CLI.md) – Command line usage
-- [docs/Advanced-Usage.md](docs/Advanced-Usage.md) – Concurrency and custom paths
-- [docs/Debugging.md](docs/Debugging.md) – Troubleshooting tips
-- [docs/Roadmap.md](docs/Roadmap.md) – Future development plans
-- [CONTRIBUTING.md](CONTRIBUTING.md) – Contribution guidelines
-- [CHANGELOG.md](CHANGELOG.md) – Release history
-
-## Contributing
-
-Contributions are welcome! Fork the repo and submit a pull request. For major changes, open an issue first. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-Update tests as needed.
-Run `pnpm test` and build the CLI with `pnpm run build-cli`.
-Publishing runs the `prepublishOnly` script to build the CLI.
-
-## Development Setup
-
-Clone the repository and install dependencies:
+## Development
 
 ```bash
 git clone https://github.com/Wal33D/itchio-downloader.git
 cd itchio-downloader
 pnpm install
+pnpm test        # 56 tests
+pnpm run build   # compile TypeScript
+pnpm run lint    # ESLint check
 ```
 
-`pnpm install` installs `ts-jest` and other dev dependencies required for the test suite. Running tests without installing these packages will result in a "Preset ts-jest not found" error.
+## Documentation
 
-Run the tests with:
-
-```bash
-pnpm test
-```
-
-## Release Procedure
-
-1. Update the version in `package.json`.
-2. Document changes in `CHANGELOG.md`.
-3. Run `pnpm publish` (the `prepublishOnly` script builds the CLI).
-
-## Maintenance
-
-Dependabot monitors dependencies and opens PRs.
+- [API Reference](docs/API-Reference.md) — full function and type docs
+- [CLI Reference](docs/CLI.md) — all command line options
+- [Advanced Usage](docs/Advanced-Usage.md) — concurrency, custom paths, progress
+- [Installation](docs/Installation.md) — setup requirements
+- [Debugging](docs/Debugging.md) — troubleshooting and verbose logging
+- [Roadmap](docs/Roadmap.md) — planned improvements
+- [Contributing](CONTRIBUTING.md) — contribution guidelines
+- [Changelog](CHANGELOG.md) — release history
 
 ## License
 
-ISC License.
+ISC
