@@ -374,6 +374,82 @@ describe('downloadGame', () => {
     (global.fetch as any).mockRestore?.();
   });
 
+  it('rejects desiredFileName with path traversal (/)', async () => {
+    const result = (await downloadGame({
+      name: 'game',
+      author: 'user',
+      desiredFileName: '../../malicious',
+    })) as any;
+
+    expect(result.status).toBe(false);
+    expect(result.message).toContain('path separators');
+  });
+
+  it('rejects desiredFileName with backslash', async () => {
+    const result = (await downloadGame({
+      name: 'game',
+      author: 'user',
+      desiredFileName: '..\\malicious',
+    })) as any;
+
+    expect(result.status).toBe(false);
+    expect(result.message).toContain('path separators');
+  });
+
+  it('returns error for empty URL and no name/author', async () => {
+    const result = (await downloadGame({})) as any;
+
+    expect(result.status).toBe(false);
+  });
+
+  it('retries on failure then succeeds', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-retryfail-'));
+    let callCount = 0;
+    jest
+      .spyOn(fetchProfile, 'fetchItchGameProfile')
+      .mockImplementation(async () => {
+        callCount++;
+        if (callCount === 1) {
+          throw new Error('transient failure');
+        }
+        return {
+          found: true,
+          itchRecord: { name: 'game', author: 'user' },
+          message: 'ok',
+        } as any;
+      });
+    jest.spyOn(initBrowser, 'initializeBrowser').mockResolvedValue({
+      browser: { close: jest.fn() } as any,
+      status: true,
+      message: 'ok',
+    });
+    jest
+      .spyOn(initiateDownload, 'initiateDownload')
+      .mockResolvedValue({ status: true, message: 'ok' });
+    jest.spyOn(waitFile, 'waitForFile').mockResolvedValue({
+      status: true,
+      message: 'done',
+      filePath: path.join(tmpDir, 'game.zip'),
+    });
+    jest.spyOn(renameFileModule, 'renameFile').mockResolvedValue({
+      status: true,
+      message: 'renamed',
+      newFilePath: path.join(tmpDir, 'game.zip'),
+    });
+    jest.spyOn(createFileModule, 'createFile').mockResolvedValue({} as any);
+
+    const result = (await downloadGame({
+      name: 'game',
+      author: 'user',
+      downloadDirectory: tmpDir,
+      retries: 1,
+      retryDelayMs: 10,
+    })) as any;
+
+    expect(callCount).toBe(2);
+    expect(result.status).toBe(true);
+  });
+
   it('returns a buffer when inMemory is true', async () => {
     jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({
       found: true,

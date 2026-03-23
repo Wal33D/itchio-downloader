@@ -27,4 +27,25 @@ describe('parseItchGameUrl', () => {
     expect(result.name).toBeUndefined();
     expect(result.itchGameUrl).toBe(url);
   });
+
+  it('rejects non-itch.io URLs', () => {
+    const url = 'https://example.com/game';
+    const result = parseItchGameUrl({ itchGameUrl: url });
+    expect(result.parsed).toBe(false);
+    expect(result.author).toBeUndefined();
+    expect(result.name).toBeUndefined();
+  });
+
+  it('handles URL without protocol', () => {
+    const url = 'author.itch.io/game';
+    const result = parseItchGameUrl({ itchGameUrl: url });
+    expect(result.parsed).toBe(true);
+    expect(result.author).toBe('author');
+    expect(result.name).toBe('game');
+  });
+
+  it('rejects empty string', () => {
+    const result = parseItchGameUrl({ itchGameUrl: '' });
+    expect(result.parsed).toBe(false);
+  });
 });
