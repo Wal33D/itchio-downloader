@@ -5,7 +5,8 @@ import { createFile } from '../fileUtils/createFile';
 import { createDirectory } from '../fileUtils/createDirectory';
 import { renameFile } from '../fileUtils/renameFile';
 import { fetchItchGameProfile } from './fetchItchGameProfile';
-import { streamToFile, streamToBuffer } from './httpDownload';
+import { streamToFile, streamToBuffer, downloadWithResume } from './httpDownload';
+import { getCachedCookies, setCachedCookies, mergeCookies } from './cookieCache';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 
 const USER_AGENT =
@@ -64,6 +65,11 @@ function parsePage(html: string, res: Response): PageInfo {
  * 3. GET download page → fresh CSRF + upload IDs
  * 4. POST /file/{uploadId} → Cloudflare R2 CDN URL (60s TTL)
  * 5. Stream CDN URL to disk or memory
+ *
+ * Features:
+ * - Cookie caching: reuses session cookies across downloads (disable with noCookieCache)
+ * - Resume support: resumes interrupted downloads using Range headers (enable with resume)
+ * - Size verification: validates Content-Length matches actual bytes downloaded
  */
 export async function downloadGameDirect(
   params: DownloadGameParams,
@@ -77,6 +83,9 @@ export async function downloadGameDirect(
     inMemory,
     writeMetaData = true,
     onProgress,
+    resume = false,
+    cookieCacheDir,
+    noCookieCache = false,
   } = params;
 
   if (desiredFileName && (desiredFileName.includes('/') || desiredFileName.includes('\\'))) {
@@ -102,18 +111,37 @@ export async function downloadGameDirect(
       await createDirectory({ directory: downloadDirectory });
     }
 
+    // Check cookie cache for existing session
+    let cachedSession: { cookies: string; csrfToken?: string } | null = null;
+    if (!noCookieCache) {
+      cachedSession = await getCachedCookies(itchGameUrl, cookieCacheDir);
+    }
+
     // Step 1: GET game page
-    const pageRes = await fetch(itchGameUrl, {
-      headers: { 'User-Agent': USER_AGENT },
-    });
+    const pageHeaders: Record<string, string> = { 'User-Agent': USER_AGENT };
+    if (cachedSession?.cookies) {
+      pageHeaders['Cookie'] = cachedSession.cookies;
+    }
+
+    const pageRes = await fetch(itchGameUrl, { headers: pageHeaders });
     if (!pageRes.ok) {
       return { status: false, message: `Game page returned HTTP ${pageRes.status}`, httpStatus: pageRes.status };
     }
     const pageHtml = await pageRes.text();
     const page = parsePage(pageHtml, pageRes);
 
+    // Merge cached cookies with fresh response cookies
+    const sessionCookies = cachedSession?.cookies
+      ? mergeCookies(cachedSession.cookies, page.cookies)
+      : page.cookies;
+
     if (!page.csrfToken) {
       return { status: false, message: 'Could not extract CSRF token from game page.', failReason: 'csrf_failed' };
+    }
+
+    // Cache the session cookies + CSRF for future downloads
+    if (!noCookieCache) {
+      await setCachedCookies(itchGameUrl, sessionCookies, page.csrfToken, cookieCacheDir).catch(() => {});
     }
 
     // Price gate — if min_price > 0 and no direct uploads visible, this is a paid game
@@ -123,8 +151,6 @@ export async function downloadGameDirect(
 
     // If no uploads AND no donation wall (min_price=0), check if web-only
     if (page.uploadIds.length === 0 && page.minPrice === 0) {
-      // Check for donation wall — POST without upload_id will succeed for free games
-      // Only declare web-only if the donation wall POST also fails
       const isHtml5Only =
         pageHtml.includes('game_frame') || pageHtml.includes('html_embed');
       const hasPurchasePath = pageHtml.includes('/purchase');
@@ -149,7 +175,7 @@ export async function downloadGameDirect(
         'Content-Type': 'application/x-www-form-urlencoded',
         'X-Requested-With': 'XMLHttpRequest',
         Referer: itchGameUrl,
-        Cookie: page.cookies,
+        Cookie: sessionCookies,
       },
       body,
     });
@@ -163,7 +189,7 @@ export async function downloadGameDirect(
 
     // Step 3: GET download page
     const dlPageRes = await fetch(dlUrlData.url, {
-      headers: { 'User-Agent': USER_AGENT, Cookie: page.cookies },
+      headers: { 'User-Agent': USER_AGENT, Cookie: sessionCookies },
     });
     if (!dlPageRes.ok) {
       return { status: false, message: `Download page returned HTTP ${dlPageRes.status}`, httpStatus: dlPageRes.status };
@@ -172,13 +198,17 @@ export async function downloadGameDirect(
     const dlPage = parsePage(dlPageHtml, dlPageRes);
 
     // Merge cookies from download page
-    const allCookies = [page.cookies, dlPage.cookies].filter(Boolean).join('; ');
+    const allCookies = mergeCookies(sessionCookies, dlPage.cookies);
+
+    // Update cache with all accumulated cookies
+    if (!noCookieCache) {
+      await setCachedCookies(itchGameUrl, allCookies, dlPage.csrfToken || page.csrfToken, cookieCacheDir).catch(() => {});
+    }
 
     // Use upload IDs from download page (more complete list)
     let uploadId: string | undefined;
     if (params.platform) {
       const platformLower = params.platform.toLowerCase();
-      // Try matching from upload infos (which have display names)
       const infos = dlPage.uploadInfos.length > 0 ? dlPage.uploadInfos : page.uploadInfos;
       const matched = infos.find(u => u.name.toLowerCase().includes(platformLower));
       if (matched) {
@@ -213,26 +243,56 @@ export async function downloadGameDirect(
     }
 
     // Step 5: Stream CDN URL immediately (60s TTL)
-    const cdnRes = await fetch(cdnData.url, {
-      headers: { 'User-Agent': USER_AGENT },
-    });
-    if (!cdnRes.ok) {
-      return { status: false, message: `CDN download failed HTTP ${cdnRes.status}`, httpStatus: cdnRes.status };
-    }
-
-    // Determine filename from Content-Disposition or upload ID
-    const disposition = cdnRes.headers.get('content-disposition');
-    const dispositionMatch = disposition?.match(/filename="?([^";\n]+)"?/);
-    const cdnFileName = dispositionMatch?.[1] || `game-${uploadId}.zip`;
-
+    // Determine filename from a HEAD-like approach: fetch with stream
     let fileBuffer: Buffer | undefined;
     let finalFilePath = '';
+    let sizeVerified = true;
+    let bytesDownloaded = 0;
+    let resumed = false;
 
     if (inMemory) {
-      fileBuffer = await streamToBuffer(cdnRes, onProgress, cdnFileName);
+      const cdnRes = await fetch(cdnData.url, {
+        headers: { 'User-Agent': USER_AGENT },
+      });
+      if (!cdnRes.ok) {
+        return { status: false, message: `CDN download failed HTTP ${cdnRes.status}`, httpStatus: cdnRes.status };
+      }
+      fileBuffer = await streamToBuffer(cdnRes, onProgress, `game-${uploadId}`);
+      bytesDownloaded = fileBuffer.length;
     } else if (downloadDirectory) {
+      // Get the CDN URL filename first via a HEAD-like initial fetch
+      const cdnRes = await fetch(cdnData.url, {
+        method: 'HEAD',
+        headers: { 'User-Agent': USER_AGENT },
+      });
+      const disposition = cdnRes.headers.get('content-disposition');
+      const dispositionMatch = disposition?.match(/filename="?([^";\n]+)"?/);
+      const cdnFileName = dispositionMatch?.[1] || `game-${uploadId}.zip`;
       finalFilePath = path.join(downloadDirectory, cdnFileName);
-      await streamToFile(cdnRes, finalFilePath, onProgress);
+
+      if (resume) {
+        // Use resumable download
+        const result = await downloadWithResume(
+          cdnData.url,
+          finalFilePath,
+          { 'User-Agent': USER_AGENT },
+          onProgress,
+        );
+        sizeVerified = result.verified;
+        bytesDownloaded = result.bytesWritten;
+        resumed = result.bytesWritten > (result.expectedBytes ? result.expectedBytes - (Number(cdnRes.headers.get('content-length')) || 0) : 0);
+      } else {
+        // Standard download with size verification
+        const cdnDownloadRes = await fetch(cdnData.url, {
+          headers: { 'User-Agent': USER_AGENT },
+        });
+        if (!cdnDownloadRes.ok) {
+          return { status: false, message: `CDN download failed HTTP ${cdnDownloadRes.status}`, httpStatus: cdnDownloadRes.status };
+        }
+        const result = await streamToFile(cdnDownloadRes, finalFilePath, onProgress);
+        sizeVerified = result.verified;
+        bytesDownloaded = result.bytesWritten;
+      }
     }
 
     // Rename/dedup if needed
@@ -254,8 +314,7 @@ export async function downloadGameDirect(
       }
     }
 
-    // Fetch metadata — intentionally silent on failure since the download already
-    // succeeded and metadata is a nice-to-have, not a requirement
+    // Fetch metadata
     const profile = await fetchItchGameProfile({ itchGameUrl }).catch(() => null);
     const record = profile?.itchRecord as IItchRecord | undefined;
 
@@ -273,6 +332,9 @@ export async function downloadGameDirect(
       metadataPath,
       metaData: record,
       fileBuffer,
+      sizeVerified,
+      bytesDownloaded,
+      resumed,
     };
   } catch (error: unknown) {
     const err = error as Record<string, unknown>;

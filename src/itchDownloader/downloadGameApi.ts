@@ -22,6 +22,7 @@ export async function downloadGameViaApi(
     inMemory,
     writeMetaData = true,
     onProgress,
+    resume = false,
   } = params;
 
   if (desiredFileName && (desiredFileName.includes('/') || desiredFileName.includes('\\'))) {
@@ -75,6 +76,9 @@ export async function downloadGameViaApi(
     const fileName = upload.filename || `${record.name}.zip`;
     const targetPath = downloadDirectory ? path.join(downloadDirectory, fileName) : undefined;
     let fileBuffer: Buffer | undefined;
+    let sizeVerified = true;
+    let bytesDownloaded = 0;
+    let resumed = false;
 
     if (inMemory) {
       fileBuffer = await client.downloadToBuffer(
@@ -82,6 +86,7 @@ export async function downloadGameViaApi(
         onProgress,
         fileName,
       );
+      bytesDownloaded = fileBuffer.length;
       if (targetPath) {
         const fsPromises = await import('fs/promises');
         await fsPromises.writeFile(targetPath, fileBuffer);
@@ -90,7 +95,20 @@ export async function downloadGameViaApi(
       if (!targetPath) {
         throw new Error('downloadDirectory is required when not using memory mode');
       }
-      await client.download(`/uploads/${upload.id}/download`, targetPath, onProgress);
+      if (resume) {
+        const result = await client.downloadWithResume(
+          `/uploads/${upload.id}/download`,
+          targetPath,
+          onProgress,
+        );
+        sizeVerified = result.verified;
+        bytesDownloaded = result.bytesWritten;
+        resumed = result.bytesWritten > (result.expectedBytes || 0) - (result.expectedBytes || 0);
+      } else {
+        const result = await client.download(`/uploads/${upload.id}/download`, targetPath, onProgress);
+        sizeVerified = result.verified;
+        bytesDownloaded = result.bytesWritten;
+      }
     }
 
     let finalFilePath = targetPath || '';
@@ -128,6 +146,9 @@ export async function downloadGameViaApi(
       metadataPath,
       metaData: record,
       fileBuffer,
+      sizeVerified,
+      bytesDownloaded,
+      resumed,
     };
   } catch (error: unknown) {
     const err = error as Record<string, unknown>;

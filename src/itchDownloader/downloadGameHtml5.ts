@@ -165,7 +165,12 @@ export async function downloadGameHtml5(
         await fsp.mkdir(assetDir, { recursive: true });
 
         const assetFilePath = resolvedAsset;
+        const expectedSize = Number(assetRes.headers.get('content-length') || '0') || undefined;
         const buffer = Buffer.from(await assetRes.arrayBuffer());
+        if (expectedSize && buffer.length !== expectedSize) {
+          failures.push(`${assetPath} (size mismatch: expected ${expectedSize}, got ${buffer.length})`);
+          continue;
+        }
         await fsp.writeFile(assetFilePath, buffer);
 
         totalBytes += buffer.length;

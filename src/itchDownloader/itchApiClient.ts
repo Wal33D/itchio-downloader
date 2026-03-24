@@ -1,4 +1,4 @@
-import { streamToFile, streamToBuffer } from './httpDownload';
+import { streamToFile, streamToBuffer, downloadWithResume, StreamResult } from './httpDownload';
 import { DownloadProgress } from './types';
 
 export class ItchApiClient {
@@ -37,7 +37,7 @@ export class ItchApiClient {
     endpoint: string,
     filePath: string,
     onProgress?: (info: DownloadProgress) => void,
-  ): Promise<void> {
+  ): Promise<StreamResult> {
     const url = this.buildUrl(endpoint);
     const res = await fetch(url, { headers: this.headers });
     if (!res.ok) {
@@ -46,7 +46,16 @@ export class ItchApiClient {
       err.body = await res.text().catch(() => '');
       throw err;
     }
-    await streamToFile(res, filePath, onProgress);
+    return streamToFile(res, filePath, onProgress);
+  }
+
+  async downloadWithResume(
+    endpoint: string,
+    filePath: string,
+    onProgress?: (info: DownloadProgress) => void,
+  ): Promise<StreamResult> {
+    const url = this.buildUrl(endpoint);
+    return downloadWithResume(url, filePath, this.headers, onProgress);
   }
 
   async downloadToBuffer(

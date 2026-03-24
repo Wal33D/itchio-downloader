@@ -72,6 +72,12 @@ export type DownloadGameParams = {
   /** Preferred platform for multi-upload games (e.g., 'windows', 'linux', 'osx') */
   platform?: string;
   onProgress?: (info: DownloadProgress) => void;
+  /** Enable resume support for interrupted downloads using Range headers */
+  resume?: boolean;
+  /** Directory for cookie cache (default: os.tmpdir()/itchio-downloader) */
+  cookieCacheDir?: string;
+  /** Disable cookie caching (enabled by default for direct HTTP) */
+  noCookieCache?: boolean;
 };
 
 export type DownloadGameResponse = {
@@ -87,4 +93,10 @@ export type DownloadGameResponse = {
   fileBuffer?: Buffer;
   /** List of asset file paths downloaded for HTML5 web games */
   html5Assets?: string[];
+  /** Whether the downloaded file size matched the expected Content-Length */
+  sizeVerified?: boolean;
+  /** Total bytes downloaded */
+  bytesDownloaded?: number;
+  /** Whether the download was resumed from a partial file */
+  resumed?: boolean;
 };

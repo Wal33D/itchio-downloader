@@ -12,4 +12,6 @@ export interface CLIArgs {
   html5?: boolean;
   platform?: string;
   delay?: number;
+  resume?: boolean;
+  noCookieCache?: boolean;
 }

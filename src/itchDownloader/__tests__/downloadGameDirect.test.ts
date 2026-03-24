@@ -5,8 +5,15 @@ import { downloadGameDirect } from '../downloadGameDirect';
 import * as httpDownload from '../httpDownload';
 
 jest.mock('../httpDownload', () => ({
-  streamToFile: jest.fn().mockResolvedValue(undefined),
+  streamToFile: jest.fn().mockResolvedValue({ bytesWritten: 100, expectedBytes: 100, verified: true }),
   streamToBuffer: jest.fn().mockResolvedValue(Buffer.from('test-content')),
+  downloadWithResume: jest.fn().mockResolvedValue({ bytesWritten: 100, expectedBytes: 100, verified: true }),
+}));
+
+jest.mock('../cookieCache', () => ({
+  getCachedCookies: jest.fn().mockResolvedValue(null),
+  setCachedCookies: jest.fn().mockResolvedValue(undefined),
+  mergeCookies: jest.fn((a: string, b: string) => [a, b].filter(Boolean).join('; ')),
 }));
 
 jest.mock('../fetchItchGameProfile', () => ({
@@ -86,7 +93,13 @@ describe('downloadGameDirect', () => {
     mockFetch.mockResolvedValueOnce(
       mockResponse(JSON.stringify({ url: 'https://cdn.example.com/game.zip' })),
     );
-    // Step 5: GET CDN URL
+    // Step 5: HEAD CDN URL (for filename)
+    mockFetch.mockResolvedValueOnce(
+      mockResponse('', {
+        headers: { 'content-disposition': 'attachment; filename="game.zip"' },
+      }),
+    );
+    // Step 6: GET CDN URL (actual download)
     mockFetch.mockResolvedValueOnce(
       mockResponse('', {
         headers: { 'content-disposition': 'attachment; filename="game.zip"' },
@@ -104,7 +117,8 @@ describe('downloadGameDirect', () => {
     expect(result.status).toBe(true);
     expect(result.message).toContain('Download successful');
     expect(httpDownload.streamToFile).toHaveBeenCalled();
-    expect(mockFetch).toHaveBeenCalledTimes(5);
+    expect(mockFetch).toHaveBeenCalledTimes(6);
+    expect(result.sizeVerified).toBe(true);
   });
 
   it('donation wall happy path', async () => {
@@ -137,7 +151,13 @@ describe('downloadGameDirect', () => {
     mockFetch.mockResolvedValueOnce(
       mockResponse(JSON.stringify({ url: 'https://cdn.example.com/game2.zip' })),
     );
-    // Step 5: GET CDN URL
+    // Step 5: HEAD CDN URL
+    mockFetch.mockResolvedValueOnce(
+      mockResponse('', {
+        headers: { 'content-disposition': 'attachment; filename="game2.zip"' },
+      }),
+    );
+    // Step 6: GET CDN URL
     mockFetch.mockResolvedValueOnce(
       mockResponse('', {
         headers: { 'content-disposition': 'attachment; filename="game2.zip"' },
@@ -224,7 +244,13 @@ describe('downloadGameDirect', () => {
     mockFetch.mockResolvedValueOnce(
       mockResponse(JSON.stringify({ url: 'https://cdn.example.com/file.zip' })),
     );
-    // CDN returns 403
+    // HEAD request succeeds
+    mockFetch.mockResolvedValueOnce(
+      mockResponse('', {
+        headers: { 'content-disposition': 'attachment; filename="file.zip"' },
+      }),
+    );
+    // Actual CDN download returns 403
     mockFetch.mockResolvedValueOnce(
       mockResponse('Forbidden', { ok: false, status: 403 }),
     );
@@ -349,6 +375,13 @@ describe('downloadGameDirect', () => {
     mockFetch.mockResolvedValueOnce(
       mockResponse(JSON.stringify({ url: 'https://cdn.example.com/na.zip' })),
     );
+    // HEAD CDN URL
+    mockFetch.mockResolvedValueOnce(
+      mockResponse('', {
+        headers: { 'content-disposition': 'attachment; filename="na.zip"' },
+      }),
+    );
+    // GET CDN URL
     mockFetch.mockResolvedValueOnce(
       mockResponse('', {
         headers: { 'content-disposition': 'attachment; filename="na.zip"' },

@@ -53,6 +53,9 @@ function printResult(
       if (r.metaData?.title) console.log(`    Title: ${r.metaData.title}`);
       if (r.fileBuffer) console.log(`    Buffer: ${formatBytes(r.fileBuffer.length)}`);
       if (r.html5Assets) console.log(`    Assets: ${r.html5Assets.length} files`);
+      if (r.bytesDownloaded) console.log(`    Size: ${formatBytes(r.bytesDownloaded)}`);
+      if (r.sizeVerified === false) console.log(`    \u26a0 Size verification failed`);
+      if (r.resumed) console.log(`    \u21bb Resumed from partial download`);
     } else {
       console.error(`\n  \u2718 ${r.message}`);
       if (r.httpStatus) console.error(`    HTTP Status: ${r.httpStatus}`);
@@ -129,6 +132,14 @@ export async function run(
       type: 'number',
       default: 0,
     })
+    .option('resume', {
+      describe: 'Resume interrupted downloads using Range headers',
+      type: 'boolean',
+    })
+    .option('noCookieCache', {
+      describe: 'Disable cookie caching (cookies are cached by default)',
+      type: 'boolean',
+    })
     .check((args) => {
       if (args.collection) {
         return true;
@@ -180,6 +191,8 @@ export async function run(
   if (argv.retries !== undefined) params.retries = Number(argv.retries);
   if (argv.retryDelay !== undefined)
     params.retryDelayMs = Number(argv.retryDelay);
+  if (argv.resume) params.resume = true;
+  if (argv.noCookieCache) params.noCookieCache = true;
   if (onProgress) {
     params.onProgress = onProgress;
   }
