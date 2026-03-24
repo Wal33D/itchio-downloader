@@ -86,7 +86,7 @@ npm install -g itchio-downloader
 pnpm add itchio-downloader
 yarn add itchio-downloader
 
-# Arch Linux (AUR)
+# Arch Linux (AUR) — https://aur.archlinux.org/packages/itchio-downloader
 yay -S itchio-downloader
 ```
 
