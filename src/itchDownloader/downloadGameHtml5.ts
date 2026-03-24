@@ -4,6 +4,7 @@ import fsp from 'fs/promises';
 import { createDirectory } from '../fileUtils/createDirectory';
 import { createFile } from '../fileUtils/createFile';
 import { fetchItchGameProfile } from './fetchItchGameProfile';
+import { fetchWithTimeout } from './httpDownload';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 
 const USER_AGENT =
@@ -91,7 +92,7 @@ export async function downloadGameHtml5(
 
   try {
     // Step 1: GET game page → find HTML5 iframe URL
-    const pageRes = await fetch(itchGameUrl, { headers: { 'User-Agent': USER_AGENT } });
+    const pageRes = await fetchWithTimeout(itchGameUrl, { headers: { 'User-Agent': USER_AGENT } });
     if (!pageRes.ok) {
       return { status: false, message: `Game page returned HTTP ${pageRes.status}`, httpStatus: pageRes.status };
     }
@@ -111,7 +112,7 @@ export async function downloadGameHtml5(
     await createDirectory({ directory: gameDir });
 
     // Step 2: GET index.html
-    const indexRes = await fetch(`${baseUrl}index.html`, { headers: { 'User-Agent': USER_AGENT } });
+    const indexRes = await fetchWithTimeout(`${baseUrl}index.html`, { headers: { 'User-Agent': USER_AGENT } });
     if (!indexRes.ok) {
       return { status: false, message: `index.html returned HTTP ${indexRes.status}`, httpStatus: indexRes.status };
     }
@@ -127,7 +128,7 @@ export async function downloadGameHtml5(
 
     for (const jsFile of jsFiles) {
       try {
-        const jsRes = await fetch(`${baseUrl}${jsFile}`, { headers: { 'User-Agent': USER_AGENT } });
+        const jsRes = await fetchWithTimeout(`${baseUrl}${jsFile}`, { headers: { 'User-Agent': USER_AGENT } });
         if (jsRes.ok) {
           const jsContent = await jsRes.text();
           jsDiscoveredAssets.push(...scanJsForAssets(jsContent));
@@ -155,7 +156,7 @@ export async function downloadGameHtml5(
         }
 
         const assetUrl = `${baseUrl}${assetPath}`;
-        const assetRes = await fetch(assetUrl, { headers: { 'User-Agent': USER_AGENT } });
+        const assetRes = await fetchWithTimeout(assetUrl, { headers: { 'User-Agent': USER_AGENT } });
         if (!assetRes.ok) {
           failures.push(`${assetPath} (HTTP ${assetRes.status})`);
           continue;

@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { Readable } from 'stream';
-import { streamToFile, streamToBuffer } from '../httpDownload';
+import { streamToFile, streamToBuffer, fetchWithTimeout } from '../httpDownload';
 
 /**
  * Create a mock Response object with a Node Readable body stream.
@@ -159,5 +159,58 @@ describe('httpDownload', () => {
     const result = await streamToBuffer(res);
     expect(result.toString()).toBe('exact match');
     expect(result.length).toBe(content.length);
+  });
+
+  it('streamToFile treats negative Content-Length as unknown', async () => {
+    const content = Buffer.from('negative CL');
+    const filePath = path.join(tmpDir, 'negcl.bin');
+    const res = makeMockResponse(content, { 'content-length': '-1' });
+
+    const result = await streamToFile(res, filePath);
+
+    expect(result.expectedBytes).toBeUndefined();
+    expect(result.verified).toBe(true);
+  });
+
+  it('streamToFile treats NaN Content-Length as unknown', async () => {
+    const content = Buffer.from('nan CL');
+    const filePath = path.join(tmpDir, 'nancl.bin');
+    const res = makeMockResponse(content, { 'content-length': 'not-a-number' });
+
+    const result = await streamToFile(res, filePath);
+
+    expect(result.expectedBytes).toBeUndefined();
+    expect(result.verified).toBe(true);
+  });
+});
+
+describe('fetchWithTimeout', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('resolves when fetch completes before timeout', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+    }) as unknown as typeof fetch;
+
+    const res = await fetchWithTimeout('https://example.com', {}, 5000);
+    expect(res.ok).toBe(true);
+  });
+
+  it('aborts when fetch exceeds timeout', async () => {
+    global.fetch = jest.fn().mockImplementation(
+      (_url: string, opts: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          opts.signal?.addEventListener('abort', () => {
+            reject(new DOMException('The operation was aborted', 'AbortError'));
+          });
+        }),
+    ) as unknown as typeof fetch;
+
+    await expect(fetchWithTimeout('https://slow.example.com', {}, 50)).rejects.toThrow('aborted');
   });
 });

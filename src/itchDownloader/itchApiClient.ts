@@ -1,4 +1,4 @@
-import { streamToFile, streamToBuffer, downloadWithResume, StreamResult } from './httpDownload';
+import { streamToFile, streamToBuffer, downloadWithResume, fetchWithTimeout, StreamResult } from './httpDownload';
 import { DownloadProgress } from './types';
 
 export class ItchApiClient {
@@ -23,7 +23,7 @@ export class ItchApiClient {
 
   async get<T = unknown>(endpoint: string, params?: Record<string, string | number>): Promise<T> {
     const url = this.buildUrl(endpoint, params);
-    const res = await fetch(url, { headers: this.headers });
+    const res = await fetchWithTimeout(url, { headers: this.headers });
     if (!res.ok) {
       const err = new Error(`Request failed with status ${res.status}`) as Error & { statusCode: number; body: string };
       err.statusCode = res.status;
@@ -39,7 +39,7 @@ export class ItchApiClient {
     onProgress?: (info: DownloadProgress) => void,
   ): Promise<StreamResult> {
     const url = this.buildUrl(endpoint);
-    const res = await fetch(url, { headers: this.headers });
+    const res = await fetchWithTimeout(url, { headers: this.headers });
     if (!res.ok) {
       const err = new Error(`Download failed with status ${res.status}`) as Error & { statusCode: number; body: string };
       err.statusCode = res.status;
@@ -64,7 +64,7 @@ export class ItchApiClient {
     fileName?: string,
   ): Promise<Buffer> {
     const url = this.buildUrl(endpoint);
-    const res = await fetch(url, { headers: this.headers });
+    const res = await fetchWithTimeout(url, { headers: this.headers });
     if (!res.ok) {
       const err = new Error(`Download failed with status ${res.status}`) as Error & { statusCode: number; body: string };
       err.statusCode = res.status;

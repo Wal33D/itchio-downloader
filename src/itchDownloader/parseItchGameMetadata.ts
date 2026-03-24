@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from './httpDownload';
 import { IParsedItchGameMetadata } from './types';
 
 /**
@@ -32,7 +33,7 @@ export const parseItchGameMetadata = async ({
   }
 
   try {
-    const response = await fetch(itchGameUrl);
+    const response = await fetchWithTimeout(itchGameUrl);
     if (!response.ok) {
       return {
         jsonParsed: false,

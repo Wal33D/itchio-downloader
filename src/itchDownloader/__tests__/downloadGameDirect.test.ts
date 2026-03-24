@@ -9,6 +9,8 @@ jest.mock('../httpDownload', () => ({
   streamToFile: jest.fn().mockResolvedValue({ bytesWritten: 100, expectedBytes: 100, verified: true }),
   streamToBuffer: jest.fn().mockResolvedValue(Buffer.from('test-content')),
   downloadWithResume: jest.fn().mockResolvedValue({ bytesWritten: 100, expectedBytes: 100, verified: true }),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+  fetchWithTimeout: jest.fn((...args: unknown[]) => (global.fetch as Function)(...args)),
 }));
 
 jest.mock('../cookieCache', () => ({
@@ -588,6 +590,53 @@ describe('downloadGameDirect', () => {
     expect(result.sizeVerified).toBe(true);
     expect(result.bytesDownloaded).toBe(100);
     expect(result.resumed).toBe(false);
+  });
+
+  it('sanitizes Content-Disposition filename (path traversal prevention)', async () => {
+    const gamePageHtml = `
+      <html>
+        <input name="csrf_token" value="toksafe" />
+        <div data-upload_id="42">file.zip</div>
+      </html>
+    `;
+    const downloadPageHtml = `
+      <html>
+        <input name="csrf_token" value="toksafe2" />
+        <div data-upload_id="42">file.zip</div>
+      </html>
+    `;
+
+    const mockFetch = jest.fn();
+    mockFetch.mockResolvedValueOnce(mockResponse(gamePageHtml));
+    mockFetch.mockResolvedValueOnce(
+      mockResponse(JSON.stringify({ url: 'https://itch.io/download/page/safe' })),
+    );
+    mockFetch.mockResolvedValueOnce(mockResponse(downloadPageHtml));
+    mockFetch.mockResolvedValueOnce(
+      mockResponse(JSON.stringify({ url: 'https://cdn.example.com/safe.zip' })),
+    );
+    // HEAD CDN URL returns malicious Content-Disposition with path traversal
+    mockFetch.mockResolvedValueOnce(
+      mockResponse('', {
+        headers: { 'content-disposition': 'attachment; filename="../../etc/passwd"' },
+      }),
+    );
+    // GET CDN URL
+    mockFetch.mockResolvedValueOnce(mockResponse(''));
+
+    global.fetch = mockFetch as unknown as typeof fetch;
+
+    const result = await downloadGameDirect({
+      itchGameUrl: 'https://author.itch.io/safegame',
+      downloadDirectory: tmpDir,
+      writeMetaData: false,
+    });
+
+    expect(result.status).toBe(true);
+    // File must be in the download directory, not traversed
+    expect(result.filePath).toContain(tmpDir);
+    expect(result.filePath).not.toContain('..');
+    expect(result.filePath).toContain('passwd'); // basename extracted correctly
   });
 
   it('inMemory mode reports bytesDownloaded', async () => {

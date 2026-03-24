@@ -56,4 +56,70 @@ describe('downloadCollection', () => {
     await downloadCollection('https://itch.io/c/1/test');
     expect(dgMock).toHaveBeenCalledWith([{ itchGameUrl: 'https://a' }], 1);
   });
+
+  it('passes resume flag through to each game', async () => {
+    (global as any).fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ games: [{ url: 'https://a' }], next_page: null }),
+    });
+    const dgMock = jest
+      .spyOn(downloadGameMod, 'downloadGame')
+      .mockResolvedValue('x' as any);
+    await downloadCollection('https://itch.io/c/1/test', undefined, { resume: true });
+    expect(dgMock).toHaveBeenCalledWith(
+      [expect.objectContaining({ resume: true })],
+      1,
+    );
+  });
+
+  it('passes noCookieCache flag through to each game', async () => {
+    (global as any).fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ games: [{ url: 'https://a' }], next_page: null }),
+    });
+    const dgMock = jest
+      .spyOn(downloadGameMod, 'downloadGame')
+      .mockResolvedValue('x' as any);
+    await downloadCollection('https://itch.io/c/1/test', undefined, { noCookieCache: true });
+    expect(dgMock).toHaveBeenCalledWith(
+      [expect.objectContaining({ noCookieCache: true })],
+      1,
+    );
+  });
+
+  it('passes cookieCacheDir through to each game', async () => {
+    (global as any).fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ games: [{ url: 'https://a' }], next_page: null }),
+    });
+    const dgMock = jest
+      .spyOn(downloadGameMod, 'downloadGame')
+      .mockResolvedValue('x' as any);
+    await downloadCollection('https://itch.io/c/1/test', 'key', { cookieCacheDir: '/tmp/cookies' });
+    expect(dgMock).toHaveBeenCalledWith(
+      [expect.objectContaining({ cookieCacheDir: '/tmp/cookies', apiKey: 'key' })],
+      1,
+    );
+  });
+
+  it('throws on invalid collection URL', async () => {
+    await expect(downloadCollection('https://itch.io/invalid')).rejects.toThrow('Invalid collection');
+  });
+
+  it('throws on API error during pagination', async () => {
+    const fetchMock = jest.fn();
+    (global as any).fetch = fetchMock;
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ games: [{ url: 'https://a' }], next_page: 2 }),
+    });
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    });
+
+    await expect(
+      downloadCollection('https://itch.io/c/123/test'),
+    ).rejects.toThrow('Failed to fetch collection page 2');
+  });
 });

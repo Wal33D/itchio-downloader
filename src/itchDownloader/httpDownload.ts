@@ -5,6 +5,25 @@ import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import { DownloadProgress } from './types';
 
+/** Default timeout for HTTP requests (30 seconds). */
+const DEFAULT_TIMEOUT_MS = 30_000;
+
+/**
+ * Fetch with an automatic timeout via AbortController.
+ * Prevents indefinite hangs on unresponsive servers.
+ */
+export function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+    clearTimeout(timer),
+  );
+}
+
 /** Result returned by streamToFile with verification info. */
 export interface StreamResult {
   bytesWritten: number;
@@ -55,7 +74,8 @@ export async function streamToFile(
   onProgress?: (info: DownloadProgress) => void,
   resumeFrom?: number,
 ): Promise<StreamResult> {
-  const contentLength = Number(res.headers.get('content-length') || '0') || undefined;
+  const rawCL = Number(res.headers.get('content-length') || '0');
+  const contentLength = Number.isFinite(rawCL) && rawCL > 0 ? rawCL : undefined;
   const expectedBytes = resumeFrom && contentLength ? resumeFrom + contentLength : contentLength;
   await fsp.mkdir(path.dirname(filePath), { recursive: true });
   const writeStream = fs.createWriteStream(filePath, resumeFrom ? { flags: 'a' } : undefined);
@@ -84,7 +104,8 @@ export async function streamToBuffer(
   onProgress?: (info: DownloadProgress) => void,
   fileName?: string,
 ): Promise<Buffer> {
-  const total = Number(res.headers.get('content-length') || '0') || undefined;
+  const rawTotal = Number(res.headers.get('content-length') || '0');
+  const total = Number.isFinite(rawTotal) && rawTotal > 0 ? rawTotal : undefined;
   const readable = responseToReadable(res);
   const chunks: Buffer[] = [];
   let bytes = 0;
@@ -133,7 +154,8 @@ export async function downloadWithResume(
     reqHeaders['Range'] = `bytes=${resumeFrom}-`;
   }
 
-  const res = await fetch(url, { headers: reqHeaders });
+  // Use a longer timeout for downloads (5 minutes) since large files take time
+  const res = await fetchWithTimeout(url, { headers: reqHeaders }, 5 * 60 * 1000);
 
   // If server doesn't support Range (200 instead of 206), start fresh
   if (resumeFrom > 0 && res.status !== 206) {

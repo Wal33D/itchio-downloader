@@ -1,4 +1,5 @@
 import { downloadGame } from './downloadGame';
+import { fetchWithTimeout } from './httpDownload';
 import {
   DownloadGameParams,
   DownloadGameResponse,
@@ -23,7 +24,7 @@ async function fetchGameUrls(
     );
     reqUrl.searchParams.set('page', String(page));
     if (apiKey) reqUrl.searchParams.set('api_key', apiKey);
-    const res = await fetch(reqUrl.toString());
+    const res = await fetchWithTimeout(reqUrl.toString());
     if (!res.ok) {
       const err = new Error(
         `Failed to fetch collection page ${page}: ${res.status}`,

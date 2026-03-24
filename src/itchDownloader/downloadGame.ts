@@ -278,9 +278,8 @@ export async function downloadGameSingle(
   let attempt = 0;
   let result: DownloadGameResponse = await attemptPuppeteer();
   while (!result.status && attempt < retries) {
-    await new Promise((r) =>
-      setTimeout(r, retryDelayMs * Math.pow(2, attempt)),
-    );
+    const delay = Math.min(retryDelayMs * Math.pow(2, attempt), 30_000);
+    await new Promise((r) => setTimeout(r, delay));
     attempt++;
     result = await attemptPuppeteer();
   }

@@ -39,8 +39,8 @@ async function loadStore(cacheDir?: string): Promise<CookieStore> {
  */
 async function saveStore(store: CookieStore, cacheDir?: string): Promise<void> {
   const cachePath = getCachePath(cacheDir);
-  await fsp.mkdir(path.dirname(cachePath), { recursive: true });
-  await fsp.writeFile(cachePath, JSON.stringify(store, null, 2), 'utf-8');
+  await fsp.mkdir(path.dirname(cachePath), { recursive: true, mode: 0o700 });
+  await fsp.writeFile(cachePath, JSON.stringify(store, null, 2), { encoding: 'utf-8', mode: 0o600 });
 }
 
 /**

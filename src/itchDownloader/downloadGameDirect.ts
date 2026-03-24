@@ -5,7 +5,7 @@ import { createFile } from '../fileUtils/createFile';
 import { createDirectory } from '../fileUtils/createDirectory';
 import { renameFile } from '../fileUtils/renameFile';
 import { fetchItchGameProfile } from './fetchItchGameProfile';
-import { streamToFile, streamToBuffer, downloadWithResume } from './httpDownload';
+import { streamToFile, streamToBuffer, downloadWithResume, fetchWithTimeout } from './httpDownload';
 import { getCachedCookies, setCachedCookies, mergeCookies } from './cookieCache';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 
@@ -123,7 +123,7 @@ export async function downloadGameDirect(
       pageHeaders['Cookie'] = cachedSession.cookies;
     }
 
-    const pageRes = await fetch(itchGameUrl, { headers: pageHeaders });
+    const pageRes = await fetchWithTimeout(itchGameUrl, { headers: pageHeaders });
     if (!pageRes.ok) {
       return { status: false, message: `Game page returned HTTP ${pageRes.status}`, httpStatus: pageRes.status };
     }
@@ -168,7 +168,7 @@ export async function downloadGameDirect(
       ? `csrf_token=${encodeURIComponent(page.csrfToken)}&upload_id=${page.uploadIds[0]}`
       : `csrf_token=${encodeURIComponent(page.csrfToken)}`;
 
-    const dlUrlRes = await fetch(`${itchGameUrl}/download_url`, {
+    const dlUrlRes = await fetchWithTimeout(`${itchGameUrl}/download_url`, {
       method: 'POST',
       headers: {
         'User-Agent': USER_AGENT,
@@ -188,7 +188,7 @@ export async function downloadGameDirect(
     }
 
     // Step 3: GET download page
-    const dlPageRes = await fetch(dlUrlData.url, {
+    const dlPageRes = await fetchWithTimeout(dlUrlData.url, {
       headers: { 'User-Agent': USER_AGENT, Cookie: sessionCookies },
     });
     if (!dlPageRes.ok) {
@@ -223,7 +223,7 @@ export async function downloadGameDirect(
     const csrf = dlPage.csrfToken || page.csrfToken;
 
     // Step 4: POST /file/{uploadId} for CDN URL
-    const fileRes = await fetch(`${itchGameUrl}/file/${uploadId}`, {
+    const fileRes = await fetchWithTimeout(`${itchGameUrl}/file/${uploadId}`, {
       method: 'POST',
       headers: {
         'User-Agent': USER_AGENT,
@@ -251,7 +251,7 @@ export async function downloadGameDirect(
     let resumed = false;
 
     if (inMemory) {
-      const cdnRes = await fetch(cdnData.url, {
+      const cdnRes = await fetchWithTimeout(cdnData.url, {
         headers: { 'User-Agent': USER_AGENT },
       });
       if (!cdnRes.ok) {
@@ -261,13 +261,15 @@ export async function downloadGameDirect(
       bytesDownloaded = fileBuffer.length;
     } else if (downloadDirectory) {
       // Get the CDN URL filename first via a HEAD-like initial fetch
-      const cdnRes = await fetch(cdnData.url, {
+      const cdnRes = await fetchWithTimeout(cdnData.url, {
         method: 'HEAD',
         headers: { 'User-Agent': USER_AGENT },
       });
       const disposition = cdnRes.headers.get('content-disposition');
       const dispositionMatch = disposition?.match(/filename="?([^";\n]+)"?/);
-      const cdnFileName = dispositionMatch?.[1] || `game-${uploadId}.zip`;
+      // Sanitize filename: strip path components to prevent directory traversal
+      const rawFileName = dispositionMatch?.[1] || `game-${uploadId}.zip`;
+      const cdnFileName = path.basename(rawFileName).replace(/\0/g, '') || `game-${uploadId}.zip`;
       finalFilePath = path.join(downloadDirectory, cdnFileName);
 
       if (resume) {
@@ -283,7 +285,7 @@ export async function downloadGameDirect(
         resumed = result.resumed ?? false;
       } else {
         // Standard download with size verification
-        const cdnDownloadRes = await fetch(cdnData.url, {
+        const cdnDownloadRes = await fetchWithTimeout(cdnData.url, {
           headers: { 'User-Agent': USER_AGENT },
         });
         if (!cdnDownloadRes.ok) {

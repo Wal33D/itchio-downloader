@@ -261,6 +261,9 @@ describe('cli', () => {
       downloadDirectory: undefined,
       concurrency: 2,
       onProgress: undefined,
+      resume: undefined,
+      noCookieCache: undefined,
+      cookieCacheDir: undefined,
     });
     expect(logSpy).toHaveBeenCalled();
   });
@@ -328,6 +331,109 @@ describe('cli', () => {
     expect(mock).toHaveBeenCalledWith(
       expect.objectContaining({ platform: 'linux' }),
       expect.any(Object),
+    );
+  });
+
+  it('passes --resume flag to params', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--resume',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      expect.objectContaining({ resume: true }),
+      expect.any(Object),
+    );
+  });
+
+  it('passes --noCookieCache flag to params', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--noCookieCache',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      expect.objectContaining({ noCookieCache: true }),
+      expect.any(Object),
+    );
+  });
+
+  it('passes --cookieCacheDir to params', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--cookieCacheDir',
+      '/tmp/cache',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      expect.objectContaining({ cookieCacheDir: '/tmp/cache' }),
+      expect.any(Object),
+    );
+  });
+
+  it('collection passes --resume flag', async () => {
+    const mock = jest
+      .spyOn(downloadCollectionModule, 'downloadCollection')
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--collection',
+      'https://itch.io/c/1/test',
+      '--resume',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      'https://itch.io/c/1/test',
+      undefined,
+      expect.objectContaining({ resume: true }),
+    );
+  });
+
+  it('collection passes --noCookieCache flag', async () => {
+    const mock = jest
+      .spyOn(downloadCollectionModule, 'downloadCollection')
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--collection',
+      'https://itch.io/c/1/test',
+      '--noCookieCache',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      'https://itch.io/c/1/test',
+      undefined,
+      expect.objectContaining({ noCookieCache: true }),
     );
   });
 
