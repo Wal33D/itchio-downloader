@@ -65,7 +65,7 @@ describe('ItchApiClient', () => {
     expect(result.uploads[0].filename).toBe('game.zip');
   });
 
-  it('download() writes file to disk', async () => {
+  it('download() writes file to disk and returns StreamResult', async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'api-dl-'));
     const filePath = path.join(tmpDir, 'downloaded.zip');
     const data = Buffer.from('file-content-here');
@@ -78,10 +78,81 @@ describe('ItchApiClient', () => {
     global.fetch = mockFetch;
 
     const client = new ItchApiClient('key');
-    await client.download('/uploads/1/download', filePath);
+    const result = await client.download('/uploads/1/download', filePath);
 
     expect(fs.existsSync(filePath)).toBe(true);
     const written = fs.readFileSync(filePath);
     expect(written.toString()).toBe('file-content-here');
+
+    // StreamResult fields
+    expect(result).toHaveProperty('bytesWritten', data.length);
+    expect(result).toHaveProperty('verified', true);
+    expect(result).toHaveProperty('expectedBytes', data.length);
+  });
+
+  it('download() throws on non-ok response', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'api-dl-err-'));
+    const filePath = path.join(tmpDir, 'fail.zip');
+
+    const mockFetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      text: async () => 'Forbidden',
+    });
+    global.fetch = mockFetch;
+
+    const client = new ItchApiClient('key');
+
+    try {
+      await client.download('/uploads/1/download', filePath);
+      fail('Expected error to be thrown');
+    } catch (err: any) {
+      expect(err.message).toContain('403');
+      expect(err.statusCode).toBe(403);
+    }
+  });
+
+  it('downloadWithResume() delegates to downloadWithResume and includes auth headers', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'api-resume-'));
+    const filePath = path.join(tmpDir, 'resumed.zip');
+    const data = Buffer.from('resumed-content');
+
+    const mockFetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: (h: string) => (h === 'content-length' ? String(data.length) : null) },
+      body: Readable.from(data),
+    });
+    global.fetch = mockFetch;
+
+    const client = new ItchApiClient('resume-key');
+    const result = await client.downloadWithResume('/uploads/1/download', filePath);
+
+    expect(result).toHaveProperty('bytesWritten', data.length);
+    expect(result).toHaveProperty('verified', true);
+    expect(result).toHaveProperty('resumed', false);
+
+    // Verify auth headers were passed
+    const fetchCall = mockFetch.mock.calls[0];
+    expect(fetchCall[1].headers['Authorization']).toBe('Bearer resume-key');
+
+    expect(fs.existsSync(filePath)).toBe(true);
+    expect(fs.readFileSync(filePath).toString()).toBe('resumed-content');
+  });
+
+  it('downloadToBuffer() returns Buffer with correct content', async () => {
+    const data = Buffer.from('buffer-via-api');
+    const mockFetch = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      body: Readable.from(data),
+    });
+    global.fetch = mockFetch;
+
+    const client = new ItchApiClient('key');
+    const result = await client.downloadToBuffer('/uploads/1/download');
+
+    expect(result).toBeInstanceOf(Buffer);
+    expect(result.toString()).toBe('buffer-via-api');
   });
 });

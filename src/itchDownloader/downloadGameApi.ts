@@ -103,7 +103,7 @@ export async function downloadGameViaApi(
         );
         sizeVerified = result.verified;
         bytesDownloaded = result.bytesWritten;
-        resumed = result.bytesWritten > (result.expectedBytes || 0) - (result.expectedBytes || 0);
+        resumed = result.resumed ?? false;
       } else {
         const result = await client.download(`/uploads/${upload.id}/download`, targetPath, onProgress);
         sizeVerified = result.verified;

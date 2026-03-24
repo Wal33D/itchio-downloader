@@ -280,7 +280,7 @@ export async function downloadGameDirect(
         );
         sizeVerified = result.verified;
         bytesDownloaded = result.bytesWritten;
-        resumed = result.bytesWritten > (result.expectedBytes ? result.expectedBytes - (Number(cdnRes.headers.get('content-length')) || 0) : 0);
+        resumed = result.resumed ?? false;
       } else {
         // Standard download with size verification
         const cdnDownloadRes = await fetch(cdnData.url, {

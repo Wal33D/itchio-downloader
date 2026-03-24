@@ -10,6 +10,8 @@ export interface StreamResult {
   bytesWritten: number;
   expectedBytes?: number;
   verified: boolean;
+  /** Whether the download was resumed from a partial file */
+  resumed?: boolean;
 }
 
 /**
@@ -134,21 +136,16 @@ export async function downloadWithResume(
   const res = await fetch(url, { headers: reqHeaders });
 
   // If server doesn't support Range (200 instead of 206), start fresh
-  if (resumeFrom > 0 && res.status === 200) {
+  if (resumeFrom > 0 && res.status !== 206) {
     resumeFrom = 0;
-    // Truncate the part file since we're starting over
-    await fsp.writeFile(partPath, Buffer.alloc(0));
-  } else if (resumeFrom > 0 && res.status !== 206) {
-    // Other error — start fresh
-    resumeFrom = 0;
-    await fsp.writeFile(partPath, Buffer.alloc(0));
   }
 
   if (!res.ok && res.status !== 206) {
     throw new Error(`Download failed HTTP ${res.status}`);
   }
 
-  const result = await streamToFile(res, partPath, onProgress, resumeFrom > 0 ? resumeFrom : undefined);
+  const didResume = resumeFrom > 0;
+  const result = await streamToFile(res, partPath, onProgress, didResume ? resumeFrom : undefined);
 
   // Verify size if Content-Length was known
   if (result.expectedBytes && !result.verified) {
@@ -160,5 +157,5 @@ export async function downloadWithResume(
 
   // Success — rename .part → final
   await fsp.rename(partPath, filePath);
-  return result;
+  return { ...result, resumed: didResume };
 }

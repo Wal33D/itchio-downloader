@@ -114,4 +114,50 @@ describe('httpDownload', () => {
     expect(fs.existsSync(filePath)).toBe(true);
     expect(fs.readFileSync(filePath).length).toBe(0);
   });
+
+  it('streamToFile returns StreamResult with verification info', async () => {
+    const content = Buffer.from('verified content');
+    const filePath = path.join(tmpDir, 'result.bin');
+
+    const res = makeMockResponse(content, {
+      'content-length': String(content.length),
+    });
+    const result = await streamToFile(res, filePath);
+
+    expect(result).toHaveProperty('bytesWritten', content.length);
+    expect(result).toHaveProperty('expectedBytes', content.length);
+    expect(result).toHaveProperty('verified', true);
+  });
+
+  it('streamToFile returns verified=true when no Content-Length', async () => {
+    const content = Buffer.from('no CL header');
+    const filePath = path.join(tmpDir, 'nocl.bin');
+
+    const res = makeMockResponse(content);
+    const result = await streamToFile(res, filePath);
+
+    expect(result.verified).toBe(true);
+    expect(result.expectedBytes).toBeUndefined();
+    expect(result.bytesWritten).toBe(content.length);
+  });
+
+  it('streamToBuffer throws on Content-Length mismatch', async () => {
+    const content = Buffer.from('short');
+    const res = makeMockResponse(content, {
+      'content-length': '9999',
+    });
+
+    await expect(streamToBuffer(res)).rejects.toThrow('Size mismatch');
+  });
+
+  it('streamToBuffer validates Content-Length match', async () => {
+    const content = Buffer.from('exact match');
+    const res = makeMockResponse(content, {
+      'content-length': String(content.length),
+    });
+
+    const result = await streamToBuffer(res);
+    expect(result.toString()).toBe('exact match');
+    expect(result.length).toBe(content.length);
+  });
 });
