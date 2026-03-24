@@ -255,7 +255,10 @@ export async function downloadGameSingle(
       return { status, message, metadataPath, filePath: finalFilePath, metaData };
     } catch (error: unknown) {
       message = `Setup failed: ${error instanceof Error ? error.message : String(error)}`;
-      const httpStatus = (error as Record<string, unknown>).statusCode as number | undefined;
+      const httpStatus =
+        error instanceof Error && 'statusCode' in error
+          ? (error as Error & { statusCode: number }).statusCode
+          : undefined;
       if (finalFilePath) {
         return { status: false, message, httpStatus, filePath: finalFilePath };
       }

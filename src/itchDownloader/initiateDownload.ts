@@ -1,4 +1,4 @@
-import { Browser } from 'puppeteer';
+import type { Browser } from 'puppeteer';
 
 /**
  * Initiates a download for a game from the Itch.io website using Puppeteer.
@@ -45,8 +45,10 @@ export const initiateDownload = async ({
       await page.click(downloadLinkSelector);
       downloadInitiated = true;
       message = 'Download initiated successfully from main page.';
-    } catch {
-      // Main download button not found — fall through to donation wall
+    } catch (btnError: unknown) {
+      // Main download button (.button.download_btn) not found — fall through to donation wall
+      const detail = btnError instanceof Error ? btnError.message : String(btnError);
+      message = `Main download button not found (${detail}), trying donation wall...`;
     }
 
     // If the main download button is not found, try the donation wall

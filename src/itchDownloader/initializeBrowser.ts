@@ -45,7 +45,9 @@ export const initializeBrowser = async ({
       downloadPath: path.resolve(downloadDirectory),
     });
 
-    // Track download progress via CDP Page events (compatible with modern Chrome)
+    // Track download progress via CDP Page events (compatible with Chrome 120+).
+    // Puppeteer's CDPSession type doesn't expose the .on() method for page-level
+    // events, so we cast to a minimal interface. This targets Puppeteer v24+.
     if (onProgress) {
       const cdpClient = client as unknown as {
         on(
@@ -79,6 +81,14 @@ export const initializeBrowser = async ({
     message = 'Browser initialized successfully.';
   } catch (error: unknown) {
     message = `Failed to initialize browser: ${error instanceof Error ? error.message : String(error)}`;
+    // Close browser if it launched but setup failed (prevents orphaned Chrome processes)
+    if (browser) {
+      try {
+        await browser.close();
+      } catch {
+        // Best-effort cleanup
+      }
+    }
     browser = null;
   }
 

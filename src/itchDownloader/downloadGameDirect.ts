@@ -254,7 +254,8 @@ export async function downloadGameDirect(
       }
     }
 
-    // Fetch metadata
+    // Fetch metadata — intentionally silent on failure since the download already
+    // succeeded and metadata is a nice-to-have, not a requirement
     const profile = await fetchItchGameProfile({ itchGameUrl }).catch(() => null);
     const record = profile?.itchRecord as IItchRecord | undefined;
 
