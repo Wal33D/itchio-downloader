@@ -1,11 +1,19 @@
-# Itchio-Downloader
+<div align="center">
 
-[![npm version](https://img.shields.io/npm/v/itchio-downloader.svg)](https://www.npmjs.com/package/itchio-downloader)
-[![CI](https://github.com/Wal33D/itchio-downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/Wal33D/itchio-downloader/actions/workflows/ci.yml)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE.md)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
+# itchio-downloader
 
-Download free games from [itch.io](https://itch.io) programmatically. No API key, no Puppeteer, no GUI — just HTTP.
+**Download free games from [itch.io](https://itch.io) programmatically.**\
+No API key. No Puppeteer. No GUI. Just HTTP.
+
+[![npm version](https://img.shields.io/npm/v/itchio-downloader.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/itchio-downloader)
+[![CI](https://img.shields.io/github/actions/workflow/status/Wal33D/itchio-downloader/ci.yml?style=flat-square&label=tests)](https://github.com/Wal33D/itchio-downloader/actions/workflows/ci.yml)
+[![License: ISC](https://img.shields.io/badge/license-ISC-blue.svg?style=flat-square)](LICENSE.md)
+[![Node.js](https://img.shields.io/badge/node-%E2%89%A518-brightgreen.svg?style=flat-square)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg?style=flat-square)](https://www.typescriptlang.org/)
+
+</div>
+
+---
 
 ```bash
 npm install itchio-downloader
@@ -17,49 +25,52 @@ const { downloadGame } = require('itchio-downloader');
 const result = await downloadGame({
   itchGameUrl: 'https://baraklava.itch.io/manic-miners',
 });
-// → Downloads 1 GB game via direct HTTP, no browser needed
+// Downloads a 1 GB game via direct HTTP — no browser needed
 ```
-
----
 
 ## Why This Exists
 
-There's no official API for downloading free itch.io games. The itch desktop app requires a GUI. Butler requires developer access. This library gives you a simple function call or CLI command that just works.
+There's no official API for downloading free itch.io games. The itch desktop app requires a GUI. Butler requires developer access. This library gives you a single function call or CLI command that just works.
 
-**Tested on games from 2.6 MB to 1.9 GB.** 137 unit tests. Zero Puppeteer required for most downloads.
+**Tested on games from 2.6 MB to 1.9 GB.** 137 unit tests. Strict TypeScript. Zero lint warnings.
+
+---
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| **Direct HTTP** | Downloads free games via 4 HTTP requests — no browser binary |
-| **HTML5 Web Games** | Scrape browser-only games for offline play (`--html5`) |
-| **Resume Downloads** | Resume interrupted downloads with `--resume` (Range headers) |
-| **Cookie Caching** | Reuse session cookies across downloads (30-min TTL) |
-| **Size Verification** | Validate Content-Length matches actual bytes downloaded |
-| **Platform Selection** | Choose Windows/Mac/Linux builds (`--platform`) |
-| **API Key Support** | Optional authenticated downloads via itch.io API |
-| **Batch & Concurrent** | Download multiple games with configurable concurrency |
-| **Collections** | Fetch every game from a collection URL |
-| **In-Memory** | Download to a `Buffer` instead of disk |
-| **Progress Tracking** | Real-time `onProgress` callback |
-| **Retries** | Exponential backoff on failure |
-| **Rate Limiting** | Configurable delay between batch downloads |
-| **Metadata** | Saves game metadata JSON alongside downloads |
-| **Puppeteer Fallback** | Optional — only used if direct HTTP fails |
+<table>
+<tr><td width="180"><strong>Direct HTTP</strong></td><td>Downloads free games via 4 HTTP requests — no browser binary needed</td></tr>
+<tr><td><strong>HTML5 Web Games</strong></td><td>Scrape browser-only games for offline play with <code>--html5</code></td></tr>
+<tr><td><strong>Resume Downloads</strong></td><td>Resume interrupted downloads using HTTP Range headers with <code>--resume</code></td></tr>
+<tr><td><strong>Cookie Caching</strong></td><td>Reuse session cookies across downloads (30-min TTL) — faster batch downloads</td></tr>
+<tr><td><strong>Size Verification</strong></td><td>Validate Content-Length matches actual bytes downloaded on every path</td></tr>
+<tr><td><strong>Platform Selection</strong></td><td>Choose Windows, Mac, or Linux builds with <code>--platform</code></td></tr>
+<tr><td><strong>API Key Support</strong></td><td>Optional authenticated downloads via itch.io API</td></tr>
+<tr><td><strong>Batch & Concurrent</strong></td><td>Download multiple games with configurable concurrency and rate limiting</td></tr>
+<tr><td><strong>Collections</strong></td><td>Fetch every game from a collection URL in one command</td></tr>
+<tr><td><strong>In-Memory</strong></td><td>Download to a <code>Buffer</code> instead of disk</td></tr>
+<tr><td><strong>Progress Tracking</strong></td><td>Real-time progress bar in CLI, <code>onProgress</code> callback in library</td></tr>
+<tr><td><strong>Retries</strong></td><td>Exponential backoff on failure</td></tr>
+<tr><td><strong>Metadata</strong></td><td>Saves game metadata JSON alongside downloads</td></tr>
+<tr><td><strong>Puppeteer Fallback</strong></td><td>Optional last-resort fallback — only if direct HTTP fails</td></tr>
+</table>
+
+---
 
 ## How It Works
 
 ```
 downloadGame(params)
-  1. API key provided?  → Authenticated API download
-  2. --html5 flag?      → Scrape web game assets
-  3. Free game?         → Direct HTTP (CSRF → download page → CDN URL)
-  4. Web-only game?     → Auto-detect and scrape HTML5 assets
-  5. All else fails?    → Puppeteer fallback (if installed)
+  1. API key provided?  --> Authenticated API download
+  2. --html5 flag?      --> Scrape web game assets
+  3. Free game?         --> Direct HTTP (CSRF --> download page --> CDN URL)
+  4. Web-only game?     --> Auto-detect and scrape HTML5 assets
+  5. All else fails?    --> Puppeteer fallback (if installed)
 ```
 
-Most free games resolve at step 3. Puppeteer is an optional dependency — you don't need it unless steps 1–4 all fail.
+Most free games resolve at **step 3**. Puppeteer is an optional dependency — you don't need it unless steps 1-4 all fail.
+
+---
 
 ## Install
 
@@ -75,35 +86,39 @@ pnpm add itchio-downloader
 yarn add itchio-downloader
 ```
 
-## CLI Usage
+---
+
+## CLI
 
 ```bash
 # Download by URL
 itchio-downloader --url "https://baraklava.itch.io/manic-miners"
 
-# Download by name and author
+# Download by name + author
 itchio-downloader --name "manic-miners" --author "baraklava" --downloadDirectory ./games
 
-# Download an HTML5 web game for offline play
+# HTML5 web game for offline play
 itchio-downloader --url "https://ncase.itch.io/wbwwb" --html5
 
-# Choose a specific platform build
+# Choose a platform build
 itchio-downloader --url "https://dev.itch.io/game" --platform linux
 
-# Download an entire collection with rate limiting
+# Resume an interrupted download
+itchio-downloader --url "https://dev.itch.io/large-game" --resume
+
+# Download a collection with rate limiting
 itchio-downloader --collection "https://itch.io/c/123/my-collection" --concurrency 2 --delay 1000
 
 # With API key and retries
 itchio-downloader --url "https://dev.itch.io/game" --apiKey "your-key" --retries 3
 
-# Resume an interrupted download
-itchio-downloader --url "https://dev.itch.io/large-game" --resume
-
 # Disable cookie caching
 itchio-downloader --url "https://dev.itch.io/game" --noCookieCache
 ```
 
-See [docs/CLI.md](docs/CLI.md) for the full option reference.
+> See **[docs/CLI.md](docs/CLI.md)** for the full option reference.
+
+---
 
 ## Library Usage
 
@@ -120,7 +135,7 @@ const result = await downloadGame({
 console.log(result.filePath); // './games/Terra Nil 0.41 Windows.zip'
 
 // By name and author
-const result = await downloadGame({
+const result2 = await downloadGame({
   name: 'manic-miners',
   author: 'baraklava',
 });
@@ -142,14 +157,37 @@ console.log(result.html5Assets);
 // Open ./games/wbwwb/index.html to play offline
 ```
 
-### Platform Selection
+### Resume Interrupted Downloads
+
+Large downloads can be resumed if interrupted. Partial data is saved to a `.part` file and continues from where it left off:
 
 ```javascript
+const result = await downloadGame({
+  itchGameUrl: 'https://baraklava.itch.io/manic-miners',
+  resume: true,
+});
+
+console.log(result.resumed);        // true if continued from partial
+console.log(result.sizeVerified);   // true if Content-Length matched
+console.log(result.bytesDownloaded); // total bytes written
+```
+
+### Cookie Caching
+
+Session cookies are cached automatically (30-min TTL) so subsequent downloads skip CSRF negotiation:
+
+```javascript
+// Disable caching or customize the directory
 await downloadGame({
   itchGameUrl: 'https://dev.itch.io/game',
-  platform: 'linux', // 'windows', 'linux', or 'osx'
-  apiKey: 'your-key',
+  noCookieCache: true,
+  cookieCacheDir: '/tmp/cache',
 });
+
+// Manage the cache programmatically
+const { getCachedCookies, clearCachedCookies } = require('itchio-downloader');
+const cached = await getCachedCookies('https://dev.itch.io/game');
+await clearCachedCookies(); // clear all
 ```
 
 ### Progress Tracking
@@ -166,42 +204,22 @@ await downloadGame({
 });
 ```
 
-### Resume Interrupted Downloads
+### More Examples
 
-Large downloads can be resumed if interrupted. Partial data is saved to a `.part` file and the download continues from where it left off using HTTP Range headers:
-
-```javascript
-const result = await downloadGame({
-  itchGameUrl: 'https://baraklava.itch.io/manic-miners',
-  resume: true,
-});
-console.log(result.resumed);       // true if download was resumed
-console.log(result.sizeVerified);  // true if Content-Length matched
-console.log(result.bytesDownloaded); // total bytes
-```
-
-### Cookie Caching
-
-Session cookies are cached automatically (30-minute TTL) so subsequent downloads skip redundant CSRF token fetches. Disable with `noCookieCache`:
+<details>
+<summary><strong>Platform Selection</strong></summary>
 
 ```javascript
 await downloadGame({
   itchGameUrl: 'https://dev.itch.io/game',
-  noCookieCache: true,           // disable caching
-  cookieCacheDir: '/tmp/cache',  // or customize the cache directory
+  platform: 'linux', // 'windows', 'linux', or 'osx'
+  apiKey: 'your-key',
 });
 ```
+</details>
 
-You can also manage the cache programmatically:
-
-```javascript
-const { getCachedCookies, clearCachedCookies } = require('itchio-downloader');
-
-const cached = await getCachedCookies('https://dev.itch.io/game');
-await clearCachedCookies(); // clear all cached cookies
-```
-
-### In-Memory Download
+<details>
+<summary><strong>In-Memory Download</strong></summary>
 
 ```javascript
 const result = await downloadGame({
@@ -211,11 +229,12 @@ const result = await downloadGame({
 });
 console.log(result.fileBuffer); // Buffer containing the file
 ```
+</details>
 
-### Batch Downloads
+<details>
+<summary><strong>Batch Downloads</strong></summary>
 
 ```javascript
-// Sequential with rate limiting
 await downloadGame(
   [
     { name: 'manic-miners', author: 'baraklava' },
@@ -224,30 +243,33 @@ await downloadGame(
   { concurrency: 2, delayBetweenMs: 1000 },
 );
 ```
+</details>
+
+---
 
 ## Configuration
 
 | Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `itchGameUrl` | `string` | — | Direct URL to the game |
-| `name` | `string` | — | Game name (use with `author`) |
-| `author` | `string` | — | Author's username |
+|:----------|:-----|:--------|:------------|
+| `itchGameUrl` | `string` | -- | Direct URL to the game |
+| `name` | `string` | -- | Game name (use with `author`) |
+| `author` | `string` | -- | Author's username |
 | `apiKey` | `string` | `ITCH_API_KEY` env | API key for authenticated downloads |
 | `downloadDirectory` | `string` | `~/downloads` | Where to save files |
-| `desiredFileName` | `string` | — | Custom file name (no path separators) |
+| `desiredFileName` | `string` | -- | Custom file name (no path separators) |
 | `inMemory` | `boolean` | `false` | Download to Buffer instead of disk |
 | `html5` | `boolean` | `false` | Download HTML5 web game assets |
-| `platform` | `string` | — | Preferred platform: `'windows'`, `'linux'`, `'osx'` |
+| `platform` | `string` | -- | Preferred platform: `windows`, `linux`, `osx` |
+| `resume` | `boolean` | `false` | Resume interrupted downloads (Range headers) |
+| `noCookieCache` | `boolean` | `false` | Disable automatic cookie caching |
+| `cookieCacheDir` | `string` | system tmpdir | Directory for the cookie cache |
 | `writeMetaData` | `boolean` | `true` | Save metadata JSON alongside download |
 | `retries` | `number` | `0` | Retry attempts on failure |
 | `retryDelayMs` | `number` | `500` | Base delay for exponential backoff (ms) |
-| `navigationTimeoutMs` | `number` | `30000` | Puppeteer page navigation timeout (ms) |
-| `fileWaitTimeoutMs` | `number` | `30000` | Download file detection timeout (ms) |
 | `parallel` | `boolean` | `false` | Run all downloads concurrently |
-| `resume` | `boolean` | `false` | Resume interrupted downloads using Range headers |
-| `noCookieCache` | `boolean` | `false` | Disable automatic cookie caching |
-| `cookieCacheDir` | `string` | system tmpdir | Directory for the cookie cache file |
-| `onProgress` | `function` | — | `({ bytesReceived, totalBytes, fileName }) => void` |
+| `onProgress` | `function` | -- | `({ bytesReceived, totalBytes, fileName }) => void` |
+
+---
 
 ## Response
 
@@ -258,18 +280,16 @@ type DownloadGameResponse = {
   filePath?: string;        // path to downloaded file
   fileBuffer?: Buffer;      // file contents (inMemory mode)
   metadataPath?: string;    // path to metadata JSON
-  metaData?: IItchRecord;   // game metadata
-  html5Assets?: string[];   // list of downloaded assets (html5 mode)
+  metaData?: IItchRecord;   // game metadata object
+  html5Assets?: string[];   // downloaded asset paths (html5 mode)
   httpStatus?: number;      // HTTP status code on failure
   sizeVerified?: boolean;   // true if Content-Length matched actual bytes
   bytesDownloaded?: number; // total bytes downloaded
-  resumed?: boolean;        // true if download was resumed from partial
+  resumed?: boolean;        // true if download was resumed from .part file
 };
 ```
 
-## Usage Policy
-
-Only download free games and follow the [itch.io Terms of Service](https://itch.io/docs/general/terms). Don't bypass payment restrictions. This project isn't affiliated with or endorsed by itch.io.
+---
 
 ## Development
 
@@ -279,20 +299,32 @@ cd itchio-downloader
 pnpm install
 pnpm test        # 137 tests
 pnpm run build   # compile TypeScript
-pnpm run lint    # ESLint
+pnpm run lint    # ESLint (zero warnings)
 ```
 
 ## Documentation
 
-- **[API Reference](docs/API-Reference.md)** — functions, types, and exports
-- **[CLI Reference](docs/CLI.md)** — all command line options
-- **[Advanced Usage](docs/Advanced-Usage.md)** — concurrency, HTML5, platform selection
-- **[Installation](docs/Installation.md)** — setup requirements
-- **[Debugging](docs/Debugging.md)** — troubleshooting tips
-- **[Roadmap](docs/Roadmap.md)** — planned improvements
-- **[Contributing](CONTRIBUTING.md)** — contribution guidelines
-- **[Changelog](CHANGELOG.md)** — release history
+| | |
+|:--|:--|
+| **[API Reference](docs/API-Reference.md)** | Functions, types, and exports |
+| **[CLI Reference](docs/CLI.md)** | All command-line options |
+| **[Advanced Usage](docs/Advanced-Usage.md)** | Resume, cookies, concurrency, HTML5 |
+| **[Installation](docs/Installation.md)** | Setup requirements |
+| **[Debugging](docs/Debugging.md)** | Troubleshooting tips |
+| **[Roadmap](docs/Roadmap.md)** | Planned improvements |
+| **[Changelog](CHANGELOG.md)** | Release history |
+| **[Contributing](CONTRIBUTING.md)** | Contribution guidelines |
 
-## License
+## Usage Policy
 
-ISC
+Only download free games and follow the [itch.io Terms of Service](https://itch.io/docs/general/terms). Don't bypass payment restrictions. This project isn't affiliated with or endorsed by itch.io.
+
+---
+
+<div align="center">
+
+**[npm](https://www.npmjs.com/package/itchio-downloader)** &middot; **[GitHub](https://github.com/Wal33D/itchio-downloader)** &middot; **[Issues](https://github.com/Wal33D/itchio-downloader/issues)**
+
+ISC License
+
+</div>
