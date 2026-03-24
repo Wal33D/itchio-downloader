@@ -289,4 +289,66 @@ describe('cli', () => {
 
     expect(errorSpy).toHaveBeenCalled();
   });
+
+  it('passes --html5 flag to params', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue({ status: true, message: 'ok', html5Assets: ['index.html'] } as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--html5',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      expect.objectContaining({ html5: true }),
+      expect.any(Object),
+    );
+  });
+
+  it('passes --platform flag to params', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--platform',
+      'linux',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      expect.objectContaining({ platform: 'linux' }),
+      expect.any(Object),
+    );
+  });
+
+  it('passes --delay flag as delayBetweenMs', async () => {
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await run([
+      'node',
+      'cli.ts',
+      '--url',
+      'https://author.itch.io/game',
+      '--delay',
+      '500',
+    ]);
+
+    expect(mock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ delayBetweenMs: 500 }),
+    );
+  });
 });

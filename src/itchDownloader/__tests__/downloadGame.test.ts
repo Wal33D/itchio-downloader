@@ -518,4 +518,49 @@ describe('downloadGame', () => {
     expect(result.message).toContain('direct HTTP');
     spy.mockRestore();
   });
+
+  it('applies delayBetweenMs between batch downloads', async () => {
+    jest
+      .spyOn(fetchProfile, 'fetchItchGameProfile')
+      .mockResolvedValue({ found: true, itchRecord: { name: 'game' }, message: 'ok' });
+
+    const downloadGameDirectModule = await import('../downloadGameDirect');
+    const directSpy = jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
+      status: true,
+      message: 'ok',
+    });
+
+    const start = Date.now();
+    await downloadGame(
+      [
+        { name: 'game1', author: 'user' },
+        { name: 'game2', author: 'user' },
+      ],
+      { concurrency: 1, delayBetweenMs: 100 },
+    );
+    const elapsed = Date.now() - start;
+
+    expect(directSpy).toHaveBeenCalledTimes(2);
+    expect(elapsed).toBeGreaterThanOrEqual(80);
+    directSpy.mockRestore();
+  });
+
+  it('passes platform param through to downloadGameDirect', async () => {
+    const downloadGameDirectModule = await import('../downloadGameDirect');
+    const spy = jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
+      status: true,
+      message: 'ok',
+    });
+
+    await downloadGame({
+      name: 'game',
+      author: 'user',
+      platform: 'linux',
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ platform: 'linux' }),
+    );
+    spy.mockRestore();
+  });
 });

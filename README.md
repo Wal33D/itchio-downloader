@@ -210,7 +210,7 @@ Only download free games and follow the [itch.io Terms of Service](https://itch.
 git clone https://github.com/Wal33D/itchio-downloader.git
 cd itchio-downloader
 pnpm install
-pnpm test        # 81 tests
+pnpm test        # 86 tests
 pnpm run build   # compile TypeScript
 pnpm run lint    # ESLint check
 ```
