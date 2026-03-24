@@ -120,6 +120,15 @@ export async function run(
       describe: 'Download HTML5 web game assets for offline play',
       type: 'boolean',
     })
+    .option('platform', {
+      describe: 'Preferred platform (windows, linux, osx)',
+      type: 'string',
+    })
+    .option('delay', {
+      describe: 'Delay in ms between batch downloads for rate limiting',
+      type: 'number',
+      default: 0,
+    })
     .check((args) => {
       if (args.collection) {
         return true;
@@ -167,6 +176,7 @@ export async function run(
   if (argv.downloadDirectory) params.downloadDirectory = argv.downloadDirectory;
   if (argv.memory) params.inMemory = true;
   if (argv.html5) params.html5 = true;
+  if (argv.platform) params.platform = argv.platform;
   if (argv.retries !== undefined) params.retries = Number(argv.retries);
   if (argv.retryDelay !== undefined)
     params.retryDelayMs = Number(argv.retryDelay);
@@ -178,7 +188,11 @@ export async function run(
     console.log(
       `\n  Downloading: ${params.itchGameUrl || `${params.author}/${params.name}`}\n`,
     );
-    const result = await downloadGame(params, concurrency);
+    const delay = argv.delay !== undefined ? Number(argv.delay) : 0;
+    const result = await downloadGame(params, {
+      concurrency,
+      delayBetweenMs: delay,
+    });
     printResult('Game', result);
   } catch (error) {
     console.error(

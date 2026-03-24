@@ -11,9 +11,15 @@ import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
 
+interface UploadInfo {
+  id: string;
+  name: string;
+}
+
 interface PageInfo {
   csrfToken: string;
   uploadIds: string[];
+  uploadInfos: UploadInfo[];
   cookies: string;
   minPrice: number;
 }
@@ -25,6 +31,10 @@ function parsePage(html: string, res: Response): PageInfo {
   const csrfMatch = html.match(/csrf_token" value="([^"]+)/);
   const uploadMatches = [...html.matchAll(/data-upload_id="(\d+)/g)];
   const priceMatch = html.match(/"min_price":(\d+)/);
+
+  // Parse upload info: extract upload IDs with their associated display names
+  const uploadInfos = [...html.matchAll(/<a[^>]*data-upload_id="(\d+)"[^>]*>[\s\S]*?<strong[^>]*class="name"[^>]*>([^<]+)<\/strong>/g)]
+    .map(m => ({ id: m[1], name: m[2].trim() }));
 
   const setCookies: string[] = [];
   // getSetCookie exists on Node 20+; fall back to get('set-cookie')
@@ -39,6 +49,7 @@ function parsePage(html: string, res: Response): PageInfo {
   return {
     csrfToken: csrfMatch?.[1] || '',
     uploadIds: uploadMatches.map((m) => m[1]),
+    uploadInfos,
     cookies,
     minPrice: Number(priceMatch?.[1] ?? '0'),
   };
@@ -164,7 +175,17 @@ export async function downloadGameDirect(
     const allCookies = [page.cookies, dlPage.cookies].filter(Boolean).join('; ');
 
     // Use upload IDs from download page (more complete list)
-    const uploadId = dlPage.uploadIds[0] || page.uploadIds[0];
+    let uploadId: string | undefined;
+    if (params.platform) {
+      const platformLower = params.platform.toLowerCase();
+      // Try matching from upload infos (which have display names)
+      const infos = dlPage.uploadInfos.length > 0 ? dlPage.uploadInfos : page.uploadInfos;
+      const matched = infos.find(u => u.name.toLowerCase().includes(platformLower));
+      if (matched) {
+        uploadId = matched.id;
+      }
+    }
+    uploadId = uploadId || dlPage.uploadIds[0] || page.uploadIds[0];
     if (!uploadId) {
       return { status: false, message: 'No uploads found on download page.' };
     }

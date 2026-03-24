@@ -30,6 +30,10 @@ itchio-downloader [options]
 | `--apiKey`            | itch.io API key for authenticated downloads (defaults to `ITCH_API_KEY`) |
 | `--downloadDirectory` | Directory where the file should be saved                                 |
 | `--memory`            | Store the downloaded file in memory                                      |
+| `--html5`             | Download HTML5 web game assets for offline play                          |
+| `--platform`          | Preferred platform: `windows`, `linux`, or `osx`                         |
+| `--retries`           | Number of retry attempts on failure (default: `0`)                       |
+| `--retryDelay`        | Base delay in ms for exponential backoff (default: `500`)                |
 | `--concurrency`       | Max simultaneous downloads when using a list                             |
 | `-h, --help`          | Display usage information                                                |
 
@@ -37,6 +41,10 @@ You must provide either a collection URL, a game URL, or both a name and author.
 
 You can set the API key in an `.env` file or environment variable `ITCH_API_KEY`
 so the `--apiKey` flag is optional.
+
+> **Note:** Most free games download without Puppeteer or an API key. The library
+> uses direct HTTP by default and only falls back to Puppeteer if it is installed
+> and all other methods fail.
 
 ### Examples
 
@@ -52,9 +60,21 @@ itchio-downloader --url "https://baraklava.itch.io/manic-miners" --concurrency 2
 
 # Downloading all games from a collection
 itchio-downloader --collection "https://itch.io/c/123/example"
+
+# Download an HTML5 web game for offline play
+itchio-downloader --url "https://ncase.itch.io/wbwwb" --html5
+
+# Download a specific platform build
+itchio-downloader --url "https://dev.itch.io/game" --apiKey "your-key" --platform linux
+
+# Combine HTML5 with a custom directory
+itchio-downloader --url "https://example.itch.io/browser-game" --html5 --downloadDirectory ./web-games
+
+# Retry on failure with backoff
+itchio-downloader --url "https://dev.itch.io/game" --retries 3 --retryDelay 1000
 ```
 
 If you have the package installed locally without `-g`, run the examples with `npx itchio-downloader` or `pnpm dlx itchio-downloader`.
 
-During downloads the CLI prints a progress percentage in the terminal so you can
-track how many bytes have been received.
+During downloads the CLI prints a progress bar in the terminal with percentage,
+bytes received, and total size when available.

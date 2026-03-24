@@ -10,4 +10,6 @@ export interface CLIArgs {
   concurrency?: number;
   memory?: boolean;
   html5?: boolean;
+  platform?: string;
+  delay?: number;
 }

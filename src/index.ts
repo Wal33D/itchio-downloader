@@ -5,7 +5,7 @@ import {
   DownloadProgress,
 } from './itchDownloader/types';
 
-import { downloadGame } from './itchDownloader/downloadGame';
+import { downloadGame, DownloadGameOptions } from './itchDownloader/downloadGame';
 import { downloadGameDirect } from './itchDownloader/downloadGameDirect';
 import { downloadGameHtml5 } from './itchDownloader/downloadGameHtml5';
 import { CLIArgs } from './types/cli';
@@ -16,6 +16,7 @@ export {
   downloadGameDirect,
   downloadGameHtml5,
   DownloadGameParams,
+  DownloadGameOptions,
   DownloadGameResponse,
   IItchRecord,
   DownloadProgress,

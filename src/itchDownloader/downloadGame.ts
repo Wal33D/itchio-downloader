@@ -22,10 +22,24 @@ function log(...args: unknown[]) {
 // Track active browsers for cleanup on process exit
 const activeBrowsers = new Set<Browser>();
 
+export interface DownloadGameOptions {
+  /** Maximum number of concurrent downloads (default: 1) */
+  concurrency?: number;
+  /** Delay in ms between each download to rate-limit requests (default: 0) */
+  delayBetweenMs?: number;
+}
+
 export async function downloadGame(
   params: DownloadGameParams | DownloadGameParams[],
-  concurrency = 1,
+  concurrencyOrOptions: number | DownloadGameOptions = 1,
 ): Promise<DownloadGameResponse | DownloadGameResponse[]> {
+  const opts: DownloadGameOptions =
+    typeof concurrencyOrOptions === 'number'
+      ? { concurrency: concurrencyOrOptions }
+      : concurrencyOrOptions;
+  const concurrency = Math.max(opts.concurrency ?? 1, 1);
+  const delayMs = opts.delayBetweenMs ?? 0;
+
   if (Array.isArray(params)) {
     const list = params as DownloadGameParams[];
     const runParallel = list.some((p) => p.parallel);
@@ -33,7 +47,6 @@ export async function downloadGame(
       return Promise.all(list.map((p) => downloadGameSingle(p)));
     }
 
-    const limit = Math.max(concurrency, 1);
     const results: DownloadGameResponse[] = new Array(list.length);
     let index = 0;
 
@@ -42,11 +55,14 @@ export async function downloadGame(
         const current = index++;
         if (current >= list.length) break;
         results[current] = await downloadGameSingle(list[current]);
+        if (delayMs > 0 && index < list.length) {
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
       }
     }
 
     const workers: Promise<void>[] = [];
-    for (let i = 0; i < Math.min(limit, list.length); i++) {
+    for (let i = 0; i < Math.min(concurrency, list.length); i++) {
       workers.push(worker());
     }
     await Promise.all(workers);

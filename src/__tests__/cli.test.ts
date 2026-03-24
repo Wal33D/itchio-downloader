@@ -81,7 +81,7 @@ describe('cli', () => {
         author: undefined,
         downloadDirectory: '/tmp',
       },
-      1,
+      { concurrency: 1, delayBetweenMs: 0 },
     );
     expect(logSpy).toHaveBeenCalled();
   });
@@ -109,7 +109,7 @@ describe('cli', () => {
         apiKey: '123',
         downloadDirectory: undefined,
       },
-      1,
+      { concurrency: 1, delayBetweenMs: 0 },
     );
     expect(logSpy).toHaveBeenCalled();
   });
@@ -131,7 +131,7 @@ describe('cli', () => {
         apiKey: 'abc',
         downloadDirectory: undefined,
       },
-      1,
+      { concurrency: 1, delayBetweenMs: 0 },
     );
     expect(logSpy).toHaveBeenCalled();
     delete process.env.ITCH_API_KEY;
@@ -152,7 +152,7 @@ describe('cli', () => {
         author: 'user',
         downloadDirectory: undefined,
       },
-      1,
+      { concurrency: 1, delayBetweenMs: 0 },
     );
     expect(logSpy).toHaveBeenCalled();
   });
@@ -183,7 +183,7 @@ describe('cli', () => {
         retries: 2,
         retryDelayMs: 100,
       },
-      1,
+      { concurrency: 1, delayBetweenMs: 0 },
     );
     expect(logSpy).toHaveBeenCalled();
   });
@@ -210,7 +210,7 @@ describe('cli', () => {
         author: undefined,
         downloadDirectory: undefined,
       },
-      3,
+      { concurrency: 3, delayBetweenMs: 0 },
     );
     expect(logSpy).toHaveBeenCalled();
   });
@@ -237,7 +237,7 @@ describe('cli', () => {
         downloadDirectory: undefined,
         inMemory: true,
       },
-      1,
+      { concurrency: 1, delayBetweenMs: 0 },
     );
     expect(logSpy).toHaveBeenCalled();
   });

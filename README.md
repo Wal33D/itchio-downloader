@@ -10,6 +10,9 @@ A small CLI and Node.js library for downloading free games from [itch.io](https:
 
 ## Features
 
+- **No Puppeteer Required** — downloads free games via direct HTTP (Puppeteer is optional fallback)
+- **HTML5 Web Games** — download browser-only games for offline play with `--html5`
+- **Platform Selection** — choose Windows/Mac/Linux build with `--platform`
 - **Direct Downloads** — by URL or name + author, no desktop GUI or Butler needed
 - **API Key Support** — optional itch.io API key for authenticated downloads
 - **Batch & Concurrent** — download multiple games with configurable concurrency
@@ -35,9 +38,10 @@ pnpm add -g itchio-downloader
 ```javascript
 const { downloadGame } = require('itchio-downloader');
 
-// By URL
+// Downloads without Puppeteer or API key — just works
 const result = await downloadGame({
-  itchGameUrl: 'https://baraklava.itch.io/manic-miners',
+  itchGameUrl: 'https://vfqd.itch.io/terra-nil',
+  downloadDirectory: './games',
 });
 
 // By name and author
@@ -54,7 +58,33 @@ const result = await downloadGame({
   retries: 3,
   retryDelayMs: 1000,
 });
+```
 
+### HTML5 Web Games
+
+```javascript
+// Download HTML5 web game for offline play
+const result = await downloadGame({
+  itchGameUrl: 'https://ncase.itch.io/wbwwb',
+  html5: true,
+  downloadDirectory: './games',
+});
+console.log(result.html5Assets); // ['game.js', 'sprites/bg.png', ...]
+```
+
+### Platform Selection
+
+```javascript
+await downloadGame({
+  itchGameUrl: 'https://dev.itch.io/game',
+  apiKey: 'your-key',
+  platform: 'linux',
+});
+```
+
+### In-Memory & Progress Tracking
+
+```javascript
 // In-memory download
 const result = await downloadGame({
   itchGameUrl: 'https://baraklava.itch.io/manic-miners',
@@ -91,6 +121,8 @@ itchio-downloader --name "manic-miners" --author "baraklava" --downloadDirectory
 itchio-downloader --collection "https://itch.io/c/123/my-collection" --concurrency 3
 itchio-downloader --url "https://dev.itch.io/game" --apiKey "your-key" --retries 3
 itchio-downloader --url "https://dev.itch.io/game" --memory  # in-memory mode
+itchio-downloader --url "https://ncase.itch.io/wbwwb" --html5  # HTML5 web game
+itchio-downloader --url "https://dev.itch.io/game" --platform linux  # specific platform
 ```
 
 See [docs/CLI.md](docs/CLI.md) for all options.
@@ -106,6 +138,8 @@ See [docs/CLI.md](docs/CLI.md) for all options.
 | `downloadDirectory` | `string` | `~/downloads` | Where to save files |
 | `desiredFileName` | `string` | — | Custom file name (no path separators) |
 | `inMemory` | `boolean` | `false` | Download to Buffer instead of disk |
+| `html5` | `boolean` | `false` | Download HTML5 web game assets for offline play |
+| `platform` | `string` | — | Preferred platform: `'windows'`, `'linux'`, `'osx'` |
 | `writeMetaData` | `boolean` | `true` | Save metadata JSON alongside download |
 | `retries` | `number` | `0` | Retry attempts on failure |
 | `retryDelayMs` | `number` | `500` | Base delay for exponential backoff (ms) |
@@ -131,6 +165,8 @@ type DownloadGameParams = {
   navigationTimeoutMs?: number;
   fileWaitTimeoutMs?: number;
   parallel?: boolean;
+  html5?: boolean;
+  platform?: string;
   onProgress?: (info: DownloadProgress) => void;
 };
 
@@ -141,7 +177,8 @@ type DownloadGameResponse = {
   metaData?: IItchRecord;
   metadataPath?: string;
   filePath?: string;
-  fileBuffer?: Buffer; // when inMemory is true
+  fileBuffer?: Buffer;
+  html5Assets?: string[];
 };
 
 interface DownloadProgress {
@@ -150,6 +187,18 @@ interface DownloadProgress {
   fileName?: string;
 }
 ```
+
+## How It Works
+
+The library uses a priority chain to download games, trying each method in order until one succeeds:
+
+1. **API key** — If an API key is provided (or set via `ITCH_API_KEY`), use the authenticated itch.io API for the most reliable download.
+2. **`--html5` flag** — If explicitly requested, scrape the embedded web game iframe and download all assets (HTML, JS, images, audio) for offline play.
+3. **Direct HTTP** — For free games without an API key: fetch the game page, extract CSRF tokens and upload IDs, negotiate a signed CDN URL, and stream the file. No browser required.
+4. **Auto-detect HTML5** — If the direct download fails because the game has no downloadable uploads (web-only), automatically attempt an HTML5 asset scrape.
+5. **Puppeteer fallback** — Only if Puppeteer is installed and all methods above have failed, launch a headless browser to trigger the download.
+
+> **Note:** Puppeteer is now an optional dependency. Most free games download without it.
 
 ## Usage Policy
 

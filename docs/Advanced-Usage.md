@@ -1,6 +1,89 @@
 # Advanced Usage
 
-This page covers more complex scenarios for `downloadGame`. These examples show how to control concurrency, run downloads in parallel, and save files to custom locations. For installation instructions see the [README](../README.md).
+This page covers more complex scenarios for `downloadGame`. These examples show how to control concurrency, run downloads in parallel, download HTML5 web games, select platforms, and save files to custom locations. For installation instructions see the [README](../README.md).
+
+## Direct HTTP downloads (no Puppeteer needed)
+
+Most free games on itch.io can be downloaded without Puppeteer or an API key. The library handles this automatically by extracting CSRF tokens from the game page and negotiating a signed CDN URL via direct HTTP requests.
+
+This is the default behavior -- just call `downloadGame` and it works:
+
+```javascript
+const { downloadGame } = require('itchio-downloader');
+
+const result = await downloadGame({
+  itchGameUrl: 'https://vfqd.itch.io/terra-nil',
+  downloadDirectory: './games',
+});
+// No API key, no Puppeteer -- downloaded via direct HTTP
+```
+
+When does Puppeteer get used? Only as a last resort, and only if it is installed. The download priority chain is:
+
+1. API key (if provided)
+2. Explicit `html5: true` flag
+3. Direct HTTP (CSRF + CDN)
+4. Auto-detect HTML5 (if direct HTTP finds no downloadable uploads)
+5. Puppeteer fallback (only if installed)
+
+You can also call `downloadGameDirect` directly if you want to skip the priority chain:
+
+```javascript
+const { downloadGameDirect } = require('itchio-downloader');
+
+const result = await downloadGameDirect({
+  itchGameUrl: 'https://vfqd.itch.io/terra-nil',
+  downloadDirectory: './games',
+});
+```
+
+## HTML5 web game downloads
+
+Some itch.io games are browser-only -- they run in an embedded iframe and have no downloadable files. The `html5` option scrapes all assets from the game's iframe (HTML, JavaScript, CSS, images, audio, data files) and saves them locally for offline play.
+
+```javascript
+const result = await downloadGame({
+  itchGameUrl: 'https://ncase.itch.io/wbwwb',
+  html5: true,
+  downloadDirectory: './games',
+});
+
+console.log(result.html5Assets);
+// ['game.js', 'style.css', 'sprites/player.png', 'audio/bgm.ogg', ...]
+console.log(result.filePath);
+// './games/wbwwb/index.html' -- open this in a browser to play offline
+```
+
+The library also scans JavaScript files for additional asset references (images, audio, JSON data, WASM modules, etc.) to ensure a complete offline copy.
+
+If you don't set `html5: true` explicitly, the library will auto-detect web-only games when direct HTTP download fails and automatically fall back to HTML5 asset scraping.
+
+From the CLI:
+
+```bash
+itchio-downloader --url "https://ncase.itch.io/wbwwb" --html5
+itchio-downloader --url "https://ncase.itch.io/wbwwb" --html5 --downloadDirectory ./web-games
+```
+
+## Platform selection
+
+When a game provides builds for multiple platforms, use the `platform` option to download a specific one:
+
+```javascript
+await downloadGame({
+  itchGameUrl: 'https://dev.itch.io/game',
+  apiKey: 'your-key',
+  platform: 'linux',
+});
+```
+
+Accepted values are `'windows'`, `'linux'`, and `'osx'`. This is most useful with API key downloads where the API returns a list of uploads with platform tags.
+
+From the CLI:
+
+```bash
+itchio-downloader --url "https://dev.itch.io/game" --apiKey "your-key" --platform linux
+```
 
 ## Controlled concurrency
 

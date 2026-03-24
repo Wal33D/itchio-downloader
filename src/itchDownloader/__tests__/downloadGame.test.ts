@@ -478,4 +478,44 @@ describe('downloadGame', () => {
     expect(result.filePath).toBeUndefined();
     (global.fetch as any).mockRestore?.();
   });
+
+  it('html5 flag routes to downloadGameHtml5', async () => {
+    // We need to mock the modules at this scope
+    const downloadGameHtml5Module = await import('../downloadGameHtml5');
+    const spy = jest.spyOn(downloadGameHtml5Module, 'downloadGameHtml5').mockResolvedValue({
+      status: true,
+      message: 'HTML5 game downloaded: 3 assets.',
+      html5Assets: ['index.html', 'game.js', 'style.css'],
+    });
+
+    const result = (await downloadGame({
+      name: 'webgame',
+      author: 'user',
+      html5: true,
+    })) as any;
+
+    expect(result.status).toBe(true);
+    expect(spy).toHaveBeenCalled();
+    expect(result.message).toContain('HTML5');
+    spy.mockRestore();
+  });
+
+  it('direct HTTP tried before Puppeteer', async () => {
+    const downloadGameDirectModule = await import('../downloadGameDirect');
+    const spy = jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
+      status: true,
+      message: 'Download successful (direct HTTP).',
+      filePath: '/tmp/game.zip',
+    });
+
+    const result = (await downloadGame({
+      name: 'directgame',
+      author: 'user',
+    })) as any;
+
+    expect(result.status).toBe(true);
+    expect(spy).toHaveBeenCalled();
+    expect(result.message).toContain('direct HTTP');
+    spy.mockRestore();
+  });
 });

@@ -69,6 +69,8 @@ export type DownloadGameParams = {
   parallel?: boolean;
   /** Download HTML5 web game assets for offline play */
   html5?: boolean;
+  /** Preferred platform for multi-upload games (e.g., 'windows', 'linux', 'osx') */
+  platform?: string;
   onProgress?: (info: DownloadProgress) => void;
 };
 

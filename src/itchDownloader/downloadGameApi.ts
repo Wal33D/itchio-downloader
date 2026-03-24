@@ -67,7 +67,11 @@ export async function downloadGameViaApi(
     if (!uploadsData.uploads || uploadsData.uploads.length === 0) {
       throw new Error('No uploads found for game');
     }
-    const upload = uploadsData.uploads[0];
+    const upload = params.platform
+      ? uploadsData.uploads.find(u =>
+          u.filename?.toLowerCase().includes(params.platform!.toLowerCase())
+        ) || uploadsData.uploads[0]
+      : uploadsData.uploads[0];
     const fileName = upload.filename || `${record.name}.zip`;
     const targetPath = downloadDirectory ? path.join(downloadDirectory, fileName) : undefined;
     let fileBuffer: Buffer | undefined;
