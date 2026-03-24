@@ -36,6 +36,9 @@ itchio-downloader [options]
 | `--retryDelay`        | Base delay in ms for exponential backoff (default: `500`)                |
 | `--concurrency`       | Max simultaneous downloads when using a list                             |
 | `--delay`             | Delay in ms between batch downloads for rate limiting (default: `0`)     |
+| `--resume`            | Resume interrupted downloads using HTTP Range headers                    |
+| `--noCookieCache`     | Disable automatic cookie caching                                         |
+| `--cookieCacheDir`    | Directory for cookie cache (default: system tmpdir)                      |
 | `-h, --help`          | Display usage information                                                |
 
 You must provide either a collection URL, a game URL, or both a name and author.
@@ -73,6 +76,15 @@ itchio-downloader --url "https://example.itch.io/browser-game" --html5 --downloa
 
 # Retry on failure with backoff
 itchio-downloader --url "https://dev.itch.io/game" --retries 3 --retryDelay 1000
+
+# Resume an interrupted large download
+itchio-downloader --url "https://dev.itch.io/large-game" --resume
+
+# Download without cookie caching
+itchio-downloader --url "https://dev.itch.io/game" --noCookieCache
+
+# Custom cookie cache directory
+itchio-downloader --url "https://dev.itch.io/game" --cookieCacheDir /tmp/my-cache
 ```
 
 If you have the package installed locally without `-g`, run the examples with `npx itchio-downloader` or `pnpm dlx itchio-downloader`.

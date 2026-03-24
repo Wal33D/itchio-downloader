@@ -1,10 +1,18 @@
 # API Reference
 
-Itchio-Downloader exports three main functions along with related TypeScript types. Import them from the package root.
+Itchio-Downloader exports download functions, cookie cache utilities, and a resumable download helper. Import them from the package root.
 The library requires **Node.js 18+** for the native `fetch` API:
 
 ```javascript
-const { downloadGame, downloadGameDirect, downloadGameHtml5 } = require('itchio-downloader');
+const {
+  downloadGame,
+  downloadGameDirect,
+  downloadGameHtml5,
+  downloadWithResume,
+  getCachedCookies,
+  setCachedCookies,
+  clearCachedCookies,
+} = require('itchio-downloader');
 ```
 
 ---
@@ -32,6 +40,9 @@ Downloads one or more games from itch.io. Automatically selects the best downloa
   - `navigationTimeoutMs` _(number, optional)_ -- Puppeteer page navigation timeout in milliseconds. Defaults to `30000`.
   - `fileWaitTimeoutMs` _(number, optional)_ -- Download file detection timeout in milliseconds. Defaults to `30000`.
   - `parallel` _(boolean, optional)_ -- When used inside an array, run this download concurrently via `Promise.all`.
+  - `resume` _(boolean, optional)_ -- Resume interrupted downloads using HTTP Range headers. Partial data is saved to a `.part` file and the download continues from where it left off. Defaults to `false`.
+  - `noCookieCache` _(boolean, optional)_ -- Disable automatic cookie caching. By default, session cookies and CSRF tokens are cached per domain with a 30-minute TTL to speed up subsequent downloads.
+  - `cookieCacheDir` _(string, optional)_ -- Directory for the cookie cache file. Defaults to a subdirectory in the system temp directory.
   - `onProgress` _(function, optional)_ -- Receives `{ bytesReceived, totalBytes, fileName }` as the download proceeds.
 - `concurrency` _(number, optional)_ -- When `params` is an array and `parallel` is not set, limits how many downloads happen at once. Defaults to `1`.
 
@@ -53,9 +64,11 @@ Downloads a free itch.io game using direct HTTP requests -- no Puppeteer, no API
 4. POST to `/file/{uploadId}` to get a Cloudflare R2 CDN URL (60-second TTL).
 5. Stream the CDN URL to disk or memory.
 
+Session cookies and CSRF tokens are cached automatically (30-minute TTL) so subsequent downloads to the same domain skip step 1. When `resume: true` is set, interrupted downloads are saved as `.part` files and resumed using Range headers.
+
 ### Parameters
 
-Accepts the same `DownloadGameParams` object. The most relevant fields are `itchGameUrl` (or `name`/`author`), `downloadDirectory`, `desiredFileName`, `inMemory`, `writeMetaData`, and `onProgress`.
+Accepts the same `DownloadGameParams` object. The most relevant fields are `itchGameUrl` (or `name`/`author`), `downloadDirectory`, `desiredFileName`, `inMemory`, `writeMetaData`, `resume`, `noCookieCache`, `cookieCacheDir`, and `onProgress`.
 
 ### Returns
 
@@ -79,6 +92,48 @@ A `Promise<DownloadGameResponse>`. On success, the response includes:
 
 ---
 
+## downloadWithResume(url, filePath, headers?, onProgress?)
+
+Download a file with automatic resume support. If a `.part` file exists from a previous interrupted download, sends a `Range` header to resume from where it left off. On success, renames `.part` to the final path.
+
+### Parameters
+
+- `url` _(string)_ -- URL to download.
+- `filePath` _(string)_ -- Final file path. Partial data is stored at `filePath + '.part'`.
+- `headers` _(Record<string, string>, optional)_ -- Additional headers (e.g., User-Agent, Authorization).
+- `onProgress` _(function, optional)_ -- Progress callback.
+
+### Returns
+
+A `Promise<StreamResult>`:
+
+```typescript
+interface StreamResult {
+  bytesWritten: number;
+  expectedBytes?: number;
+  verified: boolean;    // true if Content-Length matched actual bytes
+  resumed?: boolean;    // true if download was resumed from partial
+}
+```
+
+---
+
+## Cookie Cache Functions
+
+### getCachedCookies(url, cacheDir?)
+
+Returns cached cookies for a URL's domain, or `null` if expired (30-min TTL) or missing.
+
+### setCachedCookies(url, cookies, csrfToken?, cacheDir?)
+
+Saves cookies and an optional CSRF token for a URL's domain.
+
+### clearCachedCookies(url?, cacheDir?)
+
+Clears cached cookies for a specific domain, or all cached cookies if no URL is provided.
+
+---
+
 ## Types
 
 ```typescript
@@ -98,6 +153,9 @@ type DownloadGameParams = {
   parallel?: boolean;
   html5?: boolean;
   platform?: string;
+  resume?: boolean;
+  cookieCacheDir?: string;
+  noCookieCache?: boolean;
   onProgress?: (info: DownloadProgress) => void;
 };
 
@@ -110,6 +168,9 @@ type DownloadGameResponse = {
   filePath?: string;
   fileBuffer?: Buffer;
   html5Assets?: string[];
+  sizeVerified?: boolean;
+  bytesDownloaded?: number;
+  resumed?: boolean;
 };
 
 interface DownloadProgress {
@@ -164,6 +225,20 @@ await downloadGame({
   apiKey: 'your-key',
   platform: 'linux',
 });
+
+// Resumable download with size verification
+const resumeResult = await downloadGame({
+  itchGameUrl: 'https://dev.itch.io/large-game',
+  resume: true,
+});
+console.log(resumeResult.resumed);       // true if continued from .part
+console.log(resumeResult.sizeVerified);  // true if size matched
+console.log(resumeResult.bytesDownloaded);
+
+// Cookie cache management
+const { getCachedCookies, clearCachedCookies } = require('itchio-downloader');
+const cached = await getCachedCookies('https://dev.itch.io/game');
+await clearCachedCookies(); // clear all
 ```
 
 See [Advanced Usage](Advanced-Usage.md) for concurrency, HTML5, platform, and custom path examples.

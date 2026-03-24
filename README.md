@@ -26,7 +26,7 @@ const result = await downloadGame({
 
 There's no official API for downloading free itch.io games. The itch desktop app requires a GUI. Butler requires developer access. This library gives you a simple function call or CLI command that just works.
 
-**Tested on games from 2.6 MB to 1.9 GB.** 86 unit tests. Zero Puppeteer required for most downloads.
+**Tested on games from 2.6 MB to 1.9 GB.** 137 unit tests. Zero Puppeteer required for most downloads.
 
 ## Features
 
@@ -34,6 +34,9 @@ There's no official API for downloading free itch.io games. The itch desktop app
 |---------|-------------|
 | **Direct HTTP** | Downloads free games via 4 HTTP requests — no browser binary |
 | **HTML5 Web Games** | Scrape browser-only games for offline play (`--html5`) |
+| **Resume Downloads** | Resume interrupted downloads with `--resume` (Range headers) |
+| **Cookie Caching** | Reuse session cookies across downloads (30-min TTL) |
+| **Size Verification** | Validate Content-Length matches actual bytes downloaded |
 | **Platform Selection** | Choose Windows/Mac/Linux builds (`--platform`) |
 | **API Key Support** | Optional authenticated downloads via itch.io API |
 | **Batch & Concurrent** | Download multiple games with configurable concurrency |
@@ -92,6 +95,12 @@ itchio-downloader --collection "https://itch.io/c/123/my-collection" --concurren
 
 # With API key and retries
 itchio-downloader --url "https://dev.itch.io/game" --apiKey "your-key" --retries 3
+
+# Resume an interrupted download
+itchio-downloader --url "https://dev.itch.io/large-game" --resume
+
+# Disable cookie caching
+itchio-downloader --url "https://dev.itch.io/game" --noCookieCache
 ```
 
 See [docs/CLI.md](docs/CLI.md) for the full option reference.
@@ -157,6 +166,41 @@ await downloadGame({
 });
 ```
 
+### Resume Interrupted Downloads
+
+Large downloads can be resumed if interrupted. Partial data is saved to a `.part` file and the download continues from where it left off using HTTP Range headers:
+
+```javascript
+const result = await downloadGame({
+  itchGameUrl: 'https://baraklava.itch.io/manic-miners',
+  resume: true,
+});
+console.log(result.resumed);       // true if download was resumed
+console.log(result.sizeVerified);  // true if Content-Length matched
+console.log(result.bytesDownloaded); // total bytes
+```
+
+### Cookie Caching
+
+Session cookies are cached automatically (30-minute TTL) so subsequent downloads skip redundant CSRF token fetches. Disable with `noCookieCache`:
+
+```javascript
+await downloadGame({
+  itchGameUrl: 'https://dev.itch.io/game',
+  noCookieCache: true,           // disable caching
+  cookieCacheDir: '/tmp/cache',  // or customize the cache directory
+});
+```
+
+You can also manage the cache programmatically:
+
+```javascript
+const { getCachedCookies, clearCachedCookies } = require('itchio-downloader');
+
+const cached = await getCachedCookies('https://dev.itch.io/game');
+await clearCachedCookies(); // clear all cached cookies
+```
+
 ### In-Memory Download
 
 ```javascript
@@ -200,20 +244,26 @@ await downloadGame(
 | `navigationTimeoutMs` | `number` | `30000` | Puppeteer page navigation timeout (ms) |
 | `fileWaitTimeoutMs` | `number` | `30000` | Download file detection timeout (ms) |
 | `parallel` | `boolean` | `false` | Run all downloads concurrently |
+| `resume` | `boolean` | `false` | Resume interrupted downloads using Range headers |
+| `noCookieCache` | `boolean` | `false` | Disable automatic cookie caching |
+| `cookieCacheDir` | `string` | system tmpdir | Directory for the cookie cache file |
 | `onProgress` | `function` | — | `({ bytesReceived, totalBytes, fileName }) => void` |
 
 ## Response
 
 ```typescript
 type DownloadGameResponse = {
-  status: boolean;        // true if download succeeded
-  message: string;        // human-readable result
-  filePath?: string;      // path to downloaded file
-  fileBuffer?: Buffer;    // file contents (inMemory mode)
-  metadataPath?: string;  // path to metadata JSON
-  metaData?: IItchRecord; // game metadata
-  html5Assets?: string[]; // list of downloaded assets (html5 mode)
-  httpStatus?: number;    // HTTP status code on failure
+  status: boolean;          // true if download succeeded
+  message: string;          // human-readable result
+  filePath?: string;        // path to downloaded file
+  fileBuffer?: Buffer;      // file contents (inMemory mode)
+  metadataPath?: string;    // path to metadata JSON
+  metaData?: IItchRecord;   // game metadata
+  html5Assets?: string[];   // list of downloaded assets (html5 mode)
+  httpStatus?: number;      // HTTP status code on failure
+  sizeVerified?: boolean;   // true if Content-Length matched actual bytes
+  bytesDownloaded?: number; // total bytes downloaded
+  resumed?: boolean;        // true if download was resumed from partial
 };
 ```
 
@@ -227,7 +277,7 @@ Only download free games and follow the [itch.io Terms of Service](https://itch.
 git clone https://github.com/Wal33D/itchio-downloader.git
 cd itchio-downloader
 pnpm install
-pnpm test        # 86 tests
+pnpm test        # 137 tests
 pnpm run build   # compile TypeScript
 pnpm run lint    # ESLint
 ```
