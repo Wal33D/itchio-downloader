@@ -51,6 +51,12 @@ export interface DownloadCollectionOptions {
   downloadDirectory?: string;
   concurrency?: number;
   onProgress?: (info: DownloadProgress) => void;
+  /** Enable resume support for interrupted downloads */
+  resume?: boolean;
+  /** Disable cookie caching */
+  noCookieCache?: boolean;
+  /** Custom cookie cache directory */
+  cookieCacheDir?: string;
 }
 
 export async function downloadCollection(
@@ -66,6 +72,9 @@ export async function downloadCollection(
     if (opts.downloadDirectory) p.downloadDirectory = opts.downloadDirectory;
     if (opts.onProgress) p.onProgress = opts.onProgress;
     if (key) p.apiKey = key;
+    if (opts.resume) p.resume = true;
+    if (opts.noCookieCache) p.noCookieCache = true;
+    if (opts.cookieCacheDir) p.cookieCacheDir = opts.cookieCacheDir;
     return p;
   });
   return downloadGame(params, opts.concurrency ?? 1);

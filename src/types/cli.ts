@@ -14,4 +14,5 @@ export interface CLIArgs {
   delay?: number;
   resume?: boolean;
   noCookieCache?: boolean;
+  cookieCacheDir?: string;
 }

@@ -215,6 +215,8 @@ export async function downloadGameHtml5(
       metadataPath,
       metaData: record,
       html5Assets: downloaded,
+      sizeVerified: failures.length === 0,
+      bytesDownloaded: totalBytes,
     };
   } catch (error: unknown) {
     return {

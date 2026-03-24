@@ -140,6 +140,10 @@ export async function run(
       describe: 'Disable cookie caching (cookies are cached by default)',
       type: 'boolean',
     })
+    .option('cookieCacheDir', {
+      describe: 'Directory for cookie cache (default: system tmpdir)',
+      type: 'string',
+    })
     .check((args) => {
       if (args.collection) {
         return true;
@@ -167,6 +171,9 @@ export async function run(
         downloadDirectory: argv.downloadDirectory,
         concurrency,
         onProgress,
+        resume: argv.resume,
+        noCookieCache: argv.noCookieCache,
+        cookieCacheDir: argv.cookieCacheDir,
       });
       printResult('Collection', result as DownloadGameResponse);
     } catch (error) {
@@ -193,6 +200,7 @@ export async function run(
     params.retryDelayMs = Number(argv.retryDelay);
   if (argv.resume) params.resume = true;
   if (argv.noCookieCache) params.noCookieCache = true;
+  if (argv.cookieCacheDir) params.cookieCacheDir = argv.cookieCacheDir;
   if (onProgress) {
     params.onProgress = onProgress;
   }
