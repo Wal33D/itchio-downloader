@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2026-03-23
+
+### Added
+
+- **Direct HTTP downloads** — download free games with 4 HTTP requests, no Puppeteer needed
+- **HTML5 web game downloads** — scrape and save browser-only games for offline play (`--html5` flag)
+- **Platform selection** — choose Windows/Mac/Linux build with `--platform` flag
+- **Rate limiting** — `--delay` flag for ms between batch downloads
+- **Shared streaming utility** (`httpDownload.ts`) — `streamToFile()`, `streamToBuffer()`
+- **New exports** — `downloadGameDirect`, `downloadGameHtml5`, `DownloadGameOptions`
+- 25 new tests (81 total) covering direct HTTP, HTML5, streaming, and fallback chain
+
+### Changed
+
+- **Puppeteer is now optional** — moved to `optionalDependencies`, dynamically imported
+- **New download priority chain**: API → HTML5 flag → Direct HTTP → auto-detect HTML5 → Puppeteer
+- `downloadGame()` accepts `DownloadGameOptions` object (backward compatible with number)
+- `ItchApiClient` refactored to use shared `httpDownload` helpers
+- Complete documentation rewrite — README, API-Reference, CLI, Advanced-Usage, Roadmap
+
 ## [0.9.0] - 2026-03-23
 
 ### Security
