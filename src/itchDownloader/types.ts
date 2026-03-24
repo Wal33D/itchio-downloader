@@ -67,6 +67,8 @@ export type DownloadGameParams = {
   fileWaitTimeoutMs?: number;
   /** When part of an array, set to true to run downloads concurrently */
   parallel?: boolean;
+  /** Download HTML5 web game assets for offline play */
+  html5?: boolean;
   onProgress?: (info: DownloadProgress) => void;
 };
 
@@ -79,4 +81,6 @@ export type DownloadGameResponse = {
   filePath?: string;
   /** Buffer containing the downloaded file when inMemory is used */
   fileBuffer?: Buffer;
+  /** List of asset file paths downloaded for HTML5 web games */
+  html5Assets?: string[];
 };

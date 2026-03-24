@@ -52,6 +52,7 @@ function printResult(
       if (r.metadataPath) console.log(`    Metadata: ${r.metadataPath}`);
       if (r.metaData?.title) console.log(`    Title: ${r.metaData.title}`);
       if (r.fileBuffer) console.log(`    Buffer: ${formatBytes(r.fileBuffer.length)}`);
+      if (r.html5Assets) console.log(`    Assets: ${r.html5Assets.length} files`);
     } else {
       console.error(`\n  \u2718 ${r.message}`);
       if (r.httpStatus) console.error(`    HTTP Status: ${r.httpStatus}`);
@@ -115,6 +116,10 @@ export async function run(
       type: 'number',
       default: 1,
     })
+    .option('html5', {
+      describe: 'Download HTML5 web game assets for offline play',
+      type: 'boolean',
+    })
     .check((args) => {
       if (args.collection) {
         return true;
@@ -161,6 +166,7 @@ export async function run(
   if (apiKey) params.apiKey = apiKey;
   if (argv.downloadDirectory) params.downloadDirectory = argv.downloadDirectory;
   if (argv.memory) params.inMemory = true;
+  if (argv.html5) params.html5 = true;
   if (argv.retries !== undefined) params.retries = Number(argv.retries);
   if (argv.retryDelay !== undefined)
     params.retryDelayMs = Number(argv.retryDelay);

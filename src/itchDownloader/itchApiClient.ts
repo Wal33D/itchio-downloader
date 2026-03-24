@@ -1,3 +1,6 @@
+import { streamToFile, streamToBuffer } from './httpDownload';
+import { DownloadProgress } from './types';
+
 export class ItchApiClient {
   private baseUrl: string;
   constructor(private apiKey: string, baseUrl?: string) {
@@ -33,7 +36,7 @@ export class ItchApiClient {
   async download(
     endpoint: string,
     filePath: string,
-    onProgress?: (info: { bytesReceived: number; totalBytes?: number; fileName?: string }) => void,
+    onProgress?: (info: DownloadProgress) => void,
   ): Promise<void> {
     const url = this.buildUrl(endpoint);
     const res = await fetch(url, { headers: this.headers });
@@ -43,35 +46,12 @@ export class ItchApiClient {
       err.body = await res.text().catch(() => '');
       throw err;
     }
-    const total = Number(res.headers.get('content-length') || '0') || undefined;
-    const fsPromises = await import('fs/promises');
-    const fs = await import('fs');
-    const path = await import('path');
-    await fsPromises.mkdir(path.dirname(filePath), { recursive: true });
-    const { pipeline } = await import('stream/promises');
-    const { Readable } = await import('stream');
-    const writeStream = fs.createWriteStream(filePath);
-    let readable: import('stream').Readable;
-    if (res.body && typeof (res.body as ReadableStream).getReader === 'function') {
-      readable = Readable.fromWeb(res.body as import('stream/web').ReadableStream);
-    } else if (res.body) {
-      readable = res.body as unknown as import('stream').Readable;
-    } else {
-      readable = Readable.from(Buffer.alloc(0));
-    }
-    let bytes = 0;
-    readable.on('data', (chunk: Buffer) => {
-      bytes += chunk.length;
-      if (onProgress) {
-        onProgress({ bytesReceived: bytes, totalBytes: total, fileName: path.basename(filePath) });
-      }
-    });
-    await pipeline(readable, writeStream);
+    await streamToFile(res, filePath, onProgress);
   }
 
   async downloadToBuffer(
     endpoint: string,
-    onProgress?: (info: { bytesReceived: number; totalBytes?: number; fileName?: string }) => void,
+    onProgress?: (info: DownloadProgress) => void,
     fileName?: string,
   ): Promise<Buffer> {
     const url = this.buildUrl(endpoint);
@@ -82,26 +62,6 @@ export class ItchApiClient {
       err.body = await res.text().catch(() => '');
       throw err;
     }
-    const total = Number(res.headers.get('content-length') || '0') || undefined;
-    const { Readable } = await import('stream');
-    let readable: import('stream').Readable;
-    if (res.body && typeof (res.body as ReadableStream).getReader === 'function') {
-      readable = Readable.fromWeb(res.body as import('stream/web').ReadableStream);
-    } else if (res.body) {
-      readable = res.body as unknown as import('stream').Readable;
-    } else {
-      readable = Readable.from(Buffer.alloc(0));
-    }
-    const chunks: Buffer[] = [];
-    let bytes = 0;
-    for await (const chunk of readable) {
-      const buf = Buffer.from(chunk);
-      chunks.push(buf);
-      bytes += buf.length;
-      if (onProgress) {
-        onProgress({ bytesReceived: bytes, totalBytes: total, fileName });
-      }
-    }
-    return Buffer.concat(chunks);
+    return streamToBuffer(res, onProgress, fileName);
   }
 }

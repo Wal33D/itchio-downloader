@@ -9,4 +9,5 @@ export interface CLIArgs {
   retryDelay?: number;
   concurrency?: number;
   memory?: boolean;
+  html5?: boolean;
 }

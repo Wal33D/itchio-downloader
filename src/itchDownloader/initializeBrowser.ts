@@ -1,5 +1,5 @@
 import path from 'path';
-import puppeteer, { Browser } from 'puppeteer';
+import type { Browser } from 'puppeteer';
 import { DownloadProgress } from './types';
 
 export const initializeBrowser = async ({
@@ -16,7 +16,8 @@ export const initializeBrowser = async ({
   let browser: Browser | null = null;
 
   try {
-    browser = await puppeteer.launch({
+    const puppeteer = await import('puppeteer');
+    browser = await puppeteer.default.launch({
       headless,
       defaultViewport: null,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
