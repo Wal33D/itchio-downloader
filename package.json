@@ -1,7 +1,7 @@
 {
   "name": "itchio-downloader",
   "version": "1.0.0",
-  "description": "Programatically download games from itch.io using Node",
+  "description": "Download free games from itch.io programmatically — no Puppeteer, no API key required",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
