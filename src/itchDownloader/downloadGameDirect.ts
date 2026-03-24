@@ -113,12 +113,12 @@ export async function downloadGameDirect(
     const page = parsePage(pageHtml, pageRes);
 
     if (!page.csrfToken) {
-      return { status: false, message: 'Could not extract CSRF token from game page.' };
+      return { status: false, message: 'Could not extract CSRF token from game page.', failReason: 'csrf_failed' };
     }
 
     // Price gate — if min_price > 0 and no direct uploads visible, this is a paid game
     if (page.minPrice > 0 && page.uploadIds.length === 0) {
-      return { status: false, message: `Game requires purchase (min price: ${page.minPrice} cents).` };
+      return { status: false, message: `Game requires purchase (min price: ${page.minPrice} cents).`, failReason: 'paid' };
     }
 
     // If no uploads AND no donation wall (min_price=0), check if web-only
@@ -130,10 +130,10 @@ export async function downloadGameDirect(
       const hasPurchasePath = pageHtml.includes('/purchase');
 
       if (!hasPurchasePath && isHtml5Only) {
-        return { status: false, message: 'web-only HTML5 game — no downloadable files.' };
+        return { status: false, message: 'web-only HTML5 game — no downloadable files.', failReason: 'web_only' };
       }
       if (!hasPurchasePath && !isHtml5Only) {
-        return { status: false, message: 'No uploads found on game page.' };
+        return { status: false, message: 'No uploads found on game page.', failReason: 'no_uploads' };
       }
     }
 

@@ -129,9 +129,8 @@ export async function downloadGameSingle(
 
   // === PATH 4: Auto-detect HTML5 web game ===
   if (
-    directResult.message.includes('web-only') ||
-    directResult.message.includes('No uploads found') ||
-    directResult.message.includes('no downloadable files')
+    directResult.failReason === 'web_only' ||
+    directResult.failReason === 'no_uploads'
   ) {
     log('Attempting HTML5 web game download...');
     const html5Result = await downloadGameHtml5(params);

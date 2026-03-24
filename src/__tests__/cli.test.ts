@@ -62,7 +62,7 @@ describe('cli', () => {
   it('passes url argument to downloadGame', async () => {
     const mock = jest
       .spyOn(downloadGameModule, 'downloadGame')
-      .mockResolvedValue('ok' as any);
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     await run([
@@ -118,7 +118,7 @@ describe('cli', () => {
     process.env.ITCH_API_KEY = 'abc';
     const mock = jest
       .spyOn(downloadGameModule, 'downloadGame')
-      .mockResolvedValue('ok' as any);
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     await run(['node', 'cli.ts', '--url', 'https://author.itch.io/game']);
@@ -140,7 +140,7 @@ describe('cli', () => {
   it('passes name and author arguments', async () => {
     const mock = jest
       .spyOn(downloadGameModule, 'downloadGame')
-      .mockResolvedValue('done' as any);
+      .mockResolvedValue({ status: true, message: 'done' } as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     await run(['node', 'cli.ts', '--name', 'game', '--author', 'user']);
@@ -160,7 +160,7 @@ describe('cli', () => {
   it('passes retry options', async () => {
     const mock = jest
       .spyOn(downloadGameModule, 'downloadGame')
-      .mockResolvedValue('ok' as any);
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     await run([
@@ -191,7 +191,7 @@ describe('cli', () => {
   it('forwards concurrency option', async () => {
     const mock = jest
       .spyOn(downloadGameModule, 'downloadGame')
-      .mockResolvedValue('ok' as any);
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     await run([
@@ -218,7 +218,7 @@ describe('cli', () => {
   it('passes memory flag', async () => {
     const mock = jest
       .spyOn(downloadGameModule, 'downloadGame')
-      .mockResolvedValue('ok' as any);
+      .mockResolvedValue({ status: true, message: 'ok' } as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     await run([
@@ -245,7 +245,7 @@ describe('cli', () => {
   it('handles collection option', async () => {
     const mock = jest
       .spyOn(downloadCollectionModule, 'downloadCollection')
-      .mockResolvedValue('col' as any);
+      .mockResolvedValue({ status: true, message: 'col' } as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     await run([

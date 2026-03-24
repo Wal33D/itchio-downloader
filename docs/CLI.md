@@ -35,6 +35,7 @@ itchio-downloader [options]
 | `--retries`           | Number of retry attempts on failure (default: `0`)                       |
 | `--retryDelay`        | Base delay in ms for exponential backoff (default: `500`)                |
 | `--concurrency`       | Max simultaneous downloads when using a list                             |
+| `--delay`             | Delay in ms between batch downloads for rate limiting (default: `0`)     |
 | `-h, --help`          | Display usage information                                                |
 
 You must provide either a collection URL, a game URL, or both a name and author.

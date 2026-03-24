@@ -147,6 +147,13 @@ export async function downloadGameHtml5(
 
     for (const assetPath of allAssets) {
       try {
+        // Guard against directory traversal in asset paths
+        const resolvedAsset = path.resolve(gameDir, assetPath);
+        if (!resolvedAsset.startsWith(gameDir)) {
+          failures.push(`${assetPath} (path traversal blocked)`);
+          continue;
+        }
+
         const assetUrl = `${baseUrl}${assetPath}`;
         const assetRes = await fetch(assetUrl, { headers: { 'User-Agent': USER_AGENT } });
         if (!assetRes.ok) {
@@ -154,10 +161,10 @@ export async function downloadGameHtml5(
           continue;
         }
 
-        const assetDir = path.join(gameDir, path.dirname(assetPath));
+        const assetDir = path.dirname(resolvedAsset);
         await fsp.mkdir(assetDir, { recursive: true });
 
-        const assetFilePath = path.join(gameDir, assetPath);
+        const assetFilePath = resolvedAsset;
         const buffer = Buffer.from(await assetRes.arrayBuffer());
         await fsp.writeFile(assetFilePath, buffer);
 

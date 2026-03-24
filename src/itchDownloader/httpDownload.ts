@@ -7,6 +7,7 @@ import { DownloadProgress } from './types';
 
 /**
  * Convert a fetch Response body into a Node Readable stream.
+ * Returns an empty stream if body is null (e.g., 204 No Content).
  */
 function responseToReadable(res: Response): Readable {
   if (res.body && typeof (res.body as ReadableStream).getReader === 'function') {
@@ -15,6 +16,22 @@ function responseToReadable(res: Response): Readable {
     return res.body as unknown as Readable;
   }
   return Readable.from(Buffer.alloc(0));
+}
+
+/**
+ * Safely invoke onProgress, catching any exceptions it throws
+ * to prevent breaking the download stream.
+ */
+function safeProgress(
+  onProgress: ((info: DownloadProgress) => void) | undefined,
+  info: DownloadProgress,
+): void {
+  if (!onProgress) return;
+  try {
+    onProgress(info);
+  } catch {
+    // Progress callback errors must not break downloads
+  }
 }
 
 /**
@@ -33,7 +50,11 @@ export async function streamToFile(
   if (onProgress) {
     readable.on('data', (chunk: Buffer) => {
       bytes += chunk.length;
-      onProgress({ bytesReceived: bytes, totalBytes: total, fileName: path.basename(filePath) });
+      safeProgress(onProgress, {
+        bytesReceived: bytes,
+        totalBytes: total,
+        fileName: path.basename(filePath),
+      });
     });
   }
   await pipeline(readable, writeStream);
@@ -55,9 +76,7 @@ export async function streamToBuffer(
     const buf = Buffer.from(chunk);
     chunks.push(buf);
     bytes += buf.length;
-    if (onProgress) {
-      onProgress({ bytesReceived: bytes, totalBytes: total, fileName });
-    }
+    safeProgress(onProgress, { bytesReceived: bytes, totalBytes: total, fileName });
   }
   return Buffer.concat(chunks);
 }
