@@ -37,6 +37,38 @@ const result = await downloadGameDirect({
 });
 ```
 
+## Downloading game jams
+
+Game jams are time-limited events where developers create games around a theme. itch.io hosts thousands of jams (GMTK, Ludum Dare, etc.), each with hundreds or thousands of submissions. You can download all entries from a jam with a single command:
+
+```javascript
+const { downloadJam } = require('itchio-downloader');
+
+const results = await downloadJam(
+  'https://itch.io/jam/gmtk-2023',
+  null, // no API key needed for free games
+  {
+    concurrency: 3,
+    downloadDirectory: './jam-games',
+    resume: true, // resume if interrupted
+  },
+);
+```
+
+From the CLI:
+
+```bash
+# Download all entries from a game jam
+itchio-downloader --jam "https://itch.io/jam/gmtk-2023" --concurrency 3
+
+# With resume support for large jams
+itchio-downloader --jam "https://itch.io/jam/ludum-dare-55" --resume --downloadDirectory ./ld55
+```
+
+Under the hood, `downloadJam` fetches the jam page to extract the jam ID, retrieves all entries from itch.io's `entries.json` endpoint, and feeds each game URL through the standard download pipeline. All download methods work -- direct HTTP, HTML5, API key, Puppeteer fallback.
+
+Most jam games are free HTML5 browser games or downloadable zip files. The library automatically selects the best download method for each entry.
+
 ## HTML5 web game downloads
 
 Some itch.io games are browser-only -- they run in an embedded iframe and have no downloadable files. The `html5` option scrapes all assets from the game's iframe (HTML, JavaScript, CSS, images, audio, data files) and saves them locally for offline play.

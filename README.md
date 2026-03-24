@@ -164,6 +164,20 @@ console.log(result.html5Assets);
 // Open ./games/wbwwb/index.html to play offline
 ```
 
+### Game Jams
+
+Download all entries from an itch.io game jam:
+
+```javascript
+const { downloadJam } = require('itchio-downloader');
+
+const results = await downloadJam(
+  'https://itch.io/jam/gmtk-2023',
+  null,
+  { concurrency: 3, downloadDirectory: './jam-games' },
+);
+```
+
 ### Resume Interrupted Downloads
 
 Large downloads can be resumed if interrupted. Partial data is saved to a `.part` file and continues from where it left off:

@@ -18,7 +18,8 @@ These features have been implemented and are available in the current release:
 - **Cookie caching** -- Session cookies and CSRF tokens are cached per domain with a 30-minute TTL. Subsequent downloads skip the CSRF negotiation step. Configurable via `--noCookieCache` and `--cookieCacheDir`.
 - **Resume support** -- Interrupted downloads can be resumed using HTTP Range headers. Partial data is saved to `.part` files. Enable with `--resume`.
 - **Checksum verification** -- Downloaded file sizes are verified against Content-Length headers. Responses include `sizeVerified`, `bytesDownloaded`, and `resumed` fields. In-memory downloads throw on size mismatch. HTML5 asset downloads verify each individual asset.
-- **137 unit tests** -- Comprehensive test coverage for all download paths, cookie caching, resume logic, and size verification.
+- **Game jam downloads** -- Download all entries from an itch.io game jam with `--jam`. Extracts jam ID from the jam page, fetches entries from the `entries.json` endpoint, and downloads each game through the existing pipeline.
+- **161 unit tests** -- Comprehensive test coverage for all download paths, cookie caching, resume logic, size verification, and game jams.
 
 ## Planned
 

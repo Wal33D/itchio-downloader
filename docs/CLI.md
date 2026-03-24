@@ -25,6 +25,7 @@ itchio-downloader [options]
 | --------------------- | ------------------------------------------------------------------------ |
 | `--url`               | Full URL to the game on itch.io                                          |
 | `--collection`        | URL to a collection on itch.io                                           |
+| `--jam`               | URL to a game jam — downloads all entries                                |
 | `--name`              | Name of the game to download (used with `--author`)                      |
 | `--author`            | Username of the game's author                                            |
 | `--apiKey`            | itch.io API key for authenticated downloads (defaults to `ITCH_API_KEY`) |
@@ -41,7 +42,7 @@ itchio-downloader [options]
 | `--cookieCacheDir`    | Directory for cookie cache (default: system tmpdir)                      |
 | `-h, --help`          | Display usage information                                                |
 
-You must provide either a collection URL, a game URL, or both a name and author.
+You must provide a collection URL, a jam URL, a game URL, or both a name and author.
 
 You can set the API key in an `.env` file or environment variable `ITCH_API_KEY`
 so the `--apiKey` flag is optional.
@@ -61,6 +62,9 @@ itchio-downloader --name "manic miners" --author "baraklava"
 
 # Limiting concurrent downloads when using a list
 itchio-downloader --url "https://baraklava.itch.io/manic-miners" --concurrency 2
+
+# Download all entries from a game jam
+itchio-downloader --jam "https://itch.io/jam/gmtk-2023" --concurrency 3
 
 # Downloading all games from a collection
 itchio-downloader --collection "https://itch.io/c/123/example"

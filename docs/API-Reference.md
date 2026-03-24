@@ -8,6 +8,7 @@ const {
   downloadGame,
   downloadGameDirect,
   downloadGameHtml5,
+  downloadJam,
   downloadWithResume,
   getCachedCookies,
   setCachedCookies,
@@ -89,6 +90,45 @@ Accepts the same `DownloadGameParams` object. Set `html5: true` when calling via
 A `Promise<DownloadGameResponse>`. On success, the response includes:
 - `html5Assets` -- array of downloaded asset file paths relative to the game directory.
 - `filePath` -- path to the saved `index.html`.
+
+---
+
+## downloadJam(jamUrl, apiKey?, opts?)
+
+Downloads all game entries from an itch.io game jam. Fetches the jam page to extract the jam ID, then retrieves all entries from the `entries.json` endpoint and downloads each game through the standard `downloadGame` pipeline.
+
+### Parameters
+
+- `jamUrl` _(string)_ -- URL to the jam page (e.g., `https://itch.io/jam/gmtk-2023`).
+- `apiKey` _(string, optional)_ -- itch.io API key for authenticated downloads.
+- `opts` _(DownloadJamOptions, optional)_:
+  - `downloadDirectory` _(string)_ -- Where to save downloaded files.
+  - `concurrency` _(number)_ -- Maximum simultaneous downloads. Defaults to `1`.
+  - `resume` _(boolean)_ -- Resume interrupted downloads.
+  - `noCookieCache` _(boolean)_ -- Disable cookie caching.
+  - `cookieCacheDir` _(string)_ -- Custom cookie cache directory.
+  - `onProgress` _(function)_ -- Progress callback.
+
+### Returns
+
+A `Promise<DownloadGameResponse | DownloadGameResponse[]>`. Returns a single error response if the jam has no entries, otherwise an array of results for each game.
+
+### Example
+
+```javascript
+const { downloadJam } = require('itchio-downloader');
+
+const results = await downloadJam(
+  'https://itch.io/jam/gmtk-2023',
+  null,
+  { concurrency: 3, downloadDirectory: './jam-games', resume: true },
+);
+
+// results is an array — one DownloadGameResponse per jam entry
+for (const r of Array.isArray(results) ? results : [results]) {
+  console.log(r.status ? `Downloaded: ${r.filePath}` : `Failed: ${r.message}`);
+}
+```
 
 ---
 
@@ -235,11 +275,17 @@ console.log(resumeResult.resumed);       // true if continued from .part
 console.log(resumeResult.sizeVerified);  // true if size matched
 console.log(resumeResult.bytesDownloaded);
 
+// Download all entries from a game jam
+const jamResults = await downloadJam('https://itch.io/jam/gmtk-2023', null, {
+  concurrency: 3,
+  downloadDirectory: './jam-games',
+});
+
 // Cookie cache management
 const { getCachedCookies, clearCachedCookies } = require('itchio-downloader');
 const cached = await getCachedCookies('https://dev.itch.io/game');
 await clearCachedCookies(); // clear all
 ```
 
-See [Advanced Usage](Advanced-Usage.md) for concurrency, HTML5, platform, and custom path examples.
+See [Advanced Usage](Advanced-Usage.md) for concurrency, HTML5, jams, and custom path examples.
 For troubleshooting and debug logs, see the [Debugging](Debugging.md) guide.
