@@ -4,6 +4,7 @@ import type { Argv, ArgumentsCamelCase } from 'yargs';
 import 'dotenv/config';
 import { downloadGame } from './itchDownloader/downloadGame';
 import { downloadCollection } from './itchDownloader/downloadCollection';
+import { downloadJam } from './itchDownloader/downloadJam';
 import {
   DownloadGameParams,
   DownloadGameResponse,
@@ -81,6 +82,10 @@ export async function run(
       describe: 'URL to an itch.io collection page',
       type: 'string',
     })
+    .option('jam', {
+      describe: 'URL to an itch.io game jam (downloads all entries)',
+      type: 'string',
+    })
     .option('name', {
       describe: 'The name of the game to download',
       type: 'string',
@@ -147,6 +152,8 @@ export async function run(
     .check((args) => {
       if (args.collection) {
         return true;
+      } else if (args.jam) {
+        return true;
       } else if (args.url) {
         return true;
       } else if (args.name && args.author) {
@@ -179,6 +186,27 @@ export async function run(
     } catch (error) {
       console.error(
         `\n  \u2718 Collection download failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      process.exitCode = 1;
+    }
+    return;
+  }
+
+  if (argv.jam) {
+    try {
+      console.log(`\n  Downloading jam: ${argv.jam}\n`);
+      const result = await downloadJam(argv.jam, apiKey, {
+        downloadDirectory: argv.downloadDirectory,
+        concurrency,
+        onProgress,
+        resume: argv.resume,
+        noCookieCache: argv.noCookieCache,
+        cookieCacheDir: argv.cookieCacheDir,
+      });
+      printResult('Jam', result as DownloadGameResponse);
+    } catch (error) {
+      console.error(
+        `\n  \u2718 Jam download failed: ${error instanceof Error ? error.message : String(error)}`,
       );
       process.exitCode = 1;
     }

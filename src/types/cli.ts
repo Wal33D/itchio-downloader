@@ -1,6 +1,7 @@
 export interface CLIArgs {
   url?: string;
   collection?: string;
+  jam?: string;
   name?: string;
   author?: string;
   downloadDirectory?: string;

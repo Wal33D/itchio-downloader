@@ -8,6 +8,7 @@ import {
 import { downloadGame, DownloadGameOptions } from './itchDownloader/downloadGame';
 import { downloadGameDirect } from './itchDownloader/downloadGameDirect';
 import { downloadGameHtml5 } from './itchDownloader/downloadGameHtml5';
+import { downloadJam, DownloadJamOptions } from './itchDownloader/downloadJam';
 import { CLIArgs } from './types/cli';
 import { getCachedCookies, setCachedCookies, clearCachedCookies } from './itchDownloader/cookieCache';
 import { downloadWithResume, StreamResult } from './itchDownloader/httpDownload';
@@ -26,6 +27,8 @@ export {
   DownloadGameResponse,
   IItchRecord,
   DownloadProgress,
+  downloadJam,
+  DownloadJamOptions,
   CLIArgs,
   StreamResult,
 };

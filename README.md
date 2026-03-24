@@ -32,7 +32,7 @@ const result = await downloadGame({
 
 There's no official API for downloading free itch.io games. The itch desktop app requires a GUI. Butler requires developer access. This library gives you a single function call or CLI command that just works.
 
-**Tested on games from 2.6 MB to 1.9 GB.** 137 unit tests. Strict TypeScript. Zero lint warnings.
+**Tested on games from 2.6 MB to 1.9 GB.** 161 unit tests. Strict TypeScript. Zero lint warnings.
 
 ---
 
@@ -48,6 +48,7 @@ There's no official API for downloading free itch.io games. The itch desktop app
 <tr><td><strong>API Key Support</strong></td><td>Optional authenticated downloads via itch.io API</td></tr>
 <tr><td><strong>Batch & Concurrent</strong></td><td>Download multiple games with configurable concurrency and rate limiting</td></tr>
 <tr><td><strong>Collections</strong></td><td>Fetch every game from a collection URL in one command</td></tr>
+<tr><td><strong>Game Jams</strong></td><td>Download all entries from a game jam with <code>--jam</code></td></tr>
 <tr><td><strong>In-Memory</strong></td><td>Download to a <code>Buffer</code> instead of disk</td></tr>
 <tr><td><strong>Progress Tracking</strong></td><td>Real-time progress bar in CLI, <code>onProgress</code> callback in library</td></tr>
 <tr><td><strong>Retries</strong></td><td>Exponential backoff on failure</td></tr>
@@ -108,6 +109,9 @@ itchio-downloader --url "https://dev.itch.io/game" --platform linux
 
 # Resume an interrupted download
 itchio-downloader --url "https://dev.itch.io/large-game" --resume
+
+# Download all entries from a game jam
+itchio-downloader --jam "https://itch.io/jam/gmtk-2023" --concurrency 3
 
 # Download a collection with rate limiting
 itchio-downloader --collection "https://itch.io/c/123/my-collection" --concurrency 2 --delay 1000
@@ -300,7 +304,7 @@ type DownloadGameResponse = {
 git clone https://github.com/Wal33D/itchio-downloader.git
 cd itchio-downloader
 pnpm install
-pnpm test        # 137 tests
+pnpm test        # 161 tests
 pnpm run build   # compile TypeScript
 pnpm run lint    # ESLint (zero warnings)
 ```
