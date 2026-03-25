@@ -5,12 +5,9 @@ import { createFile } from '../fileUtils/createFile';
 import { createDirectory } from '../fileUtils/createDirectory';
 import { renameFile } from '../fileUtils/renameFile';
 import { fetchItchGameProfile } from './fetchItchGameProfile';
-import { streamToFile, streamToBuffer, downloadWithResume, fetchWithTimeout } from './httpDownload';
+import { streamToFile, streamToBuffer, downloadWithResume, fetchWithTimeout, USER_AGENT } from './httpDownload';
 import { getCachedCookies, setCachedCookies, mergeCookies } from './cookieCache';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
-
-const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
 
 interface UploadInfo {
   id: string;
@@ -141,7 +138,7 @@ export async function downloadGameDirect(
 
     // Cache the session cookies + CSRF for future downloads
     if (!noCookieCache) {
-      await setCachedCookies(itchGameUrl, sessionCookies, page.csrfToken, cookieCacheDir).catch(() => {});
+      await setCachedCookies(itchGameUrl, sessionCookies, page.csrfToken, cookieCacheDir).catch(() => { /* best-effort */ });
     }
 
     // Price gate — if min_price > 0 and no direct uploads visible, this is a paid game

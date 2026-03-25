@@ -8,6 +8,10 @@ import { DownloadProgress } from './types';
 /** Default timeout for HTTP requests (30 seconds). */
 const DEFAULT_TIMEOUT_MS = 30_000;
 
+/** Shared User-Agent for all itch.io HTTP requests. Update this single constant when needed. */
+export const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
+
 /**
  * Fetch with an automatic timeout via AbortController.
  * Prevents indefinite hangs on unresponsive servers.

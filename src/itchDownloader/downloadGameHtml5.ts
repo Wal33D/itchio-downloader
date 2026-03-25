@@ -4,11 +4,8 @@ import fsp from 'fs/promises';
 import { createDirectory } from '../fileUtils/createDirectory';
 import { createFile } from '../fileUtils/createFile';
 import { fetchItchGameProfile } from './fetchItchGameProfile';
-import { fetchWithTimeout } from './httpDownload';
+import { fetchWithTimeout, USER_AGENT } from './httpDownload';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
-
-const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
 
 /** File extensions to look for when scanning JS files for asset references. */
 const ASSET_EXTENSIONS =

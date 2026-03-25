@@ -1,13 +1,10 @@
 import { downloadGame } from './downloadGame';
-import { fetchWithTimeout } from './httpDownload';
+import { fetchWithTimeout, USER_AGENT } from './httpDownload';
 import {
   DownloadGameParams,
   DownloadGameResponse,
   DownloadProgress,
 } from './types';
-
-const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
 
 /**
  * Extract the jam slug from a jam URL.
