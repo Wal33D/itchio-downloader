@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "yargs": "^18.0.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^17.3.1"
   },
   "optionalDependencies": {
     "puppeteer": "^24.11.2"
