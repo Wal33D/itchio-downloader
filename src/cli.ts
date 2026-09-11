@@ -15,9 +15,9 @@ import {
 import { CLIArgs } from './types/cli';
 
 const packageVersion = (
-  JSON.parse(
-    readFileSync(join(__dirname, '../package.json'), 'utf8'),
-  ) as { version: string }
+  JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8')) as {
+    version: string;
+  }
 ).version;
 
 function formatBytes(bytes: number): string {
@@ -28,6 +28,7 @@ function formatBytes(bytes: number): string {
 }
 
 function renderProgressBar(info: DownloadProgress): void {
+  if (!process.stdout.isTTY) return;
   const { bytesReceived, totalBytes, fileName } = info;
   const cols = Math.min(process.stdout.columns || 80, 100);
   const label = fileName ? fileName.slice(0, 20) : 'download';
@@ -61,10 +62,14 @@ function printResult(
       if (r.filePath) console.log(`    File: ${r.filePath}`);
       if (r.metadataPath) console.log(`    Metadata: ${r.metadataPath}`);
       if (r.metaData?.title) console.log(`    Title: ${r.metaData.title}`);
-      if (r.fileBuffer) console.log(`    Buffer: ${formatBytes(r.fileBuffer.length)}`);
-      if (r.html5Assets) console.log(`    Assets: ${r.html5Assets.length} files`);
-      if (r.bytesDownloaded) console.log(`    Size: ${formatBytes(r.bytesDownloaded)}`);
-      if (r.sizeVerified === false) console.log(`    \u26a0 Size verification failed`);
+      if (r.fileBuffer)
+        console.log(`    Buffer: ${formatBytes(r.fileBuffer.length)}`);
+      if (r.html5Assets)
+        console.log(`    Assets: ${r.html5Assets.length} files`);
+      if (r.bytesDownloaded)
+        console.log(`    Size: ${formatBytes(r.bytesDownloaded)}`);
+      if (r.sizeVerified === false)
+        console.log(`    \u26a0 Size verification failed`);
       if (r.resumed) console.log(`    \u21bb Resumed from partial download`);
     } else {
       succeeded = false;

@@ -6,7 +6,11 @@ import { downloadGameHtml5 } from '../downloadGameHtml5';
 jest.mock('../fetchItchGameProfile', () => ({
   fetchItchGameProfile: jest.fn().mockResolvedValue({
     found: true,
-    itchRecord: { name: 'html5game', author: 'testauthor', title: 'HTML5 Game' },
+    itchRecord: {
+      name: 'html5game',
+      author: 'testauthor',
+      title: 'HTML5 Game',
+    },
     message: 'ok',
   }),
 }));
@@ -18,20 +22,29 @@ const mockResponse = (
     status?: number;
     headers?: Record<string, string>;
   } = {},
-) => ({
-  ok: opts.ok ?? true,
-  status: opts.status ?? 200,
-  text: async () => (typeof body === 'string' ? body : body.toString()),
-  json: async () => JSON.parse(typeof body === 'string' ? body : body.toString()),
-  arrayBuffer: async () => {
-    const buf = typeof body === 'string' ? Buffer.from(body) : body;
-    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-  },
-  headers: {
-    get: (name: string) => opts.headers?.[name.toLowerCase()] ?? null,
-  },
-  body: null,
-});
+) => {
+  const buffer = typeof body === 'string' ? Buffer.from(body) : body;
+  return {
+    ok: opts.ok ?? true,
+    status: opts.status ?? 200,
+    text: async () => buffer.toString(),
+    json: async () => JSON.parse(buffer.toString()),
+    arrayBuffer: async () =>
+      buffer.buffer.slice(
+        buffer.byteOffset,
+        buffer.byteOffset + buffer.byteLength,
+      ),
+    headers: {
+      get: (name: string) => opts.headers?.[name.toLowerCase()] ?? null,
+    },
+    body: new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(buffer);
+        controller.close();
+      },
+    }),
+  };
+};
 
 describe('downloadGameHtml5', () => {
   const originalFetch = global.fetch;
@@ -122,7 +135,8 @@ describe('downloadGameHtml5', () => {
       <div data-iframe="&lt;iframe src=&quot;https://html-classic.itch.zone/html/54321/index.html?v=42&amp;source=test&quot;&gt;&lt;/iframe&gt;"></div>
     `;
     const indexHtml = '<html><body>single-file game</body></html>';
-    const mockFetch = jest.fn()
+    const mockFetch = jest
+      .fn()
       .mockResolvedValueOnce(mockResponse(gamePageHtml))
       .mockResolvedValueOnce(mockResponse(indexHtml));
     global.fetch = mockFetch as unknown as typeof fetch;
@@ -149,7 +163,8 @@ describe('downloadGameHtml5', () => {
         <script>const template = 'src="'.concat(dynamicValue, '"';</script>
       </body></html>
     `;
-    const mockFetch = jest.fn()
+    const mockFetch = jest
+      .fn()
       .mockResolvedValueOnce(mockResponse(gamePageHtml))
       .mockResolvedValueOnce(mockResponse(indexHtml));
     global.fetch = mockFetch as unknown as typeof fetch;
@@ -166,10 +181,78 @@ describe('downloadGameHtml5', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
+  it('streams index.html to disk without buffering it through response.text()', async () => {
+    const gamePageHtml = `
+      <iframe src="https://html-classic.itch.zone/html/88888/index.html"></iframe>
+    `;
+    const indexHtml = `
+      <html><body>
+        <script>${'const embedded = "src=not-an-asset";'.repeat(10_000)}</script>
+        <img src="images/cover.png">
+      </body></html>
+    `;
+    const indexResponse = mockResponse(indexHtml);
+    indexResponse.text = jest.fn(async () => {
+      throw new Error('index response should be streamed');
+    });
+    const mockFetch = jest
+      .fn()
+      .mockResolvedValueOnce(mockResponse(gamePageHtml))
+      .mockResolvedValueOnce(indexResponse)
+      .mockResolvedValueOnce(mockResponse(Buffer.from('PNG')));
+    global.fetch = mockFetch as unknown as typeof fetch;
+
+    const result = await downloadGameHtml5({
+      itchGameUrl: 'https://author.itch.io/streamed-game',
+      downloadDirectory: tmpDir,
+      writeMetaData: false,
+    });
+
+    expect(result.status).toBe(true);
+    expect(indexResponse.text).not.toHaveBeenCalled();
+    expect(result.html5Assets).toEqual(['index.html', 'images/cover.png']);
+    expect(result.bytesDownloaded).toBe(
+      Buffer.byteLength(indexHtml) + Buffer.byteLength('PNG'),
+    );
+  });
+
+  it('bounds parser memory for oversized embedded-data attributes', async () => {
+    const gamePageHtml = `
+      <iframe src="https://html-classic.itch.zone/html/99998/index.html"></iframe>
+    `;
+    const indexHtml = `
+      <html><body>
+        <script data="${'embedded-data'.repeat(20_000)}"></script>
+        <img src="images/after-embedded-data.png">
+      </body></html>
+    `;
+    const mockFetch = jest
+      .fn()
+      .mockResolvedValueOnce(mockResponse(gamePageHtml))
+      .mockResolvedValueOnce(mockResponse(indexHtml))
+      .mockResolvedValueOnce(mockResponse(Buffer.from('PNG')));
+    global.fetch = mockFetch as unknown as typeof fetch;
+
+    const result = await downloadGameHtml5({
+      itchGameUrl: 'https://author.itch.io/embedded-data-game',
+      downloadDirectory: tmpDir,
+      writeMetaData: false,
+    });
+
+    expect(result.status).toBe(true);
+    expect(result.html5Assets).toEqual([
+      'index.html',
+      'images/after-embedded-data.png',
+    ]);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
   it('explains when a game page is private or restricted', async () => {
-    global.fetch = jest.fn().mockResolvedValueOnce(
-      mockResponse('Forbidden', { ok: false, status: 403 }),
-    ) as unknown as typeof fetch;
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(
+        mockResponse('Forbidden', { ok: false, status: 403 }),
+      ) as unknown as typeof fetch;
 
     const result = await downloadGameHtml5({
       itchGameUrl: 'https://author.itch.io/private-game',

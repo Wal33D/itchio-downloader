@@ -32,7 +32,7 @@ const result = await downloadGame({
 
 There's no official API for downloading free itch.io games. The itch desktop app requires a GUI. Butler requires developer access. This library gives you a single function call or CLI command that just works.
 
-**Tested on games from 2.6 MB to 1.9 GB.** 161 unit tests. Strict TypeScript. Zero lint warnings.
+**Tested on games from 2.6 MB to 1.9 GB.** 174 automated tests. Strict TypeScript. Zero lint warnings.
 
 ---
 
@@ -74,6 +74,8 @@ Most free games resolve at **step 3**. Puppeteer is an optional dependency — y
 ---
 
 ## Install
+
+Requires Node.js `^20.19.0`, `^22.12.0`, or `>=23`.
 
 ```bash
 # As a library
@@ -167,6 +169,10 @@ console.log(result.html5Assets);
 // Open ./games/wbwwb/index.html to play offline
 ```
 
+Large single-file HTML5 games are streamed directly to disk. When itch.io
+compresses a response, verification uses the decoded byte count without
+mistaking the compressed HTTP length for the saved file size.
+
 ### Game Jams
 
 Download all entries from an itch.io game jam:
@@ -174,11 +180,10 @@ Download all entries from an itch.io game jam:
 ```javascript
 const { downloadJam } = require('itchio-downloader');
 
-const results = await downloadJam(
-  'https://itch.io/jam/gmtk-2023',
-  null,
-  { concurrency: 3, downloadDirectory: './jam-games' },
-);
+const results = await downloadJam('https://itch.io/jam/gmtk-2023', null, {
+  concurrency: 3,
+  downloadDirectory: './jam-games',
+});
 ```
 
 ### Resume Interrupted Downloads
@@ -191,8 +196,8 @@ const result = await downloadGame({
   resume: true,
 });
 
-console.log(result.resumed);        // true if continued from partial
-console.log(result.sizeVerified);   // true if Content-Length matched
+console.log(result.resumed); // true if continued from partial
+console.log(result.sizeVerified); // true if Content-Length matched
 console.log(result.bytesDownloaded); // total bytes written
 ```
 
@@ -240,6 +245,7 @@ await downloadGame({
   apiKey: 'your-key',
 });
 ```
+
 </details>
 
 <details>
@@ -253,6 +259,7 @@ const result = await downloadGame({
 });
 console.log(result.fileBuffer); // Buffer containing the file
 ```
+
 </details>
 
 <details>
@@ -267,31 +274,32 @@ await downloadGame(
   { concurrency: 2, delayBetweenMs: 1000 },
 );
 ```
+
 </details>
 
 ---
 
 ## Configuration
 
-| Parameter | Type | Default | Description |
-|:----------|:-----|:--------|:------------|
-| `itchGameUrl` | `string` | -- | Direct URL to the game |
-| `name` | `string` | -- | Game name (use with `author`) |
-| `author` | `string` | -- | Author's username |
-| `apiKey` | `string` | `ITCH_API_KEY` env | API key for authenticated downloads |
-| `downloadDirectory` | `string` | `~/downloads` | Where to save files |
-| `desiredFileName` | `string` | -- | Custom file name (no path separators) |
-| `inMemory` | `boolean` | `false` | Download to Buffer instead of disk |
-| `html5` | `boolean` | `false` | Download HTML5 web game assets |
-| `platform` | `string` | -- | Preferred platform: `windows`, `linux`, `osx` |
-| `resume` | `boolean` | `false` | Resume interrupted downloads (Range headers) |
-| `noCookieCache` | `boolean` | `false` | Disable automatic cookie caching |
-| `cookieCacheDir` | `string` | system tmpdir | Directory for the cookie cache |
-| `writeMetaData` | `boolean` | `true` | Save metadata JSON alongside download |
-| `retries` | `number` | `0` | Retry attempts on failure |
-| `retryDelayMs` | `number` | `500` | Base delay for exponential backoff (ms) |
-| `parallel` | `boolean` | `false` | Run all downloads concurrently |
-| `onProgress` | `function` | -- | `({ bytesReceived, totalBytes, fileName }) => void` |
+| Parameter           | Type       | Default            | Description                                         |
+| :------------------ | :--------- | :----------------- | :-------------------------------------------------- |
+| `itchGameUrl`       | `string`   | --                 | Direct URL to the game                              |
+| `name`              | `string`   | --                 | Game name (use with `author`)                       |
+| `author`            | `string`   | --                 | Author's username                                   |
+| `apiKey`            | `string`   | `ITCH_API_KEY` env | API key for authenticated downloads                 |
+| `downloadDirectory` | `string`   | `~/downloads`      | Where to save files                                 |
+| `desiredFileName`   | `string`   | --                 | Custom file name (no path separators)               |
+| `inMemory`          | `boolean`  | `false`            | Download to Buffer instead of disk                  |
+| `html5`             | `boolean`  | `false`            | Download HTML5 web game assets                      |
+| `platform`          | `string`   | --                 | Preferred platform: `windows`, `linux`, `osx`       |
+| `resume`            | `boolean`  | `false`            | Resume interrupted downloads (Range headers)        |
+| `noCookieCache`     | `boolean`  | `false`            | Disable automatic cookie caching                    |
+| `cookieCacheDir`    | `string`   | system tmpdir      | Directory for the cookie cache                      |
+| `writeMetaData`     | `boolean`  | `true`             | Save metadata JSON alongside download               |
+| `retries`           | `number`   | `0`                | Retry attempts on failure                           |
+| `retryDelayMs`      | `number`   | `500`              | Base delay for exponential backoff (ms)             |
+| `parallel`          | `boolean`  | `false`            | Run all downloads concurrently                      |
+| `onProgress`        | `function` | --                 | `({ bytesReceived, totalBytes, fileName }) => void` |
 
 ---
 
@@ -299,21 +307,30 @@ await downloadGame(
 
 ```typescript
 type DownloadGameResponse = {
-  status: boolean;          // true if download succeeded
-  message: string;          // human-readable result
-  filePath?: string;        // path to downloaded file
-  fileBuffer?: Buffer;      // file contents (inMemory mode)
-  metadataPath?: string;    // path to metadata JSON
-  metaData?: IItchRecord;   // game metadata object
-  html5Assets?: string[];   // downloaded asset paths (html5 mode)
-  httpStatus?: number;      // HTTP status code on failure
-  sizeVerified?: boolean;   // true if Content-Length matched actual bytes
+  status: boolean; // true if download succeeded
+  message: string; // human-readable result
+  filePath?: string; // path to downloaded file
+  fileBuffer?: Buffer; // file contents (inMemory mode)
+  metadataPath?: string; // path to metadata JSON
+  metaData?: IItchRecord; // game metadata object
+  html5Assets?: string[]; // downloaded asset paths (html5 mode)
+  httpStatus?: number; // HTTP status code on failure
+  sizeVerified?: boolean; // true if Content-Length matched actual bytes
   bytesDownloaded?: number; // total bytes downloaded
-  resumed?: boolean;        // true if download was resumed from .part file
+  resumed?: boolean; // true if download was resumed from .part file
 };
 ```
 
 ---
+
+## Troubleshooting
+
+- **HTTP 403:** the page may be private, restricted, or blocked by itch.io. Confirm it opens in a logged-out browser; this tool does not bypass access controls.
+- **HTTP 404:** check the URL. The page may have been renamed, removed, or unpublished.
+- **HTML5 game:** retry with `--html5` to explicitly select offline web-game downloading. Large single-file games can take time even when no additional assets are listed.
+- **`.direct_download_btn` error:** browser fallback was reached but itch.io did not expose a downloadable build. On Arch, install optional Chromium with `sudo pacman -S chromium`; this cannot make a private, paid, or HTML5-only build downloadable as a desktop archive.
+- **Sessions:** cookie caching is enabled by default. Avoid `--noCookieCache` unless a fresh unauthenticated session is intentional.
+- **Debugging:** prefix the command with `DEBUG_DOWNLOAD_GAME=1` and remove credentials before sharing its output in an issue.
 
 ## Development
 
@@ -321,23 +338,23 @@ type DownloadGameResponse = {
 git clone https://github.com/Wal33D/itchio-downloader.git
 cd itchio-downloader
 pnpm install
-pnpm test        # 170 tests
+pnpm test        # 174 tests
 pnpm run build   # compile TypeScript
 pnpm run lint    # ESLint (zero warnings)
 ```
 
 ## Documentation
 
-| | |
-|:--|:--|
-| **[API Reference](docs/API-Reference.md)** | Functions, types, and exports |
-| **[CLI Reference](docs/CLI.md)** | All command-line options |
+|                                              |                                     |
+| :------------------------------------------- | :---------------------------------- |
+| **[API Reference](docs/API-Reference.md)**   | Functions, types, and exports       |
+| **[CLI Reference](docs/CLI.md)**             | All command-line options            |
 | **[Advanced Usage](docs/Advanced-Usage.md)** | Resume, cookies, concurrency, HTML5 |
-| **[Installation](docs/Installation.md)** | Setup requirements |
-| **[Debugging](docs/Debugging.md)** | Troubleshooting tips |
-| **[Roadmap](docs/Roadmap.md)** | Planned improvements |
-| **[Changelog](CHANGELOG.md)** | Release history |
-| **[Contributing](CONTRIBUTING.md)** | Contribution guidelines |
+| **[Installation](docs/Installation.md)**     | Setup requirements                  |
+| **[Debugging](docs/Debugging.md)**           | Troubleshooting tips                |
+| **[Roadmap](docs/Roadmap.md)**               | Planned improvements                |
+| **[Changelog](CHANGELOG.md)**                | Release history                     |
+| **[Contributing](CONTRIBUTING.md)**          | Contribution guidelines             |
 
 ## Usage Policy
 

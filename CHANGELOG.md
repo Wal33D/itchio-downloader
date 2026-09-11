@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.3] - 2026-09-11
+
+### Fixed
+
+- Stream large HTML5 entry files and downloaded assets to disk instead of buffering them in memory.
+- Ignore compressed `Content-Length` values when Node has transparently decoded the response body.
+- Bound HTML tag parsing memory for games that embed large payloads in tag attributes.
+- Suppress interactive progress-bar rendering when CLI output is redirected.
+
+### Changed
+
+- Document verified installation paths, HTML5 behavior, browser fallback, and page-access errors.
+- Expanded regression coverage to 174 tests.
+
 ## [1.2.2] - 2026-09-11
 
 ### Fixed

@@ -1,5 +1,6 @@
 import path from 'path';
 import os from 'os';
+import fs from 'fs';
 import fsp from 'fs/promises';
 import { createDirectory } from '../fileUtils/createDirectory';
 import { createFile } from '../fileUtils/createFile';
@@ -7,6 +8,7 @@ import { fetchItchGameProfile } from './fetchItchGameProfile';
 import {
   describeGamePageHttpError,
   fetchWithTimeout,
+  streamToFile,
   USER_AGENT,
 } from './httpDownload';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
@@ -48,41 +50,151 @@ function toGameRelativeRef(
   }
 }
 
-function parseAssetRefs(
-  html: string,
+function assetRefFromTag(
+  openingTag: string,
+  tagName: string,
   indexUrl: URL,
   gameBaseUrl: URL,
-): string[] {
-  const refs: string[] = [];
-  // Only inspect actual resource-bearing opening tags. Skip complete inline
-  // script/style bodies so a bundled single-file game can contain hundreds of
-  // megabytes of JavaScript without us scanning its string literals as markup.
-  const tagPattern = /<(script|style|link|img|audio|video|source|track|object)\b/gi;
-  let match: RegExpExecArray | null;
-  while ((match = tagPattern.exec(html)) !== null) {
-    const tagEnd = html.indexOf('>', match.index);
-    if (tagEnd === -1) break;
+): string | undefined {
+  const attribute =
+    tagName === 'link'
+      ? openingTag.match(/\shref\s*=\s*(?:"([^"]*)"|'([^']*)')/i)
+      : tagName === 'object'
+        ? openingTag.match(/\sdata\s*=\s*(?:"([^"]*)"|'([^']*)')/i)
+        : openingTag.match(/\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)')/i);
+  return attribute
+    ? toGameRelativeRef(attribute[1] ?? attribute[2], indexUrl, gameBaseUrl)
+    : undefined;
+}
 
-    const tagName = match[1].toLowerCase();
-    const openingTag = html.slice(match.index, tagEnd + 1);
-    const attribute = openingTag.match(
-      /\s(?:src|href|data)\s*=\s*(?:"([^"]*)"|'([^']*)')/i,
-    );
-    const relativeRef = attribute
-      ? toGameRelativeRef(attribute[1] ?? attribute[2], indexUrl, gameBaseUrl)
-      : undefined;
-    if (relativeRef) refs.push(relativeRef);
+type Quote = '"' | "'" | undefined;
 
-    tagPattern.lastIndex = tagEnd + 1;
-    if (tagName === 'script' || tagName === 'style') {
-      const closingTag = `</${tagName}`;
-      const closingStart = html.indexOf(closingTag, tagEnd + 1);
-      if (closingStart !== -1) {
-        const closingEnd = html.indexOf('>', closingStart + closingTag.length);
-        tagPattern.lastIndex = closingEnd === -1 ? html.length : closingEnd + 1;
-      }
+function scanTagEnd(
+  value: string,
+  initialQuote?: Quote,
+  startIndex = 1,
+): { endIndex: number; quote: Quote } {
+  let quote = initialQuote;
+  for (let index = startIndex; index < value.length; index++) {
+    const char = value[index];
+    if (quote) {
+      if (char === quote) quote = undefined;
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '>') {
+      return { endIndex: index, quote };
     }
   }
+  return { endIndex: -1, quote };
+}
+
+/**
+ * Scan a saved HTML file incrementally so very large single-file games do not
+ * need a second full in-memory copy just to discover their asset tags.
+ */
+async function parseAssetRefsFromFile(
+  filePath: string,
+  indexUrl: URL,
+  gameBaseUrl: URL,
+): Promise<string[]> {
+  const refs: string[] = [];
+  let buffer = '';
+  let skippedTag: 'script' | 'style' | undefined;
+  let oversizedTag:
+    | { skippedTag?: 'script' | 'style'; quote: Quote }
+    | undefined;
+  const maximumBufferedTagBytes = 64 * 1024;
+
+  const consume = (final: boolean): void => {
+    while (buffer.length > 0) {
+      if (oversizedTag) {
+        const scan = scanTagEnd(buffer, oversizedTag.quote, 0);
+        if (scan.endIndex === -1) {
+          oversizedTag.quote = scan.quote;
+          buffer = '';
+          return;
+        }
+        buffer = buffer.slice(scan.endIndex + 1);
+        skippedTag = oversizedTag.skippedTag;
+        oversizedTag = undefined;
+        continue;
+      }
+
+      if (skippedTag) {
+        const closingMarker = `</${skippedTag}`;
+        const closingStart = buffer.toLowerCase().indexOf(closingMarker);
+        if (closingStart === -1) {
+          buffer = final
+            ? ''
+            : buffer.slice(-Math.min(buffer.length, closingMarker.length - 1));
+          return;
+        }
+        const closingEnd = scanTagEnd(buffer.slice(closingStart)).endIndex;
+        if (closingEnd === -1) {
+          buffer = final ? '' : buffer.slice(closingStart);
+          return;
+        }
+        buffer = buffer.slice(closingStart + closingEnd + 1);
+        skippedTag = undefined;
+        continue;
+      }
+
+      const tagStart = buffer.indexOf('<');
+      if (tagStart === -1) {
+        buffer = final ? '' : buffer.slice(-1);
+        return;
+      }
+      if (tagStart > 0) buffer = buffer.slice(tagStart);
+
+      const tagScan = scanTagEnd(buffer);
+      const tagEnd = tagScan.endIndex;
+      if (tagEnd === -1) {
+        if (final) {
+          buffer = '';
+        } else if (buffer.length > maximumBufferedTagBytes) {
+          const match = buffer.match(/^<(script|style)\b/i);
+          const tagName = match?.[1].toLowerCase();
+          oversizedTag = {
+            skippedTag:
+              tagName === 'script' || tagName === 'style' ? tagName : undefined,
+            quote: tagScan.quote,
+          };
+          buffer = '';
+        }
+        return;
+      }
+
+      const openingTag = buffer.slice(0, tagEnd + 1);
+      buffer = buffer.slice(tagEnd + 1);
+      const match = openingTag.match(
+        /^<(script|style|link|img|audio|video|source|track|object)\b/i,
+      );
+      if (!match) continue;
+
+      const tagName = match[1].toLowerCase();
+      const relativeRef = assetRefFromTag(
+        openingTag,
+        tagName,
+        indexUrl,
+        gameBaseUrl,
+      );
+      if (relativeRef) refs.push(relativeRef);
+
+      if (
+        (tagName === 'script' || tagName === 'style') &&
+        !/\/\s*>$/.test(openingTag)
+      ) {
+        skippedTag = tagName;
+      }
+    }
+  };
+
+  const input = fs.createReadStream(filePath, { encoding: 'utf8' });
+  for await (const chunk of input) {
+    buffer += chunk;
+    consume(false);
+  }
+  consume(true);
   return refs;
 }
 
@@ -96,10 +208,16 @@ function scanJsForAssets(
 ): string[] {
   const assets: string[] = [];
   // Match quoted strings (single or double) containing asset-like paths
-  const matches = jsContent.matchAll(/["']([a-zA-Z0-9_./-]+\.[a-zA-Z0-9]+)["']/g);
+  const matches = jsContent.matchAll(
+    /["']([a-zA-Z0-9_./-]+\.[a-zA-Z0-9]+)["']/g,
+  );
   for (const m of matches) {
     const candidate = m[1];
-    if (ASSET_EXTENSIONS.test(candidate) && !candidate.startsWith('http') && !candidate.includes('://')) {
+    if (
+      ASSET_EXTENSIONS.test(candidate) &&
+      !candidate.startsWith('http') &&
+      !candidate.includes('://')
+    ) {
       const relativeRef = toGameRelativeRef(candidate, jsUrl, gameBaseUrl);
       if (relativeRef) assets.push(relativeRef);
     }
@@ -147,7 +265,10 @@ export async function downloadGameHtml5(
     itchGameUrl = `https://${author}.itch.io/${name.toLowerCase().replace(/\s+/g, '-')}`;
   }
   if (!itchGameUrl) {
-    return { status: false, message: 'Invalid input: Provide either a URL or both name and author.' };
+    return {
+      status: false,
+      message: 'Invalid input: Provide either a URL or both name and author.',
+    };
   }
 
   const downloadDirectory = inputDirectory
@@ -156,7 +277,9 @@ export async function downloadGameHtml5(
 
   try {
     // Step 1: GET game page → find HTML5 iframe URL
-    const pageRes = await fetchWithTimeout(itchGameUrl, { headers: { 'User-Agent': USER_AGENT } });
+    const pageRes = await fetchWithTimeout(itchGameUrl, {
+      headers: { 'User-Agent': USER_AGENT },
+    });
     if (!pageRes.ok) {
       return {
         status: false,
@@ -182,16 +305,34 @@ export async function downloadGameHtml5(
     const urlName = itchGameUrl.split('/').pop() || `html5-game`;
     const gameDir = path.join(downloadDirectory, urlName);
     await createDirectory({ directory: gameDir });
+    const indexPath = path.join(gameDir, 'index.html');
 
     // Step 2: GET index.html
-    const indexRes = await fetchWithTimeout(indexUrl.toString(), { headers: { 'User-Agent': USER_AGENT } });
+    const indexRes = await fetchWithTimeout(indexUrl.toString(), {
+      headers: { 'User-Agent': USER_AGENT },
+    });
     if (!indexRes.ok) {
-      return { status: false, message: `index.html returned HTTP ${indexRes.status}`, httpStatus: indexRes.status };
+      return {
+        status: false,
+        message: `index.html returned HTTP ${indexRes.status}`,
+        httpStatus: indexRes.status,
+      };
     }
-    const indexHtml = await indexRes.text();
+    const indexResult = await streamToFile(indexRes, indexPath, onProgress);
+    if (!indexResult.verified) {
+      await fsp.rm(indexPath, { force: true });
+      return {
+        status: false,
+        message: `index.html size mismatch: expected ${indexResult.expectedBytes}, got ${indexResult.bytesWritten}`,
+      };
+    }
 
     // Step 3: Parse asset references from HTML
-    const htmlAssets = parseAssetRefs(indexHtml, indexUrl, baseUrl);
+    const htmlAssets = await parseAssetRefsFromFile(
+      indexPath,
+      indexUrl,
+      baseUrl,
+    );
 
     // Step 4: Scan JS files for additional asset references
     const jsFiles = htmlAssets.filter((asset) => {
@@ -206,10 +347,14 @@ export async function downloadGameHtml5(
     for (const jsFile of jsFiles) {
       try {
         const jsUrl = new URL(jsFile, baseUrl);
-        const jsRes = await fetchWithTimeout(jsUrl.toString(), { headers: { 'User-Agent': USER_AGENT } });
+        const jsRes = await fetchWithTimeout(jsUrl.toString(), {
+          headers: { 'User-Agent': USER_AGENT },
+        });
         if (jsRes.ok) {
           const jsContent = await jsRes.text();
-          jsDiscoveredAssets.push(...scanJsForAssets(jsContent, jsUrl, baseUrl));
+          jsDiscoveredAssets.push(
+            ...scanJsForAssets(jsContent, jsUrl, baseUrl),
+          );
         }
       } catch {
         // Non-critical — skip JS scanning failures
@@ -220,8 +365,8 @@ export async function downloadGameHtml5(
     const allAssets = [...new Set([...htmlAssets, ...jsDiscoveredAssets])];
 
     // Step 5: Download all assets
-    const downloaded: string[] = [];
-    let totalBytes = 0;
+    const downloaded: string[] = ['index.html'];
+    let totalBytes = indexResult.bytesWritten;
     const failures: string[] = [];
 
     for (const assetPath of allAssets) {
@@ -238,7 +383,9 @@ export async function downloadGameHtml5(
         }
 
         const assetUrl = new URL(assetPath, baseUrl).toString();
-        const assetRes = await fetchWithTimeout(assetUrl, { headers: { 'User-Agent': USER_AGENT } });
+        const assetRes = await fetchWithTimeout(assetUrl, {
+          headers: { 'User-Agent': USER_AGENT },
+        });
         if (!assetRes.ok) {
           failures.push(`${assetPath} (HTTP ${assetRes.status})`);
           continue;
@@ -248,49 +395,55 @@ export async function downloadGameHtml5(
         await fsp.mkdir(assetDir, { recursive: true });
 
         const assetFilePath = resolvedAsset;
-        const expectedSize = Number(assetRes.headers.get('content-length') || '0') || undefined;
-        const buffer = Buffer.from(await assetRes.arrayBuffer());
-        if (expectedSize && buffer.length !== expectedSize) {
-          failures.push(`${assetPath} (size mismatch: expected ${expectedSize}, got ${buffer.length})`);
+        const expectedSize =
+          Number(assetRes.headers.get('content-length') || '0') || undefined;
+        const priorBytes = totalBytes;
+        const streamResult = await streamToFile(
+          assetRes,
+          assetFilePath,
+          onProgress
+            ? (info) =>
+                onProgress({
+                  ...info,
+                  bytesReceived: priorBytes + info.bytesReceived,
+                })
+            : undefined,
+        );
+        if (!streamResult.verified) {
+          await fsp.rm(assetFilePath, { force: true });
+          failures.push(
+            `${assetPath} (size mismatch: expected ${expectedSize}, got ${streamResult.bytesWritten})`,
+          );
           continue;
         }
-        await fsp.writeFile(assetFilePath, buffer);
 
-        totalBytes += buffer.length;
+        totalBytes += streamResult.bytesWritten;
         downloaded.push(localAssetPath);
-
-        if (onProgress) {
-          onProgress({
-            bytesReceived: totalBytes,
-            totalBytes: undefined,
-            fileName: localAssetPath,
-          });
-        }
       } catch {
         failures.push(assetPath);
       }
     }
 
-    // Step 6: Save index.html
-    const indexPath = path.join(gameDir, 'index.html');
-    await fsp.writeFile(indexPath, indexHtml, 'utf-8');
-    downloaded.push('index.html');
-    totalBytes += Buffer.byteLength(indexHtml);
-
     // Fetch and write metadata
-    const profile = await fetchItchGameProfile({ itchGameUrl }).catch(() => null);
+    const profile = await fetchItchGameProfile({ itchGameUrl }).catch(
+      () => null,
+    );
     const record = profile?.itchRecord as IItchRecord | undefined;
 
     const metadataPath = record
       ? path.join(gameDir, `${record.name || urlName}-metadata.json`)
       : undefined;
     if (writeMetaData && metadataPath && record) {
-      await createFile({ filePath: metadataPath, content: JSON.stringify(record, null, 2) });
+      await createFile({
+        filePath: metadataPath,
+        content: JSON.stringify(record, null, 2),
+      });
     }
 
-    const failureNote = failures.length > 0
-      ? ` (${failures.length} asset(s) failed: ${failures.slice(0, 3).join(', ')}${failures.length > 3 ? '...' : ''})`
-      : '';
+    const failureNote =
+      failures.length > 0
+        ? ` (${failures.length} asset(s) failed: ${failures.slice(0, 3).join(', ')}${failures.length > 3 ? '...' : ''})`
+        : '';
 
     return {
       status: true,
