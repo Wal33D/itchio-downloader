@@ -2,7 +2,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { Readable } from 'stream';
-import { streamToFile, streamToBuffer, fetchWithTimeout } from '../httpDownload';
+import {
+  describeGamePageHttpError,
+  streamToFile,
+  streamToBuffer,
+  fetchWithTimeout,
+} from '../httpDownload';
 
 /**
  * Create a mock Response object with a Node Readable body stream.
@@ -27,6 +32,13 @@ describe('httpDownload', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'http-dl-test-'));
+  });
+
+  it('describes common game-page HTTP failures', () => {
+    expect(describeGamePageHttpError(404)).toContain('removed or unpublished');
+    expect(describeGamePageHttpError(403)).toContain('private, restricted');
+    expect(describeGamePageHttpError(429)).toContain('rate-limited');
+    expect(describeGamePageHttpError(500)).toBe('Game page returned HTTP 500.');
   });
 
   afterEach(() => {

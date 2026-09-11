@@ -32,7 +32,16 @@ export const initiateDownload = async ({
     });
 
     // Navigate to the game's page
-    await page.goto(itchGameUrl, { waitUntil: 'networkidle2', timeout: navigationTimeoutMs });
+    const gamePageResponse = await page.goto(itchGameUrl, {
+      waitUntil: 'networkidle2',
+      timeout: navigationTimeoutMs,
+    });
+    if (gamePageResponse && gamePageResponse.status() >= 400) {
+      return {
+        status: false,
+        message: `Game page returned HTTP ${gamePageResponse.status()}. The page may be private, restricted, or no longer available.`,
+      };
+    }
 
     // Calculate a random delay to simulate human interaction before clicking the download button
     const randomDelay = Math.floor(Math.random() * 3000) + 1000;
@@ -53,11 +62,38 @@ export const initiateDownload = async ({
 
     // If the main download button is not found, try the donation wall
     if (!downloadInitiated) {
-      await page.goto(`${itchGameUrl}/purchase`, { waitUntil: 'networkidle2' });
+      const html5Embed = await page.$(
+        '.html_embed_widget, .game_frame, iframe[src*="itch.zone/html/"]',
+      );
+      if (html5Embed) {
+        return {
+          status: false,
+          message:
+            'This is an HTML5 browser game with no desktop download. Retry with --html5.',
+        };
+      }
+
+      const purchaseResponse = await page.goto(`${itchGameUrl}/purchase`, {
+        waitUntil: 'networkidle2',
+        timeout: navigationTimeoutMs,
+      });
+      if (purchaseResponse && purchaseResponse.status() >= 400) {
+        return {
+          status: false,
+          message: `Donation page returned HTTP ${purchaseResponse.status()}. The game may not provide a downloadable file.`,
+        };
+      }
       await new Promise((resolve) => setTimeout(resolve, randomDelay));
 
       const noThanksSelector = '.direct_download_btn';
-      await page.waitForSelector(noThanksSelector, { timeout: 5000 });
+      const noThanksButton = await page.$(noThanksSelector);
+      if (!noThanksButton) {
+        return {
+          status: false,
+          message:
+            'No free-download option was found. The game may be paid, private, or browser-only (use --html5 for browser games).',
+        };
+      }
       await page.click(noThanksSelector);
 
       const versionListBtn = '.download_btn';

@@ -3,12 +3,12 @@
 # itchio-downloader
 
 **Download free games from [itch.io](https://itch.io) programmatically.**\
-No API key. No Puppeteer. No GUI. Just HTTP.
+No API key. No browser required for most games. No GUI.
 
 [![npm version](https://img.shields.io/npm/v/itchio-downloader.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/itchio-downloader)
 [![CI](https://img.shields.io/github/actions/workflow/status/Wal33D/itchio-downloader/ci.yml?style=flat-square&label=tests)](https://github.com/Wal33D/itchio-downloader/actions/workflows/ci.yml)
 [![License: ISC](https://img.shields.io/badge/license-ISC-blue.svg?style=flat-square)](LICENSE.md)
-[![Node.js](https://img.shields.io/badge/node-%E2%89%A518-brightgreen.svg?style=flat-square)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/node-20.19%2B-brightgreen.svg?style=flat-square)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg?style=flat-square)](https://www.typescriptlang.org/)
 
 </div>
@@ -88,6 +88,9 @@ yarn add itchio-downloader
 
 # Arch Linux (AUR) — https://aur.archlinux.org/packages/itchio-downloader
 yay -S itchio-downloader
+
+# Optional last-resort browser fallback on Arch
+sudo pacman -S chromium
 ```
 
 ---
@@ -318,7 +321,7 @@ type DownloadGameResponse = {
 git clone https://github.com/Wal33D/itchio-downloader.git
 cd itchio-downloader
 pnpm install
-pnpm test        # 161 tests
+pnpm test        # 169 tests
 pnpm run build   # compile TypeScript
 pnpm run lint    # ESLint (zero warnings)
 ```

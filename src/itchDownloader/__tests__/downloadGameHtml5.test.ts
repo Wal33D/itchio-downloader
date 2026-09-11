@@ -117,6 +117,71 @@ describe('downloadGameHtml5', () => {
     expect(result.message).toContain('Not an HTML5');
   });
 
+  it('extracts an HTML-escaped iframe URL and preserves its query string', async () => {
+    const gamePageHtml = `
+      <div data-iframe="&lt;iframe src=&quot;https://html-classic.itch.zone/html/54321/index.html?v=42&amp;source=test&quot;&gt;&lt;/iframe&gt;"></div>
+    `;
+    const indexHtml = '<html><body>single-file game</body></html>';
+    const mockFetch = jest.fn()
+      .mockResolvedValueOnce(mockResponse(gamePageHtml))
+      .mockResolvedValueOnce(mockResponse(indexHtml));
+    global.fetch = mockFetch as unknown as typeof fetch;
+
+    const result = await downloadGameHtml5({
+      itchGameUrl: 'https://author.itch.io/escaped-game',
+      downloadDirectory: tmpDir,
+      writeMetaData: false,
+    });
+
+    expect(result.status).toBe(true);
+    expect(mockFetch.mock.calls[1][0]).toBe(
+      'https://html-classic.itch.zone/html/54321/index.html?v=42&source=test',
+    );
+    expect(result.bytesDownloaded).toBe(Buffer.byteLength(indexHtml));
+  });
+
+  it('does not treat src strings inside inline JavaScript as HTML assets', async () => {
+    const gamePageHtml = `
+      <iframe src="https://html-classic.itch.zone/html/77777/index.html"></iframe>
+    `;
+    const indexHtml = `
+      <html><body>
+        <script>const template = 'src="'.concat(dynamicValue, '"';</script>
+      </body></html>
+    `;
+    const mockFetch = jest.fn()
+      .mockResolvedValueOnce(mockResponse(gamePageHtml))
+      .mockResolvedValueOnce(mockResponse(indexHtml));
+    global.fetch = mockFetch as unknown as typeof fetch;
+
+    const result = await downloadGameHtml5({
+      itchGameUrl: 'https://author.itch.io/single-file-game',
+      downloadDirectory: tmpDir,
+      writeMetaData: false,
+    });
+
+    expect(result.status).toBe(true);
+    expect(result.sizeVerified).toBe(true);
+    expect(result.html5Assets).toEqual(['index.html']);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('explains when a game page is private or restricted', async () => {
+    global.fetch = jest.fn().mockResolvedValueOnce(
+      mockResponse('Forbidden', { ok: false, status: 403 }),
+    ) as unknown as typeof fetch;
+
+    const result = await downloadGameHtml5({
+      itchGameUrl: 'https://author.itch.io/private-game',
+      downloadDirectory: tmpDir,
+    });
+
+    expect(result.status).toBe(false);
+    expect(result.httpStatus).toBe(403);
+    expect(result.failReason).toBe('page_unavailable');
+    expect(result.message).toContain('private, restricted');
+  });
+
   it('asset download failure tolerance: overall success with failed assets noted', async () => {
     const gamePageHtml = `
       <html>

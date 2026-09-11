@@ -6,6 +6,12 @@ import * as httpDownload from '../httpDownload';
 import * as cookieCache from '../cookieCache';
 
 jest.mock('../httpDownload', () => ({
+  describeGamePageHttpError: (status: number) => {
+    if (status === 404) {
+      return 'Game page not found (HTTP 404). Check the URL; the page may have been removed or unpublished.';
+    }
+    return `Game page is unavailable (HTTP ${status}). It may be private, restricted, or blocked by itch.io.`;
+  },
   streamToFile: jest.fn().mockResolvedValue({ bytesWritten: 100, expectedBytes: 100, verified: true }),
   streamToBuffer: jest.fn().mockResolvedValue(Buffer.from('test-content')),
   downloadWithResume: jest.fn().mockResolvedValue({ bytesWritten: 100, expectedBytes: 100, verified: true }),
@@ -292,6 +298,45 @@ describe('downloadGameDirect', () => {
 
     expect(result.status).toBe(false);
     expect(result.message).toContain('web-only');
+  });
+
+  it('detects an HTML5-only page even when it has no CSRF token', async () => {
+    const gamePageHtml = `
+      <html>
+        <div class="html_embed_widget">
+          <iframe src="https://html-classic.itch.zone/html/12345/index.html"></iframe>
+        </div>
+      </html>
+    `;
+
+    global.fetch = jest.fn().mockResolvedValueOnce(
+      mockResponse(gamePageHtml),
+    ) as unknown as typeof fetch;
+
+    const result = await downloadGameDirect({
+      itchGameUrl: 'https://author.itch.io/webonly-without-csrf',
+      downloadDirectory: tmpDir,
+    });
+
+    expect(result.status).toBe(false);
+    expect(result.failReason).toBe('web_only');
+    expect(result.message).toContain('web-only');
+  });
+
+  it('returns an actionable terminal error for an unavailable page', async () => {
+    global.fetch = jest.fn().mockResolvedValueOnce(
+      mockResponse('Not Found', { ok: false, status: 404 }),
+    ) as unknown as typeof fetch;
+
+    const result = await downloadGameDirect({
+      itchGameUrl: 'https://author.itch.io/removed',
+      downloadDirectory: tmpDir,
+    });
+
+    expect(result.status).toBe(false);
+    expect(result.httpStatus).toBe(404);
+    expect(result.failReason).toBe('page_unavailable');
+    expect(result.message).toContain('removed or unpublished');
   });
 
   it('path traversal rejection', async () => {

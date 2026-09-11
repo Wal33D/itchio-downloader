@@ -4,7 +4,11 @@ import fsp from 'fs/promises';
 import { createDirectory } from '../fileUtils/createDirectory';
 import { createFile } from '../fileUtils/createFile';
 import { fetchItchGameProfile } from './fetchItchGameProfile';
-import { fetchWithTimeout, USER_AGENT } from './httpDownload';
+import {
+  describeGamePageHttpError,
+  fetchWithTimeout,
+  USER_AGENT,
+} from './httpDownload';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 
 /** File extensions to look for when scanning JS files for asset references. */
@@ -15,26 +19,68 @@ const ASSET_EXTENSIONS =
  * Parse HTML for all src= and href= asset references.
  * Returns relative paths only (filters out external URLs and anchors).
  */
-function parseAssetRefs(html: string, baseHost: string): string[] {
+function toGameRelativeRef(
+  ref: string,
+  referrerUrl: URL,
+  gameBaseUrl: URL,
+): string | undefined {
+  const normalized = ref.trim().replace(/&amp;/g, '&');
+  if (
+    !normalized ||
+    normalized.startsWith('data:') ||
+    normalized.startsWith('blob:') ||
+    normalized.startsWith('#') ||
+    normalized.startsWith('javascript:')
+  ) {
+    return undefined;
+  }
+
+  try {
+    const resolved = new URL(normalized, referrerUrl);
+    if (resolved.origin !== gameBaseUrl.origin) return undefined;
+    if (!resolved.pathname.startsWith(gameBaseUrl.pathname)) return undefined;
+
+    const relativePath = resolved.pathname.slice(gameBaseUrl.pathname.length);
+    if (!relativePath || relativePath.endsWith('/')) return undefined;
+    return relativePath + resolved.search;
+  } catch {
+    return undefined;
+  }
+}
+
+function parseAssetRefs(
+  html: string,
+  indexUrl: URL,
+  gameBaseUrl: URL,
+): string[] {
   const refs: string[] = [];
-  const matches = html.matchAll(/(?:src|href)="([^"]+)"/g);
-  for (const m of matches) {
-    const ref = m[1];
-    // Skip external URLs, data URIs, anchors, and javascript:
-    if (ref.startsWith('http://') || ref.startsWith('https://')) {
-      try {
-        const url = new URL(ref);
-        if (url.hostname !== baseHost) continue;
-        // Extract relative path from absolute URL on same host
-        refs.push(url.pathname.split('/').slice(3).join('/'));
-      } catch {
-        continue;
+  // Only inspect actual resource-bearing opening tags. Skip complete inline
+  // script/style bodies so a bundled single-file game can contain hundreds of
+  // megabytes of JavaScript without us scanning its string literals as markup.
+  const tagPattern = /<(script|style|link|img|audio|video|source|track|object)\b/gi;
+  let match: RegExpExecArray | null;
+  while ((match = tagPattern.exec(html)) !== null) {
+    const tagEnd = html.indexOf('>', match.index);
+    if (tagEnd === -1) break;
+
+    const tagName = match[1].toLowerCase();
+    const openingTag = html.slice(match.index, tagEnd + 1);
+    const attribute = openingTag.match(
+      /\s(?:src|href|data)\s*=\s*(?:"([^"]*)"|'([^']*)')/i,
+    );
+    const relativeRef = attribute
+      ? toGameRelativeRef(attribute[1] ?? attribute[2], indexUrl, gameBaseUrl)
+      : undefined;
+    if (relativeRef) refs.push(relativeRef);
+
+    tagPattern.lastIndex = tagEnd + 1;
+    if (tagName === 'script' || tagName === 'style') {
+      const closingTag = `</${tagName}`;
+      const closingStart = html.indexOf(closingTag, tagEnd + 1);
+      if (closingStart !== -1) {
+        const closingEnd = html.indexOf('>', closingStart + closingTag.length);
+        tagPattern.lastIndex = closingEnd === -1 ? html.length : closingEnd + 1;
       }
-    } else if (ref.startsWith('data:') || ref.startsWith('#') || ref.startsWith('javascript:')) {
-      continue;
-    } else {
-      // Normalize: strip leading ./
-      refs.push(ref.replace(/^\.\//, ''));
     }
   }
   return refs;
@@ -43,17 +89,38 @@ function parseAssetRefs(html: string, baseHost: string): string[] {
 /**
  * Scan JavaScript source for quoted strings that look like asset paths.
  */
-function scanJsForAssets(jsContent: string): string[] {
+function scanJsForAssets(
+  jsContent: string,
+  jsUrl: URL,
+  gameBaseUrl: URL,
+): string[] {
   const assets: string[] = [];
   // Match quoted strings (single or double) containing asset-like paths
   const matches = jsContent.matchAll(/["']([a-zA-Z0-9_./-]+\.[a-zA-Z0-9]+)["']/g);
   for (const m of matches) {
     const candidate = m[1];
     if (ASSET_EXTENSIONS.test(candidate) && !candidate.startsWith('http') && !candidate.includes('://')) {
-      assets.push(candidate.replace(/^\.\//, ''));
+      const relativeRef = toGameRelativeRef(candidate, jsUrl, gameBaseUrl);
+      if (relativeRef) assets.push(relativeRef);
     }
   }
   return assets;
+}
+
+function extractHtml5IndexUrl(pageHtml: string): URL | undefined {
+  const normalizedHtml = pageHtml
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&');
+  const match = normalizedHtml.match(
+    /https:\/\/(?:html-classic\.)?itch\.zone\/html\/\d+\/index\.html(?:\?[^"'<>\s]*)?/i,
+  );
+  if (!match) return undefined;
+
+  try {
+    return new URL(match[0]);
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -91,44 +158,58 @@ export async function downloadGameHtml5(
     // Step 1: GET game page → find HTML5 iframe URL
     const pageRes = await fetchWithTimeout(itchGameUrl, { headers: { 'User-Agent': USER_AGENT } });
     if (!pageRes.ok) {
-      return { status: false, message: `Game page returned HTTP ${pageRes.status}`, httpStatus: pageRes.status };
+      return {
+        status: false,
+        message: describeGamePageHttpError(pageRes.status),
+        httpStatus: pageRes.status,
+        failReason: 'page_unavailable',
+      };
     }
     const pageHtml = await pageRes.text();
 
-    const iframeMatch = pageHtml.match(/(?:html-classic\.)?itch\.zone\/html\/(\d+)\/index\.html/);
-    if (!iframeMatch) {
-      return { status: false, message: 'Not an HTML5 web game — no embedded iframe found.' };
+    const indexUrl = extractHtml5IndexUrl(pageHtml);
+    if (!indexUrl) {
+      return {
+        status: false,
+        message: 'Not an HTML5 web game — no embedded iframe found.',
+        failReason: 'not_html5',
+      };
     }
 
-    const htmlId = iframeMatch[1];
-    const baseUrl = `https://html-classic.itch.zone/html/${htmlId}/`;
+    const baseUrl = new URL('./', indexUrl);
 
     // Determine game name for the output folder
-    const urlName = itchGameUrl.split('/').pop() || `html5-${htmlId}`;
+    const urlName = itchGameUrl.split('/').pop() || `html5-game`;
     const gameDir = path.join(downloadDirectory, urlName);
     await createDirectory({ directory: gameDir });
 
     // Step 2: GET index.html
-    const indexRes = await fetchWithTimeout(`${baseUrl}index.html`, { headers: { 'User-Agent': USER_AGENT } });
+    const indexRes = await fetchWithTimeout(indexUrl.toString(), { headers: { 'User-Agent': USER_AGENT } });
     if (!indexRes.ok) {
       return { status: false, message: `index.html returned HTTP ${indexRes.status}`, httpStatus: indexRes.status };
     }
     const indexHtml = await indexRes.text();
 
     // Step 3: Parse asset references from HTML
-    const baseHost = new URL(baseUrl).hostname;
-    const htmlAssets = parseAssetRefs(indexHtml, baseHost);
+    const htmlAssets = parseAssetRefs(indexHtml, indexUrl, baseUrl);
 
     // Step 4: Scan JS files for additional asset references
-    const jsFiles = htmlAssets.filter((a) => a.endsWith('.js') && !a.startsWith('http'));
+    const jsFiles = htmlAssets.filter((asset) => {
+      try {
+        return new URL(asset, baseUrl).pathname.endsWith('.js');
+      } catch {
+        return false;
+      }
+    });
     const jsDiscoveredAssets: string[] = [];
 
     for (const jsFile of jsFiles) {
       try {
-        const jsRes = await fetchWithTimeout(`${baseUrl}${jsFile}`, { headers: { 'User-Agent': USER_AGENT } });
+        const jsUrl = new URL(jsFile, baseUrl);
+        const jsRes = await fetchWithTimeout(jsUrl.toString(), { headers: { 'User-Agent': USER_AGENT } });
         if (jsRes.ok) {
           const jsContent = await jsRes.text();
-          jsDiscoveredAssets.push(...scanJsForAssets(jsContent));
+          jsDiscoveredAssets.push(...scanJsForAssets(jsContent, jsUrl, baseUrl));
         }
       } catch {
         // Non-critical — skip JS scanning failures
@@ -145,14 +226,18 @@ export async function downloadGameHtml5(
 
     for (const assetPath of allAssets) {
       try {
+        const localAssetPath = assetPath.split(/[?#]/, 1)[0];
         // Guard against directory traversal in asset paths
-        const resolvedAsset = path.resolve(gameDir, assetPath);
-        if (!resolvedAsset.startsWith(gameDir)) {
+        const resolvedAsset = path.resolve(gameDir, localAssetPath);
+        if (
+          resolvedAsset !== gameDir &&
+          !resolvedAsset.startsWith(gameDir + path.sep)
+        ) {
           failures.push(`${assetPath} (path traversal blocked)`);
           continue;
         }
 
-        const assetUrl = `${baseUrl}${assetPath}`;
+        const assetUrl = new URL(assetPath, baseUrl).toString();
         const assetRes = await fetchWithTimeout(assetUrl, { headers: { 'User-Agent': USER_AGENT } });
         if (!assetRes.ok) {
           failures.push(`${assetPath} (HTTP ${assetRes.status})`);
@@ -172,13 +257,13 @@ export async function downloadGameHtml5(
         await fsp.writeFile(assetFilePath, buffer);
 
         totalBytes += buffer.length;
-        downloaded.push(assetPath);
+        downloaded.push(localAssetPath);
 
         if (onProgress) {
           onProgress({
             bytesReceived: totalBytes,
             totalBytes: undefined,
-            fileName: assetPath,
+            fileName: localAssetPath,
           });
         }
       } catch {
@@ -190,6 +275,7 @@ export async function downloadGameHtml5(
     const indexPath = path.join(gameDir, 'index.html');
     await fsp.writeFile(indexPath, indexHtml, 'utf-8');
     downloaded.push('index.html');
+    totalBytes += Buffer.byteLength(indexHtml);
 
     // Fetch and write metadata
     const profile = await fetchItchGameProfile({ itchGameUrl }).catch(() => null);
