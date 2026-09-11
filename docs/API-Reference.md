@@ -1,7 +1,7 @@
 # API Reference
 
 Itchio-Downloader exports download functions, cookie cache utilities, and a resumable download helper. Import them from the package root.
-The library requires **Node.js 18+** for the native `fetch` API:
+The library requires **Node.js 20.19+, 22.12+, or a newer supported release**:
 
 ```javascript
 const {

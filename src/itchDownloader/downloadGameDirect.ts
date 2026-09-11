@@ -5,7 +5,14 @@ import { createFile } from '../fileUtils/createFile';
 import { createDirectory } from '../fileUtils/createDirectory';
 import { renameFile } from '../fileUtils/renameFile';
 import { fetchItchGameProfile } from './fetchItchGameProfile';
-import { streamToFile, streamToBuffer, downloadWithResume, fetchWithTimeout, USER_AGENT } from './httpDownload';
+import {
+  describeGamePageHttpError,
+  streamToFile,
+  streamToBuffer,
+  downloadWithResume,
+  fetchWithTimeout,
+  USER_AGENT,
+} from './httpDownload';
 import { getCachedCookies, setCachedCookies, mergeCookies } from './cookieCache';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 
@@ -122,7 +129,12 @@ export async function downloadGameDirect(
 
     const pageRes = await fetchWithTimeout(itchGameUrl, { headers: pageHeaders });
     if (!pageRes.ok) {
-      return { status: false, message: `Game page returned HTTP ${pageRes.status}`, httpStatus: pageRes.status };
+      return {
+        status: false,
+        message: describeGamePageHttpError(pageRes.status),
+        httpStatus: pageRes.status,
+        failReason: 'page_unavailable',
+      };
     }
     const pageHtml = await pageRes.text();
     const page = parsePage(pageHtml, pageRes);
@@ -132,16 +144,9 @@ export async function downloadGameDirect(
       ? mergeCookies(cachedSession.cookies, page.cookies)
       : page.cookies;
 
-    if (!page.csrfToken) {
-      return { status: false, message: 'Could not extract CSRF token from game page.', failReason: 'csrf_failed' };
-    }
-
-    // Cache the session cookies + CSRF for future downloads
-    if (!noCookieCache) {
-      await setCachedCookies(itchGameUrl, sessionCookies, page.csrfToken, cookieCacheDir).catch(() => { /* best-effort */ });
-    }
-
-    // Price gate — if min_price > 0 and no direct uploads visible, this is a paid game
+    // Classify pages before requiring a CSRF token. HTML5-only pages do not need
+    // one, and some itch.io layouts omit it entirely. Previously those pages fell
+    // through to Puppeteer and failed on a donation-wall selector.
     if (page.minPrice > 0 && page.uploadIds.length === 0) {
       return { status: false, message: `Game requires purchase (min price: ${page.minPrice} cents).`, failReason: 'paid' };
     }
@@ -158,6 +163,15 @@ export async function downloadGameDirect(
       if (!hasPurchasePath && !isHtml5Only) {
         return { status: false, message: 'No uploads found on game page.', failReason: 'no_uploads' };
       }
+    }
+
+    if (!page.csrfToken) {
+      return { status: false, message: 'Could not extract CSRF token from game page.', failReason: 'csrf_failed' };
+    }
+
+    // Cache the session cookies + CSRF for future downloads
+    if (!noCookieCache) {
+      await setCachedCookies(itchGameUrl, sessionCookies, page.csrfToken, cookieCacheDir).catch(() => { /* best-effort */ });
     }
 
     // Step 2: POST /download_url

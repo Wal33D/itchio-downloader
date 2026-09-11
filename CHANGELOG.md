@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2026-09-11
+
+### Fixed
+
+- Detect HTML5-only games before requiring a CSRF token, avoiding invalid donation-wall fallbacks.
+- Preserve escaped HTML5 iframe URLs and version query strings.
+- Ignore `src=` text inside bundled JavaScript when collecting HTML5 assets.
+- Report private, restricted, removed, and unpublished game pages with actionable HTTP errors.
+- Stop Puppeteer fallback for paid, unavailable, and known HTML5-only pages.
+- Detect system Chromium for the AUR package and document the optional browser fallback.
+
+### Changed
+
+- Updated GitHub Actions and maintained runtime/development dependencies.
+- Corrected the documented Node.js requirement to match `yargs@18`.
+- Added focused regression coverage; the suite now contains 169 tests.
+
 ## [1.0.0] - 2026-03-23
 
 ### Added

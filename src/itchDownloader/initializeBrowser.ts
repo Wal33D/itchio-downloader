@@ -1,6 +1,21 @@
 import path from 'path';
+import fs from 'fs';
 import type { Browser } from 'puppeteer';
 import { DownloadProgress } from './types';
+
+function findBrowserExecutable(): string | undefined {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+
+  if (process.platform !== 'linux') return undefined;
+  return [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/google-chrome',
+  ].find((candidate) => fs.existsSync(candidate));
+}
 
 export const initializeBrowser = async ({
   downloadDirectory,
@@ -17,10 +32,12 @@ export const initializeBrowser = async ({
 
   try {
     const puppeteer = await import('puppeteer');
+    const executablePath = findBrowserExecutable();
     browser = await puppeteer.default.launch({
       headless,
       defaultViewport: null,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      ...(executablePath ? { executablePath } : {}),
     });
 
     const page = await browser.newPage();
@@ -80,7 +97,10 @@ export const initializeBrowser = async ({
     status = true;
     message = 'Browser initialized successfully.';
   } catch (error: unknown) {
-    message = `Failed to initialize browser: ${error instanceof Error ? error.message : String(error)}`;
+    const detail = error instanceof Error ? error.message : String(error);
+    message =
+      `Failed to initialize browser: ${detail}. ` +
+      'Install Chromium or set PUPPETEER_EXECUTABLE_PATH to a Chrome/Chromium executable.';
     // Close browser if it launched but setup failed (prevents orphaned Chrome processes)
     if (browser) {
       try {

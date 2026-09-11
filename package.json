@@ -1,7 +1,7 @@
 {
   "name": "itchio-downloader",
-  "version": "1.2.0",
-  "description": "Download free games from itch.io programmatically — no Puppeteer, no API key required",
+  "version": "1.2.1",
+  "description": "Download free games from itch.io programmatically — no browser or API key required",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
@@ -26,25 +26,25 @@
   "author": "Wal33D",
   "license": "ISC",
   "engines": {
-    "node": ">=18"
+    "node": "^20.19.0 || ^22.12.0 || >=23"
   },
   "dependencies": {
-    "yargs": "^18.0.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^17.3.1",
+    "yargs": "^18.0.0"
   },
   "optionalDependencies": {
-    "puppeteer": "^24.11.2"
+    "puppeteer": "^24.40.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.10",
-    "@types/yargs": "^17.0.33",
+    "@types/yargs": "^17.0.35",
     "@typescript-eslint/eslint-plugin": "^8.35.1",
-    "@typescript-eslint/parser": "^8.35.1",
+    "@typescript-eslint/parser": "^8.57.2",
     "eslint": "^9.30.1",
     "eslint-config-prettier": "^10.1.5",
-    "globals": "^16.3.0",
+    "globals": "^17.4.0",
     "jest": "^30.0.4",
     "nodemon": "^3.1.10",
     "prettier": "^3.2.5",

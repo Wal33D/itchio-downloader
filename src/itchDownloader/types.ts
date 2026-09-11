@@ -84,7 +84,14 @@ export type DownloadGameResponse = {
   status: boolean;
   message: string;
   /** Structured failure reason for fallback chain decisions */
-  failReason?: 'web_only' | 'no_uploads' | 'paid' | 'csrf_failed' | 'not_html5' | 'puppeteer_missing';
+  failReason?:
+    | 'web_only'
+    | 'no_uploads'
+    | 'paid'
+    | 'csrf_failed'
+    | 'not_html5'
+    | 'page_unavailable'
+    | 'puppeteer_missing';
   httpStatus?: number;
   metaData?: IItchRecord;
   metadataPath?: string;

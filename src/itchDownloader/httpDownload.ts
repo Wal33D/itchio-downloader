@@ -12,6 +12,20 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 export const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
 
+/** Turn game-page HTTP failures into errors that explain the likely remedy. */
+export function describeGamePageHttpError(status: number): string {
+  if (status === 404) {
+    return 'Game page not found (HTTP 404). Check the URL; the page may have been removed or unpublished.';
+  }
+  if (status === 401 || status === 403) {
+    return `Game page is unavailable (HTTP ${status}). It may be private, restricted, or blocked by itch.io.`;
+  }
+  if (status === 429) {
+    return 'itch.io rate-limited the request (HTTP 429). Wait a few minutes, then try again.';
+  }
+  return `Game page returned HTTP ${status}.`;
+}
+
 /**
  * Fetch with an automatic timeout via AbortController.
  * Prevents indefinite hangs on unresponsive servers.

@@ -10,4 +10,4 @@ Welcome! This folder contains additional guides for using **Itchio-Downloader**.
 - [Advanced Usage](Advanced-Usage.md)
 - [Debugging](Debugging.md)
 
-The project requires **Node.js 18 or later** because it relies on the built-in `fetch` API.
+The project requires **Node.js 20.19+, 22.12+, or a newer supported release**.

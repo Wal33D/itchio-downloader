@@ -9,11 +9,19 @@ import * as initiateDownload from '../initiateDownload';
 import * as waitFile from '../../fileUtils/waitForFile';
 import * as renameFileModule from '../../fileUtils/renameFile';
 import * as createFileModule from '../../fileUtils/createFile';
+import * as downloadGameDirectModule from '../downloadGameDirect';
 import { Readable } from 'stream';
 
 describe('downloadGame', () => {
   beforeEach(() => {
     delete process.env.ITCH_API_KEY;
+    // Tests in this file exercise routing and the Puppeteer fallback. Keep them
+    // isolated from the network and mock the earlier direct-HTTP stage by default.
+    jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
+      status: false,
+      message: 'Mock direct HTTP failure.',
+      failReason: 'csrf_failed',
+    });
   });
   afterEach(() => {
     jest.restoreAllMocks();
@@ -501,7 +509,6 @@ describe('downloadGame', () => {
   });
 
   it('direct HTTP tried before Puppeteer', async () => {
-    const downloadGameDirectModule = await import('../downloadGameDirect');
     const spy = jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
       status: true,
       message: 'Download successful (direct HTTP).',
@@ -519,12 +526,53 @@ describe('downloadGame', () => {
     spy.mockRestore();
   });
 
+  it('does not launch Puppeteer for an unavailable page', async () => {
+    jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
+      status: false,
+      message: 'Game page not found (HTTP 404).',
+      httpStatus: 404,
+      failReason: 'page_unavailable',
+    });
+    const browserSpy = jest.spyOn(initBrowser, 'initializeBrowser');
+
+    const result = (await downloadGame({
+      itchGameUrl: 'https://author.itch.io/removed',
+    })) as any;
+
+    expect(result.status).toBe(false);
+    expect(result.httpStatus).toBe(404);
+    expect(browserSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not try a desktop browser fallback for a known HTML5-only game', async () => {
+    const downloadGameHtml5Module = await import('../downloadGameHtml5');
+    jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
+      status: false,
+      message: 'web-only HTML5 game — no downloadable files.',
+      failReason: 'web_only',
+    });
+    jest.spyOn(downloadGameHtml5Module, 'downloadGameHtml5').mockResolvedValue({
+      status: false,
+      message: 'index.html returned HTTP 503',
+      httpStatus: 503,
+    });
+    const browserSpy = jest.spyOn(initBrowser, 'initializeBrowser');
+
+    const result = (await downloadGame({
+      itchGameUrl: 'https://author.itch.io/web-game',
+    })) as any;
+
+    expect(result.status).toBe(false);
+    expect(result.message).toContain('HTML5 download failed');
+    expect(result.httpStatus).toBe(503);
+    expect(browserSpy).not.toHaveBeenCalled();
+  });
+
   it('applies delayBetweenMs between batch downloads', async () => {
     jest
       .spyOn(fetchProfile, 'fetchItchGameProfile')
       .mockResolvedValue({ found: true, itchRecord: { name: 'game' }, message: 'ok' });
 
-    const downloadGameDirectModule = await import('../downloadGameDirect');
     const directSpy = jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
       status: true,
       message: 'ok',
@@ -546,7 +594,6 @@ describe('downloadGame', () => {
   });
 
   it('passes platform param through to downloadGameDirect', async () => {
-    const downloadGameDirectModule = await import('../downloadGameDirect');
     const spy = jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
       status: true,
       message: 'ok',

@@ -127,6 +127,16 @@ export async function downloadGameSingle(
   }
   log('Direct HTTP failed:', directResult.message);
 
+  // A browser cannot make a removed/private page or a paid download available.
+  // Preserve the useful direct-HTTP error instead of replacing it with a vague
+  // Puppeteer navigation or selector failure.
+  if (
+    directResult.failReason === 'page_unavailable' ||
+    directResult.failReason === 'paid'
+  ) {
+    return directResult;
+  }
+
   // === PATH 4: Auto-detect HTML5 web game ===
   if (
     directResult.failReason === 'web_only' ||
@@ -138,6 +148,12 @@ export async function downloadGameSingle(
       return html5Result;
     }
     log('HTML5 download failed:', html5Result.message);
+    if (directResult.failReason === 'web_only') {
+      return {
+        ...html5Result,
+        message: `HTML5 download failed: ${html5Result.message}`,
+      };
+    }
   }
 
   // === PATH 5: Puppeteer fallback (optional dependency) ===
@@ -204,7 +220,9 @@ export async function downloadGameSingle(
         navigationTimeoutMs,
       });
       if (!puppeteerResult.status)
-        throw new Error('Download failed: ' + puppeteerResult.message);
+        throw new Error(
+          `Download failed: ${puppeteerResult.message} Direct HTTP error: ${directResult.message}`,
+        );
 
       const downloadedFileInfo = await waitForFile({
         downloadDirectory,
