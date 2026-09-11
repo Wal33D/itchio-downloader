@@ -173,6 +173,33 @@ describe('httpDownload', () => {
     expect(result.length).toBe(content.length);
   });
 
+  it('does not compare decoded file bytes with compressed Content-Length', async () => {
+    const decodedContent = Buffer.from('decoded response content');
+    const filePath = path.join(tmpDir, 'compressed.bin');
+    const res = makeMockResponse(decodedContent, {
+      'content-encoding': 'br',
+      'content-length': '5',
+    });
+
+    const result = await streamToFile(res, filePath);
+
+    expect(result.bytesWritten).toBe(decodedContent.length);
+    expect(result.expectedBytes).toBeUndefined();
+    expect(result.verified).toBe(true);
+  });
+
+  it('does not compare decoded buffer bytes with compressed Content-Length', async () => {
+    const decodedContent = Buffer.from('decoded buffer content');
+    const res = makeMockResponse(decodedContent, {
+      'content-encoding': 'gzip',
+      'content-length': '4',
+    });
+
+    const result = await streamToBuffer(res);
+
+    expect(result).toEqual(decodedContent);
+  });
+
   it('streamToFile treats negative Content-Length as unknown', async () => {
     const content = Buffer.from('negative CL');
     const filePath = path.join(tmpDir, 'negcl.bin');
@@ -223,6 +250,8 @@ describe('fetchWithTimeout', () => {
         }),
     ) as unknown as typeof fetch;
 
-    await expect(fetchWithTimeout('https://slow.example.com', {}, 50)).rejects.toThrow('aborted');
+    await expect(
+      fetchWithTimeout('https://slow.example.com', {}, 50),
+    ).rejects.toThrow('aborted');
   });
 });

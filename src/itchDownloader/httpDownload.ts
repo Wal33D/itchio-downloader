@@ -52,11 +52,28 @@ export interface StreamResult {
 }
 
 /**
+ * Node fetch transparently decodes compressed response bodies but preserves
+ * the wire-level Content-Length header. That compressed length cannot verify
+ * the number of decoded bytes delivered to callers.
+ */
+function decodedContentLength(res: Response): number | undefined {
+  const contentEncoding = res.headers.get('content-encoding');
+  if (contentEncoding && contentEncoding.toLowerCase() !== 'identity') {
+    return undefined;
+  }
+  const rawLength = Number(res.headers.get('content-length') || '0');
+  return Number.isFinite(rawLength) && rawLength > 0 ? rawLength : undefined;
+}
+
+/**
  * Convert a fetch Response body into a Node Readable stream.
  * Returns an empty stream if body is null (e.g., 204 No Content).
  */
 function responseToReadable(res: Response): Readable {
-  if (res.body && typeof (res.body as ReadableStream).getReader === 'function') {
+  if (
+    res.body &&
+    typeof (res.body as ReadableStream).getReader === 'function'
+  ) {
     return Readable.fromWeb(res.body as import('stream/web').ReadableStream);
   } else if (res.body) {
     return res.body as unknown as Readable;
@@ -92,11 +109,14 @@ export async function streamToFile(
   onProgress?: (info: DownloadProgress) => void,
   resumeFrom?: number,
 ): Promise<StreamResult> {
-  const rawCL = Number(res.headers.get('content-length') || '0');
-  const contentLength = Number.isFinite(rawCL) && rawCL > 0 ? rawCL : undefined;
-  const expectedBytes = resumeFrom && contentLength ? resumeFrom + contentLength : contentLength;
+  const contentLength = decodedContentLength(res);
+  const expectedBytes =
+    resumeFrom && contentLength ? resumeFrom + contentLength : contentLength;
   await fsp.mkdir(path.dirname(filePath), { recursive: true });
-  const writeStream = fs.createWriteStream(filePath, resumeFrom ? { flags: 'a' } : undefined);
+  const writeStream = fs.createWriteStream(
+    filePath,
+    resumeFrom ? { flags: 'a' } : undefined,
+  );
   const readable = responseToReadable(res);
   let bytes = resumeFrom || 0;
   readable.on('data', (chunk: Buffer) => {
@@ -122,8 +142,7 @@ export async function streamToBuffer(
   onProgress?: (info: DownloadProgress) => void,
   fileName?: string,
 ): Promise<Buffer> {
-  const rawTotal = Number(res.headers.get('content-length') || '0');
-  const total = Number.isFinite(rawTotal) && rawTotal > 0 ? rawTotal : undefined;
+  const total = decodedContentLength(res);
   const readable = responseToReadable(res);
   const chunks: Buffer[] = [];
   let bytes = 0;
@@ -131,7 +150,11 @@ export async function streamToBuffer(
     const buf = Buffer.from(chunk);
     chunks.push(buf);
     bytes += buf.length;
-    safeProgress(onProgress, { bytesReceived: bytes, totalBytes: total, fileName });
+    safeProgress(onProgress, {
+      bytesReceived: bytes,
+      totalBytes: total,
+      fileName,
+    });
   }
   const buffer = Buffer.concat(chunks);
   if (total && buffer.length !== total) {
@@ -173,7 +196,11 @@ export async function downloadWithResume(
   }
 
   // Use a longer timeout for downloads (5 minutes) since large files take time
-  const res = await fetchWithTimeout(url, { headers: reqHeaders }, 5 * 60 * 1000);
+  const res = await fetchWithTimeout(
+    url,
+    { headers: reqHeaders },
+    5 * 60 * 1000,
+  );
 
   // If server doesn't support Range (200 instead of 206), start fresh
   if (resumeFrom > 0 && res.status !== 206) {
@@ -185,7 +212,12 @@ export async function downloadWithResume(
   }
 
   const didResume = resumeFrom > 0;
-  const result = await streamToFile(res, partPath, onProgress, didResume ? resumeFrom : undefined);
+  const result = await streamToFile(
+    res,
+    partPath,
+    onProgress,
+    didResume ? resumeFrom : undefined,
+  );
 
   // Verify size if Content-Length was known
   if (result.expectedBytes && !result.verified) {
