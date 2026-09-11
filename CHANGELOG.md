@@ -11,13 +11,14 @@ All notable changes to this project will be documented in this file.
 - Ignore `src=` text inside bundled JavaScript when collecting HTML5 assets.
 - Report private, restricted, removed, and unpublished game pages with actionable HTTP errors.
 - Stop Puppeteer fallback for paid, unavailable, and known HTML5-only pages.
+- Return a non-zero CLI exit code when a download reports failure.
 - Detect system Chromium for the AUR package and document the optional browser fallback.
 
 ### Changed
 
 - Updated GitHub Actions and maintained runtime/development dependencies.
 - Corrected the documented Node.js requirement to match `yargs@18`.
-- Added focused regression coverage; the suite now contains 169 tests.
+- Added focused regression coverage; the suite now contains 170 tests.
 
 ## [1.0.0] - 2026-03-23
 

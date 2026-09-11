@@ -321,7 +321,7 @@ type DownloadGameResponse = {
 git clone https://github.com/Wal33D/itchio-downloader.git
 cd itchio-downloader
 pnpm install
-pnpm test        # 169 tests
+pnpm test        # 170 tests
 pnpm run build   # compile TypeScript
 pnpm run lint    # ESLint (zero warnings)
 ```

@@ -43,8 +43,9 @@ function renderProgressBar(info: DownloadProgress): void {
 function printResult(
   label: string,
   result: DownloadGameResponse | DownloadGameResponse[],
-): void {
+): boolean {
   const results = Array.isArray(result) ? result : [result];
+  let succeeded = true;
 
   for (const r of results) {
     if (r.status) {
@@ -58,10 +59,13 @@ function printResult(
       if (r.sizeVerified === false) console.log(`    \u26a0 Size verification failed`);
       if (r.resumed) console.log(`    \u21bb Resumed from partial download`);
     } else {
+      succeeded = false;
       console.error(`\n  \u2718 ${r.message}`);
       if (r.httpStatus) console.error(`    HTTP Status: ${r.httpStatus}`);
     }
   }
+
+  return succeeded;
 }
 
 export async function run(
@@ -182,7 +186,9 @@ export async function run(
         noCookieCache: argv.noCookieCache,
         cookieCacheDir: argv.cookieCacheDir,
       });
-      printResult('Collection', result as DownloadGameResponse);
+      if (!printResult('Collection', result as DownloadGameResponse)) {
+        process.exitCode = 1;
+      }
     } catch (error) {
       console.error(
         `\n  \u2718 Collection download failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -203,7 +209,9 @@ export async function run(
         noCookieCache: argv.noCookieCache,
         cookieCacheDir: argv.cookieCacheDir,
       });
-      printResult('Jam', result as DownloadGameResponse);
+      if (!printResult('Jam', result as DownloadGameResponse)) {
+        process.exitCode = 1;
+      }
     } catch (error) {
       console.error(
         `\n  \u2718 Jam download failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -242,7 +250,9 @@ export async function run(
       concurrency,
       delayBetweenMs: delay,
     });
-    printResult('Game', result);
+    if (!printResult('Game', result)) {
+      process.exitCode = 1;
+    }
   } catch (error) {
     console.error(
       `\n  \u2718 Download failed: ${error instanceof Error ? error.message : String(error)}`,
