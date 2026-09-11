@@ -91,7 +91,10 @@ export async function downloadGameSingle(
   } = params;
 
   // Validate desiredFileName — prevent path traversal
-  if (desiredFileName && (desiredFileName.includes('/') || desiredFileName.includes('\\'))) {
+  if (
+    desiredFileName &&
+    (desiredFileName.includes('/') || desiredFileName.includes('\\'))
+  ) {
     return {
       status: false,
       message: 'Invalid desiredFileName: must not contain path separators.',
@@ -110,7 +113,9 @@ export async function downloadGameSingle(
       ...params,
       apiKey: key,
       itchGameUrl,
-      downloadDirectory: inputDirectory ? path.resolve(inputDirectory) : undefined,
+      downloadDirectory: inputDirectory
+        ? path.resolve(inputDirectory)
+        : undefined,
     });
   }
 
@@ -121,7 +126,10 @@ export async function downloadGameSingle(
 
   // === PATH 3: Direct HTTP (no Puppeteer, no API key) ===
   log('Attempting direct HTTP download...');
-  const directResult = await downloadGameDirect(params);
+  let detectedHtml5Page: string | undefined;
+  const directResult = await downloadGameDirect(params, (pageHtml) => {
+    detectedHtml5Page = pageHtml;
+  });
   if (directResult.status) {
     return directResult;
   }
@@ -143,7 +151,9 @@ export async function downloadGameSingle(
     directResult.failReason === 'no_uploads'
   ) {
     log('Attempting HTML5 web game download...');
-    const html5Result = await downloadGameHtml5(params);
+    const html5Result = await downloadGameHtml5(params, {
+      pageHtml: detectedHtml5Page,
+    });
     if (html5Result.status) {
       return html5Result;
     }
@@ -208,7 +218,9 @@ export async function downloadGameSingle(
       const { initializeBrowser } = await import('./initializeBrowser');
       browserInit = await initializeBrowser({ downloadDirectory, onProgress });
       if (!browserInit.status || !browserInit.browser)
-        throw new Error('Browser initialization failed: ' + browserInit.message);
+        throw new Error(
+          'Browser initialization failed: ' + browserInit.message,
+        );
 
       activeBrowsers.add(browserInit.browser);
       const browser: Browser = browserInit.browser;
@@ -270,7 +282,13 @@ export async function downloadGameSingle(
 
       status = puppeteerResult.status;
       message = 'Download and file operations successful.';
-      return { status, message, metadataPath, filePath: finalFilePath, metaData };
+      return {
+        status,
+        message,
+        metadataPath,
+        filePath: finalFilePath,
+        metaData,
+      };
     } catch (error: unknown) {
       message = `Setup failed: ${error instanceof Error ? error.message : String(error)}`;
       const httpStatus =

@@ -17,11 +17,13 @@ describe('downloadGame', () => {
     delete process.env.ITCH_API_KEY;
     // Tests in this file exercise routing and the Puppeteer fallback. Keep them
     // isolated from the network and mock the earlier direct-HTTP stage by default.
-    jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
-      status: false,
-      message: 'Mock direct HTTP failure.',
-      failReason: 'csrf_failed',
-    });
+    jest
+      .spyOn(downloadGameDirectModule, 'downloadGameDirect')
+      .mockResolvedValue({
+        status: false,
+        message: 'Mock direct HTTP failure.',
+        failReason: 'csrf_failed',
+      });
   });
   afterEach(() => {
     jest.restoreAllMocks();
@@ -333,7 +335,10 @@ describe('downloadGame', () => {
     const data = Buffer.from('abc');
     global.fetch = jest.fn();
     (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ uploads: [{ id: 2, filename: 'game.zip' }] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ uploads: [{ id: 2, filename: 'game.zip' }] }),
+      })
       .mockResolvedValueOnce({
         ok: true,
         headers: { get: () => data.length.toString() },
@@ -363,7 +368,10 @@ describe('downloadGame', () => {
     const data = Buffer.from('xyz');
     global.fetch = jest.fn();
     (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ uploads: [{ id: 5, filename: 'game2.zip' }] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ uploads: [{ id: 5, filename: 'game2.zip' }] }),
+      })
       .mockResolvedValueOnce({
         ok: true,
         headers: { get: () => data.length.toString() },
@@ -467,7 +475,10 @@ describe('downloadGame', () => {
     const data = Buffer.from('buf');
     global.fetch = jest.fn();
     (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ uploads: [{ id: 9, filename: 'g.zip' }] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ uploads: [{ id: 9, filename: 'g.zip' }] }),
+      })
       .mockResolvedValueOnce({
         ok: true,
         headers: { get: () => data.length.toString() },
@@ -490,11 +501,13 @@ describe('downloadGame', () => {
   it('html5 flag routes to downloadGameHtml5', async () => {
     // We need to mock the modules at this scope
     const downloadGameHtml5Module = await import('../downloadGameHtml5');
-    const spy = jest.spyOn(downloadGameHtml5Module, 'downloadGameHtml5').mockResolvedValue({
-      status: true,
-      message: 'HTML5 game downloaded: 3 assets.',
-      html5Assets: ['index.html', 'game.js', 'style.css'],
-    });
+    const spy = jest
+      .spyOn(downloadGameHtml5Module, 'downloadGameHtml5')
+      .mockResolvedValue({
+        status: true,
+        message: 'HTML5 game downloaded: 3 assets.',
+        html5Assets: ['index.html', 'game.js', 'style.css'],
+      });
 
     const result = (await downloadGame({
       name: 'webgame',
@@ -509,11 +522,13 @@ describe('downloadGame', () => {
   });
 
   it('direct HTTP tried before Puppeteer', async () => {
-    const spy = jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
-      status: true,
-      message: 'Download successful (direct HTTP).',
-      filePath: '/tmp/game.zip',
-    });
+    const spy = jest
+      .spyOn(downloadGameDirectModule, 'downloadGameDirect')
+      .mockResolvedValue({
+        status: true,
+        message: 'Download successful (direct HTTP).',
+        filePath: '/tmp/game.zip',
+      });
 
     const result = (await downloadGame({
       name: 'directgame',
@@ -527,12 +542,14 @@ describe('downloadGame', () => {
   });
 
   it('does not launch Puppeteer for an unavailable page', async () => {
-    jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
-      status: false,
-      message: 'Game page not found (HTTP 404).',
-      httpStatus: 404,
-      failReason: 'page_unavailable',
-    });
+    jest
+      .spyOn(downloadGameDirectModule, 'downloadGameDirect')
+      .mockResolvedValue({
+        status: false,
+        message: 'Game page not found (HTTP 404).',
+        httpStatus: 404,
+        failReason: 'page_unavailable',
+      });
     const browserSpy = jest.spyOn(initBrowser, 'initializeBrowser');
 
     const result = (await downloadGame({
@@ -546,11 +563,13 @@ describe('downloadGame', () => {
 
   it('does not try a desktop browser fallback for a known HTML5-only game', async () => {
     const downloadGameHtml5Module = await import('../downloadGameHtml5');
-    jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
-      status: false,
-      message: 'web-only HTML5 game — no downloadable files.',
-      failReason: 'web_only',
-    });
+    jest
+      .spyOn(downloadGameDirectModule, 'downloadGameDirect')
+      .mockResolvedValue({
+        status: false,
+        message: 'web-only HTML5 game — no downloadable files.',
+        failReason: 'web_only',
+      });
     jest.spyOn(downloadGameHtml5Module, 'downloadGameHtml5').mockResolvedValue({
       status: false,
       message: 'index.html returned HTTP 503',
@@ -568,15 +587,50 @@ describe('downloadGame', () => {
     expect(browserSpy).not.toHaveBeenCalled();
   });
 
+  it('reuses the direct probe page when auto-detecting an HTML5 game', async () => {
+    const downloadGameHtml5Module = await import('../downloadGameHtml5');
+    const pageHtml =
+      '<iframe src="https://html-classic.itch.zone/html/123/index.html"></iframe>';
+    jest
+      .spyOn(downloadGameDirectModule, 'downloadGameDirect')
+      .mockImplementation(async (_params, onHtml5Page) => {
+        onHtml5Page?.(pageHtml);
+        return {
+          status: false,
+          message: 'web-only HTML5 game — no downloadable files.',
+          failReason: 'web_only',
+        };
+      });
+    const html5Spy = jest
+      .spyOn(downloadGameHtml5Module, 'downloadGameHtml5')
+      .mockResolvedValue({
+        status: true,
+        message: 'HTML5 game downloaded: 1 assets.',
+        html5Assets: ['index.html'],
+      });
+
+    const params = { itchGameUrl: 'https://author.itch.io/web-game' };
+    const result = (await downloadGame(params)) as any;
+
+    expect(result.status).toBe(true);
+    expect(html5Spy).toHaveBeenCalledWith(params, { pageHtml });
+  });
+
   it('applies delayBetweenMs between batch downloads', async () => {
     jest
       .spyOn(fetchProfile, 'fetchItchGameProfile')
-      .mockResolvedValue({ found: true, itchRecord: { name: 'game' }, message: 'ok' });
+      .mockResolvedValue({
+        found: true,
+        itchRecord: { name: 'game' },
+        message: 'ok',
+      });
 
-    const directSpy = jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
-      status: true,
-      message: 'ok',
-    });
+    const directSpy = jest
+      .spyOn(downloadGameDirectModule, 'downloadGameDirect')
+      .mockResolvedValue({
+        status: true,
+        message: 'ok',
+      });
 
     const start = Date.now();
     await downloadGame(
@@ -594,10 +648,12 @@ describe('downloadGame', () => {
   });
 
   it('passes platform param through to downloadGameDirect', async () => {
-    const spy = jest.spyOn(downloadGameDirectModule, 'downloadGameDirect').mockResolvedValue({
-      status: true,
-      message: 'ok',
-    });
+    const spy = jest
+      .spyOn(downloadGameDirectModule, 'downloadGameDirect')
+      .mockResolvedValue({
+        status: true,
+        message: 'ok',
+      });
 
     await downloadGame({
       name: 'game',
@@ -607,6 +663,7 @@ describe('downloadGame', () => {
 
     expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({ platform: 'linux' }),
+      expect.any(Function),
     );
     spy.mockRestore();
   });
