@@ -40,7 +40,7 @@ There's no official API for downloading free itch.io games. The itch desktop app
 
 <table>
 <tr><td width="180"><strong>Direct HTTP</strong></td><td>Downloads free games via 4 HTTP requests — no browser binary needed</td></tr>
-<tr><td><strong>HTML5 Web Games</strong></td><td>Scrape browser-only games for offline play with <code>--html5</code></td></tr>
+<tr><td><strong>HTML5 Web Games</strong></td><td>Auto-detect browser-only games and save them for offline play; <code>--html5</code> selects this mode immediately</td></tr>
 <tr><td><strong>Resume Downloads</strong></td><td>Resume interrupted downloads using HTTP Range headers with <code>--resume</code></td></tr>
 <tr><td><strong>Cookie Caching</strong></td><td>Reuse session cookies across downloads (30-min TTL) — faster batch downloads</td></tr>
 <tr><td><strong>Size Verification</strong></td><td>Validate Content-Length matches actual bytes downloaded on every path</td></tr>
@@ -106,7 +106,10 @@ itchio-downloader --url "https://baraklava.itch.io/manic-miners"
 # Download by name + author
 itchio-downloader --name "manic-miners" --author "baraklava" --downloadDirectory ./games
 
-# HTML5 web game for offline play
+# HTML5 web games are auto-detected
+itchio-downloader --url "https://ncase.itch.io/wbwwb"
+
+# Or select HTML5 mode immediately
 itchio-downloader --url "https://ncase.itch.io/wbwwb" --html5
 
 # Choose a platform build
