@@ -57,6 +57,7 @@ describe('cli', () => {
   afterEach(() => {
     jest.restoreAllMocks();
     delete process.env.ITCH_API_KEY;
+    process.exitCode = undefined;
   });
 
   it('passes url argument to downloadGame', async () => {
@@ -291,6 +292,19 @@ describe('cli', () => {
     await run(['node', 'cli.ts', '--url', 'https://author.itch.io/game']);
 
     expect(errorSpy).toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('sets a failure exit code when downloadGame returns an error result', async () => {
+    jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue({ status: false, message: 'not found', httpStatus: 404 } as any);
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    await run(['node', 'cli.ts', '--url', 'https://author.itch.io/missing']);
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
   });
 
   it('passes --html5 flag to params', async () => {
