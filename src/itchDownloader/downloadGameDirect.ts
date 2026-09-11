@@ -13,7 +13,11 @@ import {
   fetchWithTimeout,
   USER_AGENT,
 } from './httpDownload';
-import { getCachedCookies, setCachedCookies, mergeCookies } from './cookieCache';
+import {
+  getCachedCookies,
+  setCachedCookies,
+  mergeCookies,
+} from './cookieCache';
 import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 
 interface UploadInfo {
@@ -38,8 +42,11 @@ function parsePage(html: string, res: Response): PageInfo {
   const priceMatch = html.match(/"min_price":(\d+)/);
 
   // Parse upload info: extract upload IDs with their associated display names
-  const uploadInfos = [...html.matchAll(/<a[^>]*data-upload_id="(\d+)"[^>]*>[\s\S]*?<strong[^>]*class="name"[^>]*>([^<]+)<\/strong>/g)]
-    .map(m => ({ id: m[1], name: m[2].trim() }));
+  const uploadInfos = [
+    ...html.matchAll(
+      /<a[^>]*data-upload_id="(\d+)"[^>]*>[\s\S]*?<strong[^>]*class="name"[^>]*>([^<]+)<\/strong>/g,
+    ),
+  ].map((m) => ({ id: m[1], name: m[2].trim() }));
 
   const setCookies: string[] = [];
   // getSetCookie exists on Node 20+; fall back to get('set-cookie')
@@ -77,6 +84,7 @@ function parsePage(html: string, res: Response): PageInfo {
  */
 export async function downloadGameDirect(
   params: DownloadGameParams,
+  onHtml5Page?: (pageHtml: string) => void,
 ): Promise<DownloadGameResponse> {
   const {
     name,
@@ -92,8 +100,14 @@ export async function downloadGameDirect(
     noCookieCache = false,
   } = params;
 
-  if (desiredFileName && (desiredFileName.includes('/') || desiredFileName.includes('\\'))) {
-    return { status: false, message: 'Invalid desiredFileName: must not contain path separators.' };
+  if (
+    desiredFileName &&
+    (desiredFileName.includes('/') || desiredFileName.includes('\\'))
+  ) {
+    return {
+      status: false,
+      message: 'Invalid desiredFileName: must not contain path separators.',
+    };
   }
 
   let itchGameUrl: string | undefined = inputUrl;
@@ -101,7 +115,10 @@ export async function downloadGameDirect(
     itchGameUrl = `https://${author}.itch.io/${name.toLowerCase().replace(/\s+/g, '-')}`;
   }
   if (!itchGameUrl) {
-    return { status: false, message: 'Invalid input: Provide either a URL or both name and author.' };
+    return {
+      status: false,
+      message: 'Invalid input: Provide either a URL or both name and author.',
+    };
   }
 
   const downloadDirectory: string | undefined = inputDirectory
@@ -127,7 +144,9 @@ export async function downloadGameDirect(
       pageHeaders['Cookie'] = cachedSession.cookies;
     }
 
-    const pageRes = await fetchWithTimeout(itchGameUrl, { headers: pageHeaders });
+    const pageRes = await fetchWithTimeout(itchGameUrl, {
+      headers: pageHeaders,
+    });
     if (!pageRes.ok) {
       return {
         status: false,
@@ -148,7 +167,11 @@ export async function downloadGameDirect(
     // one, and some itch.io layouts omit it entirely. Previously those pages fell
     // through to Puppeteer and failed on a donation-wall selector.
     if (page.minPrice > 0 && page.uploadIds.length === 0) {
-      return { status: false, message: `Game requires purchase (min price: ${page.minPrice} cents).`, failReason: 'paid' };
+      return {
+        status: false,
+        message: `Game requires purchase (min price: ${page.minPrice} cents).`,
+        failReason: 'paid',
+      };
     }
 
     // If no uploads AND no donation wall (min_price=0), check if web-only
@@ -158,26 +181,47 @@ export async function downloadGameDirect(
       const hasPurchasePath = pageHtml.includes('/purchase');
 
       if (!hasPurchasePath && isHtml5Only) {
-        return { status: false, message: 'web-only HTML5 game — no downloadable files.', failReason: 'web_only' };
+        onHtml5Page?.(pageHtml);
+        return {
+          status: false,
+          message: 'web-only HTML5 game — no downloadable files.',
+          failReason: 'web_only',
+        };
       }
       if (!hasPurchasePath && !isHtml5Only) {
-        return { status: false, message: 'No uploads found on game page.', failReason: 'no_uploads' };
+        return {
+          status: false,
+          message: 'No uploads found on game page.',
+          failReason: 'no_uploads',
+        };
       }
     }
 
     if (!page.csrfToken) {
-      return { status: false, message: 'Could not extract CSRF token from game page.', failReason: 'csrf_failed' };
+      return {
+        status: false,
+        message: 'Could not extract CSRF token from game page.',
+        failReason: 'csrf_failed',
+      };
     }
 
     // Cache the session cookies + CSRF for future downloads
     if (!noCookieCache) {
-      await setCachedCookies(itchGameUrl, sessionCookies, page.csrfToken, cookieCacheDir).catch(() => { /* best-effort */ });
+      await setCachedCookies(
+        itchGameUrl,
+        sessionCookies,
+        page.csrfToken,
+        cookieCacheDir,
+      ).catch(() => {
+        /* best-effort */
+      });
     }
 
     // Step 2: POST /download_url
-    const body = page.uploadIds.length > 0
-      ? `csrf_token=${encodeURIComponent(page.csrfToken)}&upload_id=${page.uploadIds[0]}`
-      : `csrf_token=${encodeURIComponent(page.csrfToken)}`;
+    const body =
+      page.uploadIds.length > 0
+        ? `csrf_token=${encodeURIComponent(page.csrfToken)}&upload_id=${page.uploadIds[0]}`
+        : `csrf_token=${encodeURIComponent(page.csrfToken)}`;
 
     const dlUrlRes = await fetchWithTimeout(`${itchGameUrl}/download_url`, {
       method: 'POST',
@@ -191,11 +235,18 @@ export async function downloadGameDirect(
       body,
     });
     if (!dlUrlRes.ok) {
-      return { status: false, message: `download_url POST failed HTTP ${dlUrlRes.status}`, httpStatus: dlUrlRes.status };
+      return {
+        status: false,
+        message: `download_url POST failed HTTP ${dlUrlRes.status}`,
+        httpStatus: dlUrlRes.status,
+      };
     }
     const dlUrlData = (await dlUrlRes.json()) as { url?: string };
     if (!dlUrlData.url) {
-      return { status: false, message: 'No download URL returned — game may require purchase.' };
+      return {
+        status: false,
+        message: 'No download URL returned — game may require purchase.',
+      };
     }
 
     // Step 3: GET download page
@@ -203,7 +254,11 @@ export async function downloadGameDirect(
       headers: { 'User-Agent': USER_AGENT, Cookie: sessionCookies },
     });
     if (!dlPageRes.ok) {
-      return { status: false, message: `Download page returned HTTP ${dlPageRes.status}`, httpStatus: dlPageRes.status };
+      return {
+        status: false,
+        message: `Download page returned HTTP ${dlPageRes.status}`,
+        httpStatus: dlPageRes.status,
+      };
     }
     const dlPageHtml = await dlPageRes.text();
     const dlPage = parsePage(dlPageHtml, dlPageRes);
@@ -213,15 +268,23 @@ export async function downloadGameDirect(
 
     // Update cache with all accumulated cookies
     if (!noCookieCache) {
-      await setCachedCookies(itchGameUrl, allCookies, dlPage.csrfToken || page.csrfToken, cookieCacheDir).catch(() => {});
+      await setCachedCookies(
+        itchGameUrl,
+        allCookies,
+        dlPage.csrfToken || page.csrfToken,
+        cookieCacheDir,
+      ).catch(() => {});
     }
 
     // Use upload IDs from download page (more complete list)
     let uploadId: string | undefined;
     if (params.platform) {
       const platformLower = params.platform.toLowerCase();
-      const infos = dlPage.uploadInfos.length > 0 ? dlPage.uploadInfos : page.uploadInfos;
-      const matched = infos.find(u => u.name.toLowerCase().includes(platformLower));
+      const infos =
+        dlPage.uploadInfos.length > 0 ? dlPage.uploadInfos : page.uploadInfos;
+      const matched = infos.find((u) =>
+        u.name.toLowerCase().includes(platformLower),
+      );
       if (matched) {
         uploadId = matched.id;
       }
@@ -246,9 +309,16 @@ export async function downloadGameDirect(
       body: `csrf_token=${encodeURIComponent(csrf)}`,
     });
     if (!fileRes.ok) {
-      return { status: false, message: `file/${uploadId} POST failed HTTP ${fileRes.status}`, httpStatus: fileRes.status };
+      return {
+        status: false,
+        message: `file/${uploadId} POST failed HTTP ${fileRes.status}`,
+        httpStatus: fileRes.status,
+      };
     }
-    const cdnData = (await fileRes.json()) as { url?: string; external?: boolean };
+    const cdnData = (await fileRes.json()) as {
+      url?: string;
+      external?: boolean;
+    };
     if (!cdnData.url) {
       return { status: false, message: 'No CDN URL returned.' };
     }
@@ -266,7 +336,11 @@ export async function downloadGameDirect(
         headers: { 'User-Agent': USER_AGENT },
       });
       if (!cdnRes.ok) {
-        return { status: false, message: `CDN download failed HTTP ${cdnRes.status}`, httpStatus: cdnRes.status };
+        return {
+          status: false,
+          message: `CDN download failed HTTP ${cdnRes.status}`,
+          httpStatus: cdnRes.status,
+        };
       }
       fileBuffer = await streamToBuffer(cdnRes, onProgress, `game-${uploadId}`);
       bytesDownloaded = fileBuffer.length;
@@ -280,7 +354,8 @@ export async function downloadGameDirect(
       const dispositionMatch = disposition?.match(/filename="?([^";\n]+)"?/);
       // Sanitize filename: strip path components to prevent directory traversal
       const rawFileName = dispositionMatch?.[1] || `game-${uploadId}.zip`;
-      const cdnFileName = path.basename(rawFileName).replace(/\0/g, '') || `game-${uploadId}.zip`;
+      const cdnFileName =
+        path.basename(rawFileName).replace(/\0/g, '') || `game-${uploadId}.zip`;
       finalFilePath = path.join(downloadDirectory, cdnFileName);
 
       if (resume) {
@@ -300,9 +375,17 @@ export async function downloadGameDirect(
           headers: { 'User-Agent': USER_AGENT },
         });
         if (!cdnDownloadRes.ok) {
-          return { status: false, message: `CDN download failed HTTP ${cdnDownloadRes.status}`, httpStatus: cdnDownloadRes.status };
+          return {
+            status: false,
+            message: `CDN download failed HTTP ${cdnDownloadRes.status}`,
+            httpStatus: cdnDownloadRes.status,
+          };
         }
-        const result = await streamToFile(cdnDownloadRes, finalFilePath, onProgress);
+        const result = await streamToFile(
+          cdnDownloadRes,
+          finalFilePath,
+          onProgress,
+        );
         sizeVerified = result.verified;
         bytesDownloaded = result.bytesWritten;
       }
@@ -310,7 +393,9 @@ export async function downloadGameDirect(
 
     // Rename/dedup if needed
     if (downloadDirectory && finalFilePath) {
-      const originalBase = desiredFileName || path.basename(finalFilePath, path.extname(finalFilePath));
+      const originalBase =
+        desiredFileName ||
+        path.basename(finalFilePath, path.extname(finalFilePath));
       const ext = path.extname(finalFilePath);
       let uniqueBase = originalBase;
       let uniquePath = path.join(downloadDirectory, uniqueBase + ext);
@@ -321,21 +406,31 @@ export async function downloadGameDirect(
         counter++;
       }
       if (uniqueBase !== path.basename(finalFilePath, ext) || desiredFileName) {
-        const renameResult = await renameFile({ filePath: finalFilePath, desiredFileName: uniqueBase });
-        if (!renameResult.status) throw new Error('File rename failed: ' + renameResult.message);
+        const renameResult = await renameFile({
+          filePath: finalFilePath,
+          desiredFileName: uniqueBase,
+        });
+        if (!renameResult.status)
+          throw new Error('File rename failed: ' + renameResult.message);
         finalFilePath = renameResult.newFilePath as string;
       }
     }
 
     // Fetch metadata
-    const profile = await fetchItchGameProfile({ itchGameUrl }).catch(() => null);
+    const profile = await fetchItchGameProfile({ itchGameUrl }).catch(
+      () => null,
+    );
     const record = profile?.itchRecord as IItchRecord | undefined;
 
-    const metadataPath = downloadDirectory && record
-      ? path.join(downloadDirectory, `${record.name || 'game'}-metadata.json`)
-      : undefined;
+    const metadataPath =
+      downloadDirectory && record
+        ? path.join(downloadDirectory, `${record.name || 'game'}-metadata.json`)
+        : undefined;
     if (writeMetaData && metadataPath && record) {
-      await createFile({ filePath: metadataPath, content: JSON.stringify(record, null, 2) });
+      await createFile({
+        filePath: metadataPath,
+        content: JSON.stringify(record, null, 2),
+      });
     }
 
     return {

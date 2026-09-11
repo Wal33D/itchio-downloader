@@ -32,7 +32,7 @@ const result = await downloadGame({
 
 There's no official API for downloading free itch.io games. The itch desktop app requires a GUI. Butler requires developer access. This library gives you a single function call or CLI command that just works.
 
-**Tested on games from 2.6 MB to 1.9 GB.** 174 automated tests. Strict TypeScript. Zero lint warnings.
+**Tested on games from 2.6 MB to 1.9 GB.** 176 automated tests. Strict TypeScript. Zero lint warnings.
 
 ---
 
@@ -172,6 +172,10 @@ console.log(result.html5Assets);
 Large single-file HTML5 games are streamed directly to disk. When itch.io
 compresses a response, verification uses the decoded byte count without
 mistaking the compressed HTTP length for the saved file size.
+
+The `html5` option selects this path immediately. Without it, HTML5 games are
+auto-detected and the initial page response is reused, so detection does not
+add another request to itch.io.
 
 ### Game Jams
 
@@ -338,7 +342,7 @@ type DownloadGameResponse = {
 git clone https://github.com/Wal33D/itchio-downloader.git
 cd itchio-downloader
 pnpm install
-pnpm test        # 174 tests
+pnpm test        # 176 tests
 pnpm run build   # compile TypeScript
 pnpm run lint    # ESLint (zero warnings)
 ```

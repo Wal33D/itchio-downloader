@@ -250,6 +250,7 @@ function extractHtml5IndexUrl(pageHtml: string): URL | undefined {
  */
 export async function downloadGameHtml5(
   params: DownloadGameParams,
+  options: { pageHtml?: string } = {},
 ): Promise<DownloadGameResponse> {
   const {
     name,
@@ -276,19 +277,23 @@ export async function downloadGameHtml5(
     : path.resolve(os.homedir(), 'downloads');
 
   try {
-    // Step 1: GET game page → find HTML5 iframe URL
-    const pageRes = await fetchWithTimeout(itchGameUrl, {
-      headers: { 'User-Agent': USER_AGENT },
-    });
-    if (!pageRes.ok) {
-      return {
-        status: false,
-        message: describeGamePageHttpError(pageRes.status),
-        httpStatus: pageRes.status,
-        failReason: 'page_unavailable',
-      };
+    // Step 1: GET game page → find HTML5 iframe URL. Auto-detection can pass
+    // the page it already fetched so we do not duplicate a rate-limited request.
+    let pageHtml = options.pageHtml;
+    if (pageHtml === undefined) {
+      const pageRes = await fetchWithTimeout(itchGameUrl, {
+        headers: { 'User-Agent': USER_AGENT },
+      });
+      if (!pageRes.ok) {
+        return {
+          status: false,
+          message: describeGamePageHttpError(pageRes.status),
+          httpStatus: pageRes.status,
+          failReason: 'page_unavailable',
+        };
+      }
+      pageHtml = await pageRes.text();
     }
-    const pageHtml = await pageRes.text();
 
     const indexUrl = extractHtml5IndexUrl(pageHtml);
     if (!indexUrl) {

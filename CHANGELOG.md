@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.4] - 2026-09-11
+
+### Fixed
+
+- Reuse the initial game-page response during HTML5 auto-detection instead of issuing a duplicate request that can trigger itch.io rate limiting.
+
+### Changed
+
+- Expanded regression coverage to 176 tests.
+
 ## [1.2.3] - 2026-09-11
 
 ### Fixed

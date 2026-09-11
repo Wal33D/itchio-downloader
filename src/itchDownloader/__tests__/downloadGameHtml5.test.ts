@@ -154,6 +154,31 @@ describe('downloadGameHtml5', () => {
     expect(result.bytesDownloaded).toBe(Buffer.byteLength(indexHtml));
   });
 
+  it('reuses a pre-fetched game page during auto-detection', async () => {
+    const gamePageHtml = `
+      <iframe src="https://html-classic.itch.zone/html/54322/index.html?v=43"></iframe>
+    `;
+    const indexHtml = '<html><body>auto-detected game</body></html>';
+    const mockFetch = jest.fn().mockResolvedValueOnce(mockResponse(indexHtml));
+    global.fetch = mockFetch as unknown as typeof fetch;
+
+    const result = await downloadGameHtml5(
+      {
+        itchGameUrl: 'https://author.itch.io/auto-detected-game',
+        downloadDirectory: tmpDir,
+        writeMetaData: false,
+      },
+      { pageHtml: gamePageHtml },
+    );
+
+    expect(result.status).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://html-classic.itch.zone/html/54322/index.html?v=43',
+      expect.any(Object),
+    );
+  });
+
   it('does not treat src strings inside inline JavaScript as HTML assets', async () => {
     const gamePageHtml = `
       <iframe src="https://html-classic.itch.zone/html/77777/index.html"></iframe>
