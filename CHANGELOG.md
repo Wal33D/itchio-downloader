@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2026-09-11
+
+### Fixed
+
+- Report the installed package version correctly from the CLI `--version` flag.
+
 ## [1.2.1] - 2026-09-11
 
 ### Fixed

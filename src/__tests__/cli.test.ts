@@ -16,6 +16,7 @@ jest.mock('yargs', () => {
         },
         help: () => self,
         alias: () => self,
+        version: () => self,
         parseSync: () => {
           const result: any = {};
           for (let i = 0; i < args.length; i++) {

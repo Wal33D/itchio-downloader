@@ -2,6 +2,8 @@
 
 import type { Argv, ArgumentsCamelCase } from 'yargs';
 import 'dotenv/config';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { downloadGame } from './itchDownloader/downloadGame';
 import { downloadCollection } from './itchDownloader/downloadCollection';
 import { downloadJam } from './itchDownloader/downloadJam';
@@ -11,6 +13,12 @@ import {
   DownloadProgress,
 } from './itchDownloader/types';
 import { CLIArgs } from './types/cli';
+
+const packageVersion = (
+  JSON.parse(
+    readFileSync(join(__dirname, '../package.json'), 'utf8'),
+  ) as { version: string }
+).version;
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -169,6 +177,7 @@ export async function run(
     })
     .help()
     .alias('help', 'h')
+    .version(packageVersion)
     .parseSync();
 
   const apiKey = argv.apiKey ?? process.env.ITCH_API_KEY;
