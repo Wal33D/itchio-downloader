@@ -54,10 +54,10 @@ describe('downloadCollection', () => {
       .spyOn(downloadGameMod, 'downloadGame')
       .mockResolvedValue('x' as any);
     await downloadCollection('https://itch.io/c/1/test');
-    expect(dgMock).toHaveBeenCalledWith([{ itchGameUrl: 'https://a' }], {
-      concurrency: 1,
-      delayBetweenMs: 0,
-    });
+    expect(dgMock).toHaveBeenCalledWith(
+      [{ itchGameUrl: 'https://a' }],
+      { concurrency: 1, delayBetweenMs: 0 },
+    );
   });
 
   it('passes resume flag through to each game', async () => {
@@ -68,9 +68,7 @@ describe('downloadCollection', () => {
     const dgMock = jest
       .spyOn(downloadGameMod, 'downloadGame')
       .mockResolvedValue('x' as any);
-    await downloadCollection('https://itch.io/c/1/test', undefined, {
-      resume: true,
-    });
+    await downloadCollection('https://itch.io/c/1/test', undefined, { resume: true });
     expect(dgMock).toHaveBeenCalledWith(
       [expect.objectContaining({ resume: true })],
       { concurrency: 1, delayBetweenMs: 0 },
@@ -85,9 +83,7 @@ describe('downloadCollection', () => {
     const dgMock = jest
       .spyOn(downloadGameMod, 'downloadGame')
       .mockResolvedValue('x' as any);
-    await downloadCollection('https://itch.io/c/1/test', undefined, {
-      noCookieCache: true,
-    });
+    await downloadCollection('https://itch.io/c/1/test', undefined, { noCookieCache: true });
     expect(dgMock).toHaveBeenCalledWith(
       [expect.objectContaining({ noCookieCache: true })],
       { concurrency: 1, delayBetweenMs: 0 },
@@ -102,24 +98,15 @@ describe('downloadCollection', () => {
     const dgMock = jest
       .spyOn(downloadGameMod, 'downloadGame')
       .mockResolvedValue('x' as any);
-    await downloadCollection('https://itch.io/c/1/test', 'key', {
-      cookieCacheDir: '/tmp/cookies',
-    });
+    await downloadCollection('https://itch.io/c/1/test', 'key', { cookieCacheDir: '/tmp/cookies' });
     expect(dgMock).toHaveBeenCalledWith(
-      [
-        expect.objectContaining({
-          cookieCacheDir: '/tmp/cookies',
-          apiKey: 'key',
-        }),
-      ],
+      [expect.objectContaining({ cookieCacheDir: '/tmp/cookies', apiKey: 'key' })],
       { concurrency: 1, delayBetweenMs: 0 },
     );
   });
 
   it('throws on invalid collection URL', async () => {
-    await expect(downloadCollection('https://itch.io/invalid')).rejects.toThrow(
-      'Invalid collection',
-    );
+    await expect(downloadCollection('https://itch.io/invalid')).rejects.toThrow('Invalid collection');
   });
 
   it('throws on API error during pagination', async () => {
