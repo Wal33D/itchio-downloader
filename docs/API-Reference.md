@@ -123,6 +123,7 @@ Downloads all game entries from an itch.io game jam. Fetches the jam page to ext
 - `opts` _(DownloadJamOptions, optional)_:
   - `downloadDirectory` _(string)_ -- Where to save downloaded files.
   - `concurrency` _(number)_ -- Maximum simultaneous downloads. Defaults to `1`.
+  - `delayBetweenMs` _(number)_ -- Delay between downloads for rate limiting. Defaults to `0`.
   - `resume` _(boolean)_ -- Resume interrupted downloads.
   - `noCookieCache` _(boolean)_ -- Disable cookie caching.
   - `cookieCacheDir` _(string)_ -- Custom cookie cache directory.

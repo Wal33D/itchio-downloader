@@ -67,6 +67,8 @@ async function fetchJamEntries(jamId: number): Promise<string[]> {
 export interface DownloadJamOptions {
   downloadDirectory?: string;
   concurrency?: number;
+  /** Delay in ms between downloads for rate limiting */
+  delayBetweenMs?: number;
   onProgress?: (info: DownloadProgress) => void;
   /** Enable resume support for interrupted downloads */
   resume?: boolean;
@@ -111,5 +113,8 @@ export async function downloadJam(
     if (opts.cookieCacheDir) p.cookieCacheDir = opts.cookieCacheDir;
     return p;
   });
-  return downloadGame(params, opts.concurrency ?? 1);
+  return downloadGame(params, {
+    concurrency: opts.concurrency ?? 1,
+    delayBetweenMs: opts.delayBetweenMs ?? 0,
+  });
 }

@@ -42,6 +42,7 @@ describe('downloadJam', () => {
     await downloadJam('https://itch.io/jam/test-jam', undefined, {
       downloadDirectory: '/tmp/jam',
       concurrency: 2,
+      delayBetweenMs: 100,
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -51,7 +52,7 @@ describe('downloadJam', () => {
         expect.objectContaining({ itchGameUrl: 'https://bob.itch.io/game-b' }),
         expect.objectContaining({ itchGameUrl: 'https://carol.itch.io/game-c' }),
       ],
-      2,
+      { concurrency: 2, delayBetweenMs: 100 },
     );
   });
 
@@ -77,7 +78,7 @@ describe('downloadJam', () => {
         expect.objectContaining({ resume: true, noCookieCache: true }),
         expect.objectContaining({ resume: true, noCookieCache: true }),
       ],
-      1,
+      { concurrency: 1, delayBetweenMs: 0 },
     );
   });
 
@@ -97,7 +98,7 @@ describe('downloadJam', () => {
       expect.arrayContaining([
         expect.objectContaining({ apiKey: 'my-key' }),
       ]),
-      1,
+      { concurrency: 1, delayBetweenMs: 0 },
     );
   });
 

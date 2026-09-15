@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Add validated JSON and YAML batch configuration files through `--config`.
+  Config files can define shared defaults and a list of URL or name/author game
+  entries; explicitly supplied CLI options override the file values.
+- Add focused configuration parsing, validation, merging, and failure tests,
+  bringing the suite to 187 tests.
+
+### Fixed
+
+- Forward the CLI `--delay` option through collection and game-jam downloads,
+  matching the documented rate-limiting behavior.
+
 ## [1.2.5] - 2026-09-14
 
 ### Security

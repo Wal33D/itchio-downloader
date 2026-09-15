@@ -1,4 +1,5 @@
 export interface CLIArgs {
+  config?: string;
   url?: string;
   collection?: string;
   jam?: string;

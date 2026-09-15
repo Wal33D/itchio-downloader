@@ -18,19 +18,10 @@ These features have been implemented and are available in the current release:
 - **Resume support** -- Interrupted downloads can be resumed using HTTP Range headers. Partial data is saved to `.part` files. Enable with `--resume`.
 - **Size verification** -- Downloaded file sizes are verified against Content-Length headers. Responses include `sizeVerified`, `bytesDownloaded`, and `resumed` fields. In-memory downloads throw on size mismatch. HTML5 asset downloads verify each individual asset.
 - **Game jam downloads** -- Download all entries from an itch.io game jam with `--jam`. Extracts jam ID from the jam page, fetches entries from the `entries.json` endpoint, and downloads each game through the existing pipeline.
-- **178 automated tests** -- Coverage for download paths, cookie caching, resume logic, size verification, optional browser loading, and game jams.
+- **Configuration file support** -- Use `--config` with a validated JSON or YAML file containing shared defaults and URL or name/author game entries. Explicit CLI options override file values for every entry.
+- **187 automated tests** -- Coverage for download paths, cookie caching, resume logic, size verification, optional browser loading, game jams, and configuration files.
 
 ## Planned
-
-### Configuration File Support
-
-Add the ability for the CLI to read a JSON or YAML file containing a list of games and default options:
-
-1. Implement a `--config` option that accepts the path to the file.
-2. Parse each entry and merge it with any CLI flags provided.
-3. Validate the structure of the file before initiating downloads.
-
-This feature will simplify batch operations and allow sharing predefined lists of games.
 
 ### CLI Enhancements
 

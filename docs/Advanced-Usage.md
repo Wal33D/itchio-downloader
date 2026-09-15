@@ -78,6 +78,36 @@ installed separately.
 
 Most jam games are free HTML5 browser games or downloadable zip files. The library automatically selects the best download method for each entry.
 
+## Reusable batch configuration
+
+The CLI accepts validated JSON and YAML files for repeatable batch downloads.
+Shared defaults are merged into every game entry, and explicitly supplied CLI
+options take precedence:
+
+```yaml
+defaults:
+  downloadDirectory: ./games
+  concurrency: 2
+  delay: 1000
+  retries: 2
+  resume: true
+
+games:
+  - https://example.itch.io/game-one
+  - url: https://example.itch.io/game-two
+    platform: linux
+  - name: Game Three
+    author: example
+```
+
+```bash
+itchio-downloader --config ./games.yaml
+itchio-downloader --config ./games.yaml --concurrency 3 --downloadDirectory ./other-games
+```
+
+See the [CLI reference](CLI.md#batch-configuration-files) for the complete
+schema and precedence rules.
+
 ## HTML5 web game downloads
 
 Some itch.io games are browser-only -- they run in an embedded iframe and have
