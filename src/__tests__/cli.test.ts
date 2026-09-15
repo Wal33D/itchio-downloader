@@ -36,7 +36,7 @@ jest.mock('yargs', () => {
             return result;
           } catch (err) {
             // mimic yargs exiting the process on validation error
-             
+
             (process.exit as any)(1);
             throw err;
           }
@@ -50,6 +50,9 @@ jest.mock('yargs', () => {
 import * as downloadGameModule from '../itchDownloader/downloadGame';
 import * as downloadCollectionModule from '../itchDownloader/downloadCollection';
 import { run } from '../cli';
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 describe('cli', () => {
   beforeEach(() => {
@@ -257,11 +260,14 @@ describe('cli', () => {
       'https://itch.io/c/1/test',
       '--concurrency',
       '2',
+      '--delay',
+      '250',
     ]);
 
     expect(mock).toHaveBeenCalledWith('https://itch.io/c/1/test', undefined, {
       downloadDirectory: undefined,
       concurrency: 2,
+      delayBetweenMs: 250,
       onProgress: undefined,
       resume: undefined,
       noCookieCache: undefined,
@@ -297,9 +303,11 @@ describe('cli', () => {
   });
 
   it('sets a failure exit code when downloadGame returns an error result', async () => {
-    jest
-      .spyOn(downloadGameModule, 'downloadGame')
-      .mockResolvedValue({ status: false, message: 'not found', httpStatus: 404 } as any);
+    jest.spyOn(downloadGameModule, 'downloadGame').mockResolvedValue({
+      status: false,
+      message: 'not found',
+      httpStatus: 404,
+    } as any);
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     await run(['node', 'cli.ts', '--url', 'https://author.itch.io/missing']);
@@ -311,7 +319,11 @@ describe('cli', () => {
   it('passes --html5 flag to params', async () => {
     const mock = jest
       .spyOn(downloadGameModule, 'downloadGame')
-      .mockResolvedValue({ status: true, message: 'ok', html5Assets: ['index.html'] } as any);
+      .mockResolvedValue({
+        status: true,
+        message: 'ok',
+        html5Assets: ['index.html'],
+      } as any);
     jest.spyOn(console, 'log').mockImplementation(() => {});
 
     await run([
@@ -471,5 +483,114 @@ describe('cli', () => {
       expect.any(Object),
       expect.objectContaining({ delayBetweenMs: 500 }),
     );
+  });
+
+  it('downloads every game from a YAML config and merges CLI overrides', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'itchio-cli-config-test-'));
+    const configPath = join(directory, 'games.yaml');
+    writeFileSync(
+      configPath,
+      [
+        'defaults:',
+        '  downloadDirectory: ./from-config',
+        '  retries: 2',
+        '  concurrency: 2',
+        '  delay: 50',
+        'games:',
+        '  - https://author.itch.io/one',
+        '  - name: Game Two',
+        '    author: author',
+        '    html5: true',
+      ].join('\n'),
+    );
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue([
+        { status: true, message: 'one' },
+        { status: true, message: 'two' },
+      ] as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    try {
+      await run([
+        'node',
+        'cli.ts',
+        '--config',
+        configPath,
+        '--downloadDirectory',
+        './override',
+        '--retries',
+        '4',
+        '--concurrency',
+        '3',
+        '--delay',
+        '10',
+      ]);
+
+      expect(mock).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            itchGameUrl: 'https://author.itch.io/one',
+            downloadDirectory: './override',
+            retries: 4,
+          }),
+          expect.objectContaining({
+            name: 'Game Two',
+            author: 'author',
+            html5: true,
+            downloadDirectory: './override',
+            retries: 4,
+          }),
+        ],
+        { concurrency: 3, delayBetweenMs: 10 },
+      );
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('uses config batch defaults when CLI overrides are omitted', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'itchio-cli-config-test-'));
+    const configPath = join(directory, 'games.json');
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        defaults: { concurrency: 2, delay: 25 },
+        games: ['https://author.itch.io/one'],
+      }),
+    );
+    const mock = jest
+      .spyOn(downloadGameModule, 'downloadGame')
+      .mockResolvedValue([{ status: true, message: 'one' }] as any);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    try {
+      await run(['node', 'cli.ts', '--config', configPath]);
+      expect(mock).toHaveBeenCalledWith(expect.any(Array), {
+        concurrency: 2,
+        delayBetweenMs: 25,
+      });
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('reports invalid config files without starting downloads', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'itchio-cli-config-test-'));
+    const configPath = join(directory, 'games.json');
+    writeFileSync(configPath, JSON.stringify({ games: [] }));
+    const mock = jest.spyOn(downloadGameModule, 'downloadGame');
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      await run(['node', 'cli.ts', '--config', configPath]);
+      expect(mock).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Config.games must be a non-empty array'),
+      );
+      expect(process.exitCode).toBe(1);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 });

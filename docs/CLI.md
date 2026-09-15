@@ -23,6 +23,7 @@ itchio-downloader [options]
 
 | Flag                  | Description                                                              |
 | --------------------- | ------------------------------------------------------------------------ |
+| `--config`            | JSON or YAML file containing a game list and shared defaults             |
 | `--url`               | Full URL to the game on itch.io                                          |
 | `--collection`        | URL to a collection on itch.io                                           |
 | `--jam`               | URL to a game jam — downloads all entries                                |
@@ -43,7 +44,9 @@ itchio-downloader [options]
 | `-h, --help`          | Display usage information                                                |
 | `--version`           | Display the installed package version                                    |
 
-You must provide a collection URL, a jam URL, a game URL, or both a name and author.
+You must provide a config file, collection URL, jam URL, game URL, or both a
+name and author. `--config` cannot be combined with the collection, jam, URL,
+name, or author target flags.
 
 You can set the API key in an `.env` file or environment variable `ITCH_API_KEY`
 so the `--apiKey` flag is optional.
@@ -94,6 +97,62 @@ itchio-downloader --url "https://dev.itch.io/game" --noCookieCache
 # Custom cookie cache directory
 itchio-downloader --url "https://dev.itch.io/game" --cookieCacheDir /tmp/my-cache
 ```
+
+## Batch configuration files
+
+Use `--config` with a `.json`, `.yaml`, or `.yml` file to download a reusable
+list of games. Each entry can be a game URL string or an object containing
+`url`, or both `name` and `author`.
+
+```yaml
+defaults:
+  downloadDirectory: ./games
+  concurrency: 2
+  delay: 500
+  retries: 2
+  resume: true
+
+games:
+  - https://baraklava.itch.io/manic-miners
+  - name: Terra Nil
+    author: vfqd
+  - url: https://ncase.itch.io/wbwwb
+    html5: true
+```
+
+The equivalent JSON shape is:
+
+```json
+{
+  "defaults": {
+    "downloadDirectory": "./games",
+    "concurrency": 2,
+    "delay": 500
+  },
+  "games": [
+    "https://baraklava.itch.io/manic-miners",
+    { "name": "Terra Nil", "author": "vfqd" }
+  ]
+}
+```
+
+Supported shared and per-game options are `apiKey`, `downloadDirectory`,
+`memory`, `html5`, `platform`, `retries`, `retryDelay`, `resume`,
+`noCookieCache`, and `cookieCacheDir`. `concurrency` and `delay` are shared batch
+defaults only. Unknown options, invalid types, unsupported platforms, invalid
+numeric ranges, incomplete name/author pairs, and empty game lists are rejected
+before any download starts.
+
+Options explicitly supplied on the command line override the corresponding
+defaults and per-game values for every entry. For example:
+
+```bash
+itchio-downloader --config ./games.yaml --downloadDirectory ./other-games --concurrency 3
+```
+
+Relative paths are resolved from the current working directory. Prefer the
+`ITCH_API_KEY` environment variable over storing credentials in a shared config
+file.
 
 If you have the package installed locally without `-g`, run the examples with `npx itchio-downloader` or `pnpm dlx itchio-downloader`.
 

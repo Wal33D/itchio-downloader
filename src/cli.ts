@@ -13,6 +13,12 @@ import {
   DownloadProgress,
 } from './itchDownloader/types';
 import { CLIArgs } from './types/cli';
+import {
+  CliConfigDefaults,
+  CliConfigGame,
+  CliConfigGameOptions,
+  loadCliConfig,
+} from './cliConfig';
 
 const packageVersion = (
   JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8')) as {
@@ -81,6 +87,80 @@ function printResult(
   return succeeded;
 }
 
+const configurableOptionNames: (keyof CliConfigGameOptions)[] = [
+  'apiKey',
+  'downloadDirectory',
+  'memory',
+  'html5',
+  'platform',
+  'retries',
+  'retryDelay',
+  'resume',
+  'noCookieCache',
+  'cookieCacheDir',
+];
+
+function toKebabCase(value: string): string {
+  return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+
+function providedOptions(argvInput: string[]): Set<string> {
+  return new Set(
+    argvInput
+      .slice(2)
+      .filter((argument) => argument.startsWith('--'))
+      .map((argument) => argument.slice(2).split('=', 1)[0]),
+  );
+}
+
+function optionWasProvided(options: Set<string>, name: string): boolean {
+  return options.has(name) || options.has(toKebabCase(name));
+}
+
+function configCliOverrides(
+  argv: ArgumentsCamelCase<CLIArgs>,
+  explicitOptions: Set<string>,
+): CliConfigGameOptions {
+  const overrides: CliConfigGameOptions = {};
+  for (const name of configurableOptionNames) {
+    if (optionWasProvided(explicitOptions, name) && argv[name] !== undefined) {
+      const value =
+        name === 'retries' || name === 'retryDelay'
+          ? Number(argv[name])
+          : argv[name];
+      Object.assign(overrides, { [name]: value });
+    }
+  }
+  return overrides;
+}
+
+function configGameParams(
+  game: CliConfigGame,
+  defaults: CliConfigDefaults,
+  overrides: CliConfigGameOptions,
+  onProgress?: (info: DownloadProgress) => void,
+): DownloadGameParams {
+  const merged = { ...defaults, ...game, ...overrides };
+  const params: DownloadGameParams = {
+    itchGameUrl: merged.url,
+    name: merged.name,
+    author: merged.author,
+    downloadDirectory: merged.downloadDirectory,
+  };
+  const apiKey = merged.apiKey ?? process.env.ITCH_API_KEY;
+  if (apiKey) params.apiKey = apiKey;
+  if (merged.memory) params.inMemory = true;
+  if (merged.html5) params.html5 = true;
+  if (merged.platform) params.platform = merged.platform;
+  if (merged.retries !== undefined) params.retries = merged.retries;
+  if (merged.retryDelay !== undefined) params.retryDelayMs = merged.retryDelay;
+  if (merged.resume) params.resume = true;
+  if (merged.noCookieCache) params.noCookieCache = true;
+  if (merged.cookieCacheDir) params.cookieCacheDir = merged.cookieCacheDir;
+  if (onProgress) params.onProgress = onProgress;
+  return params;
+}
+
 export async function run(
   argvInput: string[] = process.argv,
   onProgress?: (info: DownloadProgress) => void,
@@ -91,6 +171,10 @@ export async function run(
   const argv: ArgumentsCamelCase<CLIArgs> = (
     yargs(hideBin(argvInput)) as Argv<CLIArgs>
   )
+    .option('config', {
+      describe: 'Path to a JSON or YAML batch configuration file',
+      type: 'string',
+    })
     .option('url', {
       describe: 'The full URL to the game on itch.io',
       type: 'string',
@@ -114,7 +198,6 @@ export async function run(
     .option('apiKey', {
       describe: 'itch.io API key for authenticated downloads',
       type: 'string',
-      default: process.env.ITCH_API_KEY,
     })
     .option('downloadDirectory', {
       describe: 'The filepath where the game will be downloaded',
@@ -167,7 +250,20 @@ export async function run(
       type: 'string',
     })
     .check((args) => {
-      if (args.collection) {
+      if (args.config) {
+        if (
+          args.collection ||
+          args.jam ||
+          args.url ||
+          args.name ||
+          args.author
+        ) {
+          throw new Error(
+            '--config cannot be combined with --collection, --jam, --url, --name, or --author.',
+          );
+        }
+        return true;
+      } else if (args.collection) {
         return true;
       } else if (args.jam) {
         return true;
@@ -177,7 +273,7 @@ export async function run(
         return true;
       }
       throw new Error(
-        'Please provide either a collection URL, a game URL, or both name and author.',
+        'Please provide a config file, collection URL, jam URL, game URL, or both name and author.',
       );
     })
     .help()
@@ -188,6 +284,44 @@ export async function run(
   const apiKey = argv.apiKey ?? process.env.ITCH_API_KEY;
   const concurrency =
     argv.concurrency !== undefined ? Number(argv.concurrency) : 1;
+  const delay = argv.delay !== undefined ? Number(argv.delay) : 0;
+
+  if (argv.config) {
+    try {
+      const config = loadCliConfig(argv.config);
+      const explicitOptions = providedOptions(argvInput);
+      const overrides = configCliOverrides(argv, explicitOptions);
+      const configConcurrency = optionWasProvided(
+        explicitOptions,
+        'concurrency',
+      )
+        ? concurrency
+        : (config.defaults.concurrency ?? 1);
+      const configDelay = optionWasProvided(explicitOptions, 'delay')
+        ? Number(argv.delay)
+        : (config.defaults.delay ?? 0);
+      const params = config.games.map((game) =>
+        configGameParams(game, config.defaults, overrides, onProgress),
+      );
+
+      console.log(
+        `\n  Downloading ${params.length} game${params.length === 1 ? '' : 's'} from config: ${argv.config}\n`,
+      );
+      const result = await downloadGame(params, {
+        concurrency: configConcurrency,
+        delayBetweenMs: configDelay,
+      });
+      if (!printResult('Config', result)) {
+        process.exitCode = 1;
+      }
+    } catch (error) {
+      console.error(
+        `\n  \u2718 Config download failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      process.exitCode = 1;
+    }
+    return;
+  }
 
   if (argv.collection) {
     try {
@@ -195,6 +329,7 @@ export async function run(
       const result = await downloadCollection(argv.collection, apiKey, {
         downloadDirectory: argv.downloadDirectory,
         concurrency,
+        delayBetweenMs: delay,
         onProgress,
         resume: argv.resume,
         noCookieCache: argv.noCookieCache,
@@ -218,6 +353,7 @@ export async function run(
       const result = await downloadJam(argv.jam, apiKey, {
         downloadDirectory: argv.downloadDirectory,
         concurrency,
+        delayBetweenMs: delay,
         onProgress,
         resume: argv.resume,
         noCookieCache: argv.noCookieCache,
@@ -259,7 +395,6 @@ export async function run(
     console.log(
       `\n  Downloading: ${params.itchGameUrl || `${params.author}/${params.name}`}\n`,
     );
-    const delay = argv.delay !== undefined ? Number(argv.delay) : 0;
     const result = await downloadGame(params, {
       concurrency,
       delayBetweenMs: delay,

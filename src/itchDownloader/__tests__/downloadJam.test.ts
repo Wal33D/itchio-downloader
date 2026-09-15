@@ -42,24 +42,36 @@ describe('downloadJam', () => {
     await downloadJam('https://itch.io/jam/test-jam', undefined, {
       downloadDirectory: '/tmp/jam',
       concurrency: 2,
+      delayBetweenMs: 100,
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(dgMock).toHaveBeenCalledWith(
       [
-        expect.objectContaining({ itchGameUrl: 'https://alice.itch.io/game-a', downloadDirectory: '/tmp/jam' }),
+        expect.objectContaining({
+          itchGameUrl: 'https://alice.itch.io/game-a',
+          downloadDirectory: '/tmp/jam',
+        }),
         expect.objectContaining({ itchGameUrl: 'https://bob.itch.io/game-b' }),
-        expect.objectContaining({ itchGameUrl: 'https://carol.itch.io/game-c' }),
+        expect.objectContaining({
+          itchGameUrl: 'https://carol.itch.io/game-c',
+        }),
       ],
-      2,
+      { concurrency: 2, delayBetweenMs: 100 },
     );
   });
 
   it('passes resume and cookie options through', async () => {
     const fetchMock = jest.fn();
     (global as any).fetch = fetchMock;
-    fetchMock.mockResolvedValueOnce({ ok: true, text: async () => jamPageHtml });
-    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => entriesJson });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => jamPageHtml,
+    });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => entriesJson,
+    });
 
     const dgMock = jest
       .spyOn(downloadGameMod, 'downloadGame')
@@ -73,19 +85,29 @@ describe('downloadJam', () => {
 
     expect(dgMock).toHaveBeenCalledWith(
       [
-        expect.objectContaining({ resume: true, noCookieCache: true, cookieCacheDir: '/tmp/cookies' }),
+        expect.objectContaining({
+          resume: true,
+          noCookieCache: true,
+          cookieCacheDir: '/tmp/cookies',
+        }),
         expect.objectContaining({ resume: true, noCookieCache: true }),
         expect.objectContaining({ resume: true, noCookieCache: true }),
       ],
-      1,
+      { concurrency: 1, delayBetweenMs: 0 },
     );
   });
 
   it('passes API key to each game', async () => {
     const fetchMock = jest.fn();
     (global as any).fetch = fetchMock;
-    fetchMock.mockResolvedValueOnce({ ok: true, text: async () => jamPageHtml });
-    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => entriesJson });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => jamPageHtml,
+    });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => entriesJson,
+    });
 
     const dgMock = jest
       .spyOn(downloadGameMod, 'downloadGame')
@@ -94,17 +116,18 @@ describe('downloadJam', () => {
     await downloadJam('https://itch.io/jam/test-jam', 'my-key');
 
     expect(dgMock).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ apiKey: 'my-key' }),
-      ]),
-      1,
+      expect.arrayContaining([expect.objectContaining({ apiKey: 'my-key' })]),
+      { concurrency: 1, delayBetweenMs: 0 },
     );
   });
 
   it('returns error when jam has no entries', async () => {
     const fetchMock = jest.fn();
     (global as any).fetch = fetchMock;
-    fetchMock.mockResolvedValueOnce({ ok: true, text: async () => jamPageHtml });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => jamPageHtml,
+    });
     fetchMock.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ jam_games: [] }),
@@ -112,18 +135,27 @@ describe('downloadJam', () => {
 
     const result = await downloadJam('https://itch.io/jam/empty-jam');
     expect(result).toEqual(
-      expect.objectContaining({ status: false, message: expect.stringContaining('No game entries') }),
+      expect.objectContaining({
+        status: false,
+        message: expect.stringContaining('No game entries'),
+      }),
     );
   });
 
   it('throws on invalid jam URL', async () => {
-    await expect(downloadJam('https://itch.io/not-a-jam')).rejects.toThrow('Invalid jam URL');
+    await expect(downloadJam('https://itch.io/not-a-jam')).rejects.toThrow(
+      'Invalid jam URL',
+    );
   });
 
   it('throws when jam page returns HTTP error', async () => {
-    (global as any).fetch = jest.fn().mockResolvedValue({ ok: false, status: 404 });
+    (global as any).fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, status: 404 });
 
-    await expect(downloadJam('https://itch.io/jam/nonexistent')).rejects.toThrow('HTTP 404');
+    await expect(
+      downloadJam('https://itch.io/jam/nonexistent'),
+    ).rejects.toThrow('HTTP 404');
   });
 
   it('throws when jam ID cannot be extracted from page', async () => {
@@ -132,22 +164,32 @@ describe('downloadJam', () => {
       text: async () => '<html>No ViewJam call here</html>',
     });
 
-    await expect(downloadJam('https://itch.io/jam/broken')).rejects.toThrow('Could not extract jam ID');
+    await expect(downloadJam('https://itch.io/jam/broken')).rejects.toThrow(
+      'Could not extract jam ID',
+    );
   });
 
   it('throws when entries endpoint returns HTTP error', async () => {
     const fetchMock = jest.fn();
     (global as any).fetch = fetchMock;
-    fetchMock.mockResolvedValueOnce({ ok: true, text: async () => jamPageHtml });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => jamPageHtml,
+    });
     fetchMock.mockResolvedValueOnce({ ok: false, status: 500 });
 
-    await expect(downloadJam('https://itch.io/jam/test-jam')).rejects.toThrow('HTTP 500');
+    await expect(downloadJam('https://itch.io/jam/test-jam')).rejects.toThrow(
+      'HTTP 500',
+    );
   });
 
   it('filters out entries without game URLs', async () => {
     const fetchMock = jest.fn();
     (global as any).fetch = fetchMock;
-    fetchMock.mockResolvedValueOnce({ ok: true, text: async () => jamPageHtml });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => jamPageHtml,
+    });
     fetchMock.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
