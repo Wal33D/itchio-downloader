@@ -32,19 +32,19 @@ const result = await downloadGame({
 
 There's no official API for downloading free itch.io games. The itch desktop app requires a GUI. Butler requires developer access. This library gives you a single function call or CLI command that just works.
 
-**Tested on games from 2.6 MB to 1.9 GB.** 176 automated tests. Strict TypeScript. Zero lint warnings.
+**Tested on games from 2.6 MB to 1.9 GB.** 178 automated tests. Strict TypeScript. Zero lint warnings.
 
 ---
 
 ## Features
 
 <table>
-<tr><td width="180"><strong>Direct HTTP</strong></td><td>Downloads free games via 4 HTTP requests — no browser binary needed</td></tr>
+<tr><td width="180"><strong>Direct HTTP</strong></td><td>Downloads free game builds over HTTP — no browser binary needed</td></tr>
 <tr><td><strong>HTML5 Web Games</strong></td><td>Auto-detect browser-only games and save them for offline play; <code>--html5</code> selects this mode immediately</td></tr>
 <tr><td><strong>Resume Downloads</strong></td><td>Resume interrupted downloads using HTTP Range headers with <code>--resume</code></td></tr>
-<tr><td><strong>Cookie Caching</strong></td><td>Reuse session cookies across downloads (30-min TTL) — faster batch downloads</td></tr>
+<tr><td><strong>Cookie Caching</strong></td><td>Reuse itch.io session cookies and CSRF tokens for 30 minutes</td></tr>
 <tr><td><strong>Size Verification</strong></td><td>Validate Content-Length matches actual bytes downloaded on every path</td></tr>
-<tr><td><strong>Platform Selection</strong></td><td>Choose Windows, Mac, or Linux builds with <code>--platform</code></td></tr>
+<tr><td><strong>Platform Selection</strong></td><td>Choose a Windows, Mac, or Linux API upload with <code>--platform</code></td></tr>
 <tr><td><strong>API Key Support</strong></td><td>Optional authenticated downloads via itch.io API</td></tr>
 <tr><td><strong>Batch & Concurrent</strong></td><td>Download multiple games with configurable concurrency and rate limiting</td></tr>
 <tr><td><strong>Collections</strong></td><td>Fetch every game from a collection URL in one command</td></tr>
@@ -53,7 +53,7 @@ There's no official API for downloading free itch.io games. The itch desktop app
 <tr><td><strong>Progress Tracking</strong></td><td>Real-time progress bar in CLI, <code>onProgress</code> callback in library</td></tr>
 <tr><td><strong>Retries</strong></td><td>Exponential backoff on failure</td></tr>
 <tr><td><strong>Metadata</strong></td><td>Saves game metadata JSON alongside downloads</td></tr>
-<tr><td><strong>Puppeteer Fallback</strong></td><td>Optional last-resort fallback — only if direct HTTP fails</td></tr>
+<tr><td><strong>Puppeteer Fallback</strong></td><td>Separately installed, last-resort browser fallback for Node.js 22.12+</td></tr>
 </table>
 
 ---
@@ -69,13 +69,16 @@ downloadGame(params)
   5. All else fails?    --> Puppeteer fallback (if installed)
 ```
 
-Most free games resolve at **step 3**. Puppeteer is an optional dependency — you don't need it unless steps 1-4 all fail.
+Most free games resolve at **step 3**. Puppeteer is not installed by default.
+On Node.js 22.12 or newer, install it separately only if you need the
+last-resort browser fallback.
 
 ---
 
 ## Install
 
-Requires Node.js `^20.19.0`, `^22.12.0`, or `>=23`.
+Core downloads require Node.js `^20.19.0`, `^22.12.0`, or `>=23`. The optional
+Puppeteer fallback requires Node.js 22.12 or newer.
 
 ```bash
 # As a library
@@ -88,11 +91,17 @@ npm install -g itchio-downloader
 pnpm add itchio-downloader
 yarn add itchio-downloader
 
+# Optional browser fallback (Node.js 22.12+)
+npm install puppeteer@^25.11.0
+
+# If the downloader CLI was installed globally
+npm install -g puppeteer@^25.11.0
+
 # Arch Linux (AUR) — https://aur.archlinux.org/packages/itchio-downloader
 yay -S itchio-downloader
 
 # Optional last-resort browser fallback on Arch
-sudo pacman -S chromium
+yay -S puppeteer chromium
 ```
 
 ---
@@ -158,7 +167,8 @@ const result2 = await downloadGame({
 
 ### HTML5 Web Games
 
-Download browser-only games (game jams, HTML5 embeds) with all assets for offline play:
+Download browser-only games (game jams, HTML5 embeds) with their discovered
+assets for offline play:
 
 ```javascript
 const result = await downloadGame({
@@ -210,7 +220,8 @@ console.log(result.bytesDownloaded); // total bytes written
 
 ### Cookie Caching
 
-Session cookies are cached automatically (30-min TTL) so subsequent downloads skip CSRF negotiation:
+Session cookies and CSRF tokens are cached automatically (30-min TTL) so
+subsequent downloads can reuse the same itch.io session:
 
 ```javascript
 // Disable caching or customize the directory
@@ -288,25 +299,30 @@ await downloadGame(
 
 ## Configuration
 
-| Parameter           | Type       | Default            | Description                                         |
-| :------------------ | :--------- | :----------------- | :-------------------------------------------------- |
-| `itchGameUrl`       | `string`   | --                 | Direct URL to the game                              |
-| `name`              | `string`   | --                 | Game name (use with `author`)                       |
-| `author`            | `string`   | --                 | Author's username                                   |
-| `apiKey`            | `string`   | `ITCH_API_KEY` env | API key for authenticated downloads                 |
-| `downloadDirectory` | `string`   | `~/downloads`      | Where to save files                                 |
-| `desiredFileName`   | `string`   | --                 | Custom file name (no path separators)               |
-| `inMemory`          | `boolean`  | `false`            | Download to Buffer instead of disk                  |
-| `html5`             | `boolean`  | `false`            | Download HTML5 web game assets                      |
-| `platform`          | `string`   | --                 | Preferred platform: `windows`, `linux`, `osx`       |
-| `resume`            | `boolean`  | `false`            | Resume interrupted downloads (Range headers)        |
-| `noCookieCache`     | `boolean`  | `false`            | Disable automatic cookie caching                    |
-| `cookieCacheDir`    | `string`   | system tmpdir      | Directory for the cookie cache                      |
-| `writeMetaData`     | `boolean`  | `true`             | Save metadata JSON alongside download               |
-| `retries`           | `number`   | `0`                | Retry attempts on failure                           |
-| `retryDelayMs`      | `number`   | `500`              | Base delay for exponential backoff (ms)             |
-| `parallel`          | `boolean`  | `false`            | Run all downloads concurrently                      |
-| `onProgress`        | `function` | --                 | `({ bytesReceived, totalBytes, fileName }) => void` |
+| Parameter             | Type       | Default            | Description                                                     |
+| :-------------------- | :--------- | :----------------- | :-------------------------------------------------------------- |
+| `itchGameUrl`         | `string`   | --                 | Direct URL to the game                                          |
+| `name`                | `string`   | --                 | Game name (use with `author`)                                   |
+| `author`              | `string`   | --                 | Author's username                                               |
+| `apiKey`              | `string`   | `ITCH_API_KEY` env | API key for authenticated downloads                             |
+| `downloadDirectory`   | `string`   | `~/downloads`      | Where to save files                                             |
+| `desiredFileName`     | `string`   | --                 | Custom base name; the downloaded extension is kept              |
+| `inMemory`            | `boolean`  | `false`            | Download to Buffer instead of disk                              |
+| `html5`               | `boolean`  | `false`            | Select HTML5 mode immediately; web-only games are auto-detected |
+| `platform`            | `string`   | --                 | Preferred API upload: `windows`, `linux`, `osx`                 |
+| `resume`              | `boolean`  | `false`            | Resume interrupted downloads (Range headers)                    |
+| `noCookieCache`       | `boolean`  | `false`            | Disable automatic cookie caching                                |
+| `cookieCacheDir`      | `string`   | system tmpdir      | Directory for the cookie cache                                  |
+| `writeMetaData`       | `boolean`  | `true`             | Save metadata JSON alongside download                           |
+| `retries`             | `number`   | `0`                | Retry attempts on failure                                       |
+| `retryDelayMs`        | `number`   | `500`              | Base delay for exponential backoff (ms)                         |
+| `navigationTimeoutMs` | `number`   | `30000`            | Puppeteer page navigation timeout (ms)                          |
+| `fileWaitTimeoutMs`   | `number`   | `30000`            | Puppeteer download-file wait timeout (ms)                       |
+| `parallel`            | `boolean`  | `false`            | If true on any batch item, run the whole batch concurrently     |
+| `onProgress`          | `function` | --                 | `({ bytesReceived, totalBytes, fileName }) => void`             |
+
+For array downloads, the second `downloadGame` argument can be a concurrency
+number or `{ concurrency, delayBetweenMs }`.
 
 ---
 
@@ -316,6 +332,7 @@ await downloadGame(
 type DownloadGameResponse = {
   status: boolean; // true if download succeeded
   message: string; // human-readable result
+  failReason?: string; // structured reason for supported failure paths
   filePath?: string; // path to downloaded file
   fileBuffer?: Buffer; // file contents (inMemory mode)
   metadataPath?: string; // path to metadata JSON
@@ -335,9 +352,9 @@ type DownloadGameResponse = {
 - **HTTP 403:** the page may be private, restricted, or blocked by itch.io. Confirm it opens in a logged-out browser; this tool does not bypass access controls.
 - **HTTP 404:** check the URL. The page may have been renamed, removed, or unpublished.
 - **HTML5 game:** retry with `--html5` to explicitly select offline web-game downloading. Large single-file games can take time even when no additional assets are listed.
-- **`.direct_download_btn` error:** browser fallback was reached but itch.io did not expose a downloadable build. On Arch, install optional Chromium with `sudo pacman -S chromium`; this cannot make a private, paid, or HTML5-only build downloadable as a desktop archive.
+- **Browser fallback unavailable:** on Node.js 22.12+, install it with `npm install puppeteer@^25.11.0`. On Arch, install both pieces with `yay -S puppeteer chromium`. A browser cannot make a private, paid, or HTML5-only build downloadable as a desktop archive.
 - **Sessions:** cookie caching is enabled by default. Avoid `--noCookieCache` unless a fresh unauthenticated session is intentional.
-- **Debugging:** prefix the command with `DEBUG_DOWNLOAD_GAME=1` and remove credentials before sharing its output in an issue.
+- **Debugging:** prefix the command with `DEBUG_DOWNLOAD_GAME=true` and remove credentials before sharing its output in an issue.
 
 ## Development
 
@@ -345,7 +362,7 @@ type DownloadGameResponse = {
 git clone https://github.com/Wal33D/itchio-downloader.git
 cd itchio-downloader
 pnpm install
-pnpm test        # 176 tests
+pnpm test        # 178 tests
 pnpm run build   # compile TypeScript
 pnpm run lint    # ESLint (zero warnings)
 ```

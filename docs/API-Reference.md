@@ -1,7 +1,9 @@
 # API Reference
 
 Itchio-Downloader exports download functions, cookie cache utilities, and a resumable download helper. Import them from the package root.
-The library requires **Node.js 20.19+, 22.12+, or a newer supported release**:
+Core downloads require **Node.js 20.19+, 22.12+, or a newer supported
+release**. The separately installed Puppeteer fallback requires Node.js 22.12
+or newer:
 
 ```javascript
 const {
@@ -18,9 +20,13 @@ const {
 
 ---
 
-## downloadGame(params, concurrency?)
+## downloadGame(params, concurrencyOrOptions?)
 
-Downloads one or more games from itch.io. Automatically selects the best download method using a priority chain (API key, HTML5, direct HTTP, auto-detect HTML5, Puppeteer fallback). When an array of parameter objects is supplied, multiple games can be fetched sequentially or in parallel.
+Downloads one or more games from itch.io. Automatically selects the best
+download method using a priority chain: API key, explicit HTML5 mode, direct
+HTTP, automatic HTML5 detection, then the separately installed Puppeteer
+fallback. When an array of parameter objects is supplied, downloads can run
+sequentially or with controlled concurrency.
 
 ### Parameters
 
@@ -28,24 +34,27 @@ Downloads one or more games from itch.io. Automatically selects the best downloa
   - `name` _(string, optional)_ -- Game name, used with `author`.
   - `author` _(string, optional)_ -- Author's username on itch.io.
   - `itchGameUrl` _(string, optional)_ -- Direct URL to the game's page.
-  - `desiredFileName` _(string, optional)_ -- Rename the downloaded file. Must not contain path separators.
+  - `desiredFileName` _(string, optional)_ -- Rename the downloaded file's base name while preserving its extension. Must not contain path separators.
   - `downloadDirectory` _(string, optional)_ -- Directory for the downloaded files. Defaults to `~/downloads`.
   - `apiKey` _(string, optional)_ -- itch.io API key for authenticated downloads.
     If omitted, the library checks the `ITCH_API_KEY` environment variable.
-  - `inMemory` _(boolean, optional)_ -- Store the downloaded file in memory and return it as a Buffer. When a `downloadDirectory` is provided the file is also written to disk.
+  - `inMemory` _(boolean, optional)_ -- Store the downloaded game file in memory instead of writing it to disk and return it as a Buffer.
   - `writeMetaData` _(boolean, optional)_ -- Write a metadata JSON file alongside the download. Defaults to `true`.
-  - `html5` _(boolean, optional)_ -- Download HTML5 web game assets for offline play. When set, the library scrapes the game's embedded iframe and downloads all referenced assets (HTML, JS, CSS, images, audio, etc.) with directory structure preserved.
-  - `platform` _(string, optional)_ -- Preferred platform for multi-upload games. Accepted values: `'windows'`, `'linux'`, `'osx'`.
+  - `html5` _(boolean, optional)_ -- Select HTML5 downloading immediately. Without it, browser-only games are auto-detected after the direct-download probe. The library saves the embedded game and discovered asset references with directory structure preserved.
+  - `platform` _(string, optional)_ -- Preferred upload for API-key downloads. Accepted values: `'windows'`, `'linux'`, `'osx'`.
   - `retries` _(number, optional)_ -- Number of retry attempts on failure. Defaults to `0`.
   - `retryDelayMs` _(number, optional)_ -- Base delay in milliseconds for exponential backoff. Defaults to `500`.
   - `navigationTimeoutMs` _(number, optional)_ -- Puppeteer page navigation timeout in milliseconds. Defaults to `30000`.
   - `fileWaitTimeoutMs` _(number, optional)_ -- Download file detection timeout in milliseconds. Defaults to `30000`.
-  - `parallel` _(boolean, optional)_ -- When used inside an array, run this download concurrently via `Promise.all`.
+  - `parallel` _(boolean, optional)_ -- When true on any item in an array, run the entire array concurrently via `Promise.all`.
   - `resume` _(boolean, optional)_ -- Resume interrupted downloads using HTTP Range headers. Partial data is saved to a `.part` file and the download continues from where it left off. Defaults to `false`.
   - `noCookieCache` _(boolean, optional)_ -- Disable automatic cookie caching. By default, session cookies and CSRF tokens are cached per domain with a 30-minute TTL to speed up subsequent downloads.
   - `cookieCacheDir` _(string, optional)_ -- Directory for the cookie cache file. Defaults to a subdirectory in the system temp directory.
   - `onProgress` _(function, optional)_ -- Receives `{ bytesReceived, totalBytes, fileName }` as the download proceeds.
-- `concurrency` _(number, optional)_ -- When `params` is an array and `parallel` is not set, limits how many downloads happen at once. Defaults to `1`.
+- `concurrencyOrOptions` _(number or DownloadGameOptions, optional)_ -- When
+  `params` is an array and `parallel` is not set, a number limits concurrent
+  downloads. An object can set `concurrency` and `delayBetweenMs`. Concurrency
+  defaults to `1`; delay defaults to `0`.
 
 ### Returns
 
@@ -63,9 +72,14 @@ Downloads a free itch.io game using direct HTTP requests -- no Puppeteer, no API
 2. POST to `/download_url` to get a signed download page URL.
 3. GET the download page to get fresh CSRF and upload IDs.
 4. POST to `/file/{uploadId}` to get a Cloudflare R2 CDN URL (60-second TTL).
-5. Stream the CDN URL to disk or memory.
+5. Download the signed CDN URL to disk or memory. Disk mode may make a HEAD
+   request first to determine the server-provided file name.
 
-Session cookies and CSRF tokens are cached automatically (30-minute TTL) so subsequent downloads to the same domain skip step 1. When `resume: true` is set, interrupted downloads are saved as `.part` files and resumed using Range headers.
+Session cookies and CSRF tokens are cached automatically for 30 minutes so
+subsequent downloads can reuse the same itch.io session. The game page is still
+requested to classify the current uploads. When `resume: true` is set,
+interrupted downloads are saved as `.part` files and resumed using Range
+headers.
 
 ### Parameters
 
@@ -79,7 +93,11 @@ A `Promise<DownloadGameResponse>`.
 
 ## downloadGameHtml5(params)
 
-Downloads an HTML5 web game from itch.io for offline play. Scrapes the embedded iframe URL (`itch.zone/html/{id}/index.html`), downloads `index.html` and all referenced assets, and saves them locally with directory structure preserved. JavaScript files are also scanned for additional asset references (images, audio, data files).
+Downloads an HTML5 web game from itch.io for offline play. Scrapes the embedded
+iframe URL (`itch.zone/html/{id}/index.html`), downloads `index.html` and the
+asset references it discovers, and preserves their local directory structure.
+JavaScript files are also scanned for common image, audio, data, and module
+references.
 
 ### Parameters
 
@@ -88,6 +106,7 @@ Accepts the same `DownloadGameParams` object. Set `html5: true` when calling via
 ### Returns
 
 A `Promise<DownloadGameResponse>`. On success, the response includes:
+
 - `html5Assets` -- array of downloaded asset file paths relative to the game directory.
 - `filePath` -- path to the saved `index.html`.
 
@@ -118,11 +137,11 @@ A `Promise<DownloadGameResponse | DownloadGameResponse[]>`. Returns a single err
 ```javascript
 const { downloadJam } = require('itchio-downloader');
 
-const results = await downloadJam(
-  'https://itch.io/jam/gmtk-2023',
-  null,
-  { concurrency: 3, downloadDirectory: './jam-games', resume: true },
-);
+const results = await downloadJam('https://itch.io/jam/gmtk-2023', null, {
+  concurrency: 3,
+  downloadDirectory: './jam-games',
+  resume: true,
+});
 
 // results is an array — one DownloadGameResponse per jam entry
 for (const r of Array.isArray(results) ? results : [results]) {
@@ -151,8 +170,8 @@ A `Promise<StreamResult>`:
 interface StreamResult {
   bytesWritten: number;
   expectedBytes?: number;
-  verified: boolean;    // true if Content-Length matched actual bytes
-  resumed?: boolean;    // true if download was resumed from partial
+  verified: boolean; // true if Content-Length matched actual bytes
+  resumed?: boolean; // true if download was resumed from partial
 }
 ```
 
@@ -202,6 +221,14 @@ type DownloadGameParams = {
 type DownloadGameResponse = {
   status: boolean;
   message: string;
+  failReason?:
+    | 'web_only'
+    | 'no_uploads'
+    | 'paid'
+    | 'csrf_failed'
+    | 'not_html5'
+    | 'page_unavailable'
+    | 'puppeteer_missing';
   httpStatus?: number;
   metaData?: IItchRecord;
   metadataPath?: string;
@@ -243,7 +270,7 @@ The `metaData` object mirrors the information fetched from the game's `data.json
 // Standard download (auto-selects best method)
 await downloadGame({
   itchGameUrl: 'https://baraklava.itch.io/manic-miners',
-  desiredFileName: 'manic-miners-latest',
+  desiredFileName: 'manic-miners-latest', // downloaded extension is preserved
 });
 
 // Direct HTTP download (no Puppeteer, no API key)
@@ -271,8 +298,8 @@ const resumeResult = await downloadGame({
   itchGameUrl: 'https://dev.itch.io/large-game',
   resume: true,
 });
-console.log(resumeResult.resumed);       // true if continued from .part
-console.log(resumeResult.sizeVerified);  // true if size matched
+console.log(resumeResult.resumed); // true if continued from .part
+console.log(resumeResult.sizeVerified); // true if size matched
 console.log(resumeResult.bytesDownloaded);
 
 // Download all entries from a game jam

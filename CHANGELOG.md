@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Security
+
+- Stop installing Puppeteer by default. It is now a separately installed,
+  optional browser fallback, which keeps the vulnerable, unpatched
+  `extract-zip` dependency out of normal installs.
+- Require Puppeteer 25.11 or newer for the opt-in browser fallback. This secure
+  fallback requires Node.js 22.12 or newer; core downloads continue to support
+  Node.js 20.19.
+- Audit production dependencies for high-severity advisories in CI.
+
+### Changed
+
+- Refresh runtime and development dependencies within their compatible major
+  versions; the complete dependency audit now reports no known vulnerabilities.
+- Keep `inMemory` downloads memory-only even when a download directory is set.
+- Expand regression coverage to 178 tests and reconcile every user-facing guide
+  with the current CLI, API, runtime, and packaging behavior.
+
 ## [1.2.4] - 2026-09-11
 
 ### Fixed

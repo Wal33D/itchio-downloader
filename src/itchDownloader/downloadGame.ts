@@ -1,4 +1,3 @@
-import type { Browser } from 'puppeteer';
 import 'dotenv/config';
 import { createFile } from '../fileUtils/createFile';
 import { createDirectory } from '../fileUtils/createDirectory';
@@ -12,6 +11,10 @@ import { DownloadGameParams, DownloadGameResponse, IItchRecord } from './types';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import {
+  loadPuppeteer,
+  PuppeteerBrowser,
+} from './puppeteerRuntime';
 
 function log(...args: unknown[]) {
   if (process.env.DEBUG_DOWNLOAD_GAME === 'true') {
@@ -20,7 +23,7 @@ function log(...args: unknown[]) {
 }
 
 // Track active browsers for cleanup on process exit
-const activeBrowsers = new Set<Browser>();
+const activeBrowsers = new Set<PuppeteerBrowser>();
 
 export interface DownloadGameOptions {
   /** Maximum number of concurrent downloads (default: 1) */
@@ -167,19 +170,15 @@ export async function downloadGameSingle(
   }
 
   // === PATH 5: Puppeteer fallback (optional dependency) ===
-  let puppeteerModule: typeof import('puppeteer') | null = null;
-  try {
-    puppeteerModule = await import('puppeteer');
-  } catch {
-    // Puppeteer not installed
-  }
+  const puppeteerModule = await loadPuppeteer();
 
   if (!puppeteerModule) {
     return {
       status: false,
       message:
         'Direct HTTP download failed and Puppeteer is not installed. ' +
-        'Install puppeteer as an optional dependency, or provide an API key. ' +
+        'On Node.js 22.12 or newer, install Puppeteer 25 alongside the ' +
+        'downloader; otherwise provide an API key. ' +
         `Direct error: ${directResult.message}`,
     };
   }
@@ -197,7 +196,7 @@ export async function downloadGameSingle(
   }
 
   let browserInit: {
-    browser: Browser | null;
+    browser: PuppeteerBrowser | null;
     status: boolean;
     message: string;
   } | null = null;
@@ -223,7 +222,7 @@ export async function downloadGameSingle(
         );
 
       activeBrowsers.add(browserInit.browser);
-      const browser: Browser = browserInit.browser;
+      const browser: PuppeteerBrowser = browserInit.browser;
 
       const { initiateDownload } = await import('./initiateDownload');
       const puppeteerResult = await initiateDownload({

@@ -1,7 +1,10 @@
 import path from 'path';
 import fs from 'fs';
-import type { Browser } from 'puppeteer';
 import { DownloadProgress } from './types';
+import {
+  loadPuppeteer,
+  PuppeteerBrowser,
+} from './puppeteerRuntime';
 
 function findBrowserExecutable(): string | undefined {
   if (process.env.PUPPETEER_EXECUTABLE_PATH) {
@@ -25,13 +28,18 @@ export const initializeBrowser = async ({
   downloadDirectory: string;
   headless?: boolean;
   onProgress?: (info: DownloadProgress) => void;
-}): Promise<{ browser: Browser | null; status: boolean; message: string }> => {
+}): Promise<{
+  browser: PuppeteerBrowser | null;
+  status: boolean;
+  message: string;
+}> => {
   let message = '';
   let status = false;
-  let browser: Browser | null = null;
+  let browser: PuppeteerBrowser | null = null;
 
   try {
-    const puppeteer = await import('puppeteer');
+    const puppeteer = await loadPuppeteer();
+    if (!puppeteer) throw new Error('Puppeteer is not installed');
     const executablePath = findBrowserExecutable();
     browser = await puppeteer.default.launch({
       headless,

@@ -436,7 +436,7 @@ export async function downloadGameDirect(
     return {
       status: true,
       message: 'Download successful (direct HTTP).',
-      filePath: downloadDirectory ? finalFilePath : undefined,
+      filePath: finalFilePath || undefined,
       metadataPath,
       metaData: record,
       fileBuffer,

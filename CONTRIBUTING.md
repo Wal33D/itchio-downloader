@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for taking the time to contribute! This project uses **Node.js 18 or newer**.
+Thank you for taking the time to contribute! This project uses **Node.js 20.19+, 22.12+, or a newer supported release** and pnpm 9.
 
 ## Install Dependencies
 
@@ -17,6 +17,8 @@ Run the lint and Jest test suite before opening a pull request:
 ```bash
 pnpm run lint
 pnpm test
+pnpm run build
+pnpm audit --audit-level high
 ```
 
 Format code with Prettier before committing:
@@ -29,7 +31,7 @@ pnpm run format
 
 1. Fork the repository and create a topic branch.
 2. Commit your changes with clear messages (imperative present tense) and push to your fork.
-3. Open a pull request against the `main` branch and describe your changes.
+3. Open a pull request against the `master` branch and describe your changes.
 
 We appreciate any fixes or improvements!
 

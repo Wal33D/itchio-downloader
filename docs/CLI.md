@@ -41,6 +41,7 @@ itchio-downloader [options]
 | `--noCookieCache`     | Disable automatic cookie caching                                         |
 | `--cookieCacheDir`    | Directory for cookie cache (default: system tmpdir)                      |
 | `-h, --help`          | Display usage information                                                |
+| `--version`           | Display the installed package version                                    |
 
 You must provide a collection URL, a jam URL, a game URL, or both a name and author.
 
@@ -48,8 +49,8 @@ You can set the API key in an `.env` file or environment variable `ITCH_API_KEY`
 so the `--apiKey` flag is optional.
 
 > **Note:** Most free games download without Puppeteer or an API key. The library
-> uses direct HTTP by default and only falls back to Puppeteer if it is installed
-> and all other methods fail.
+> uses direct HTTP by default. Puppeteer is a separately installed fallback for
+> Node.js 22.12+ and is only considered after all other methods fail.
 
 ### Examples
 
@@ -69,7 +70,10 @@ itchio-downloader --jam "https://itch.io/jam/gmtk-2023" --concurrency 3
 # Downloading all games from a collection
 itchio-downloader --collection "https://itch.io/c/123/example"
 
-# Download an HTML5 web game for offline play
+# HTML5 web-only games are auto-detected
+itchio-downloader --url "https://ncase.itch.io/wbwwb"
+
+# Or select HTML5 mode immediately
 itchio-downloader --url "https://ncase.itch.io/wbwwb" --html5
 
 # Download a specific platform build
