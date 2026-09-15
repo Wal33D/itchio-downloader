@@ -18,13 +18,18 @@ const result = await downloadGame({
 // No API key, no Puppeteer -- downloaded via direct HTTP
 ```
 
-When does Puppeteer get used? Only as a last resort, and only if it is installed. The download priority chain is:
+When does Puppeteer get used? Only as a last resort, and only if you install it
+separately on Node.js 22.12 or newer. The download priority chain is:
 
 1. API key (if provided)
 2. Explicit `html5: true` flag
 3. Direct HTTP (CSRF + CDN)
 4. Auto-detect HTML5 (if direct HTTP finds no downloadable uploads)
 5. Puppeteer fallback (only if installed)
+
+```bash
+npm install puppeteer@^25.11.0
+```
 
 You can also call `downloadGameDirect` directly if you want to skip the priority chain:
 
@@ -65,13 +70,20 @@ itchio-downloader --jam "https://itch.io/jam/gmtk-2023" --concurrency 3
 itchio-downloader --jam "https://itch.io/jam/ludum-dare-55" --resume --downloadDirectory ./ld55
 ```
 
-Under the hood, `downloadJam` fetches the jam page to extract the jam ID, retrieves all entries from itch.io's `entries.json` endpoint, and feeds each game URL through the standard download pipeline. All download methods work -- direct HTTP, HTML5, API key, Puppeteer fallback.
+Under the hood, `downloadJam` fetches the jam page to extract the jam ID,
+retrieves all entries from itch.io's `entries.json` endpoint, and feeds each
+game URL through the standard download pipeline. Direct HTTP, HTML5, and API
+downloads work normally; the browser fallback is available when Puppeteer is
+installed separately.
 
 Most jam games are free HTML5 browser games or downloadable zip files. The library automatically selects the best download method for each entry.
 
 ## HTML5 web game downloads
 
-Some itch.io games are browser-only -- they run in an embedded iframe and have no downloadable files. The `html5` option scrapes all assets from the game's iframe (HTML, JavaScript, CSS, images, audio, data files) and saves them locally for offline play.
+Some itch.io games are browser-only -- they run in an embedded iframe and have
+no downloadable files. The `html5` option selects that path immediately. The
+downloader saves the iframe entry point and the HTML, JavaScript, CSS, image,
+audio, and data references it discovers for offline play.
 
 ```javascript
 const result = await downloadGame({
@@ -93,6 +105,10 @@ If you don't set `html5: true` explicitly, the library will auto-detect web-only
 From the CLI:
 
 ```bash
+# Auto-detect a browser-only game
+itchio-downloader --url "https://ncase.itch.io/wbwwb"
+
+# Select HTML5 mode immediately
 itchio-downloader --url "https://ncase.itch.io/wbwwb" --html5
 itchio-downloader --url "https://ncase.itch.io/wbwwb" --html5 --downloadDirectory ./web-games
 ```
@@ -151,7 +167,7 @@ Specify `downloadDirectory` and `desiredFileName` to control where each file is 
 await downloadGame({
   itchGameUrl: 'https://example.itch.io/game',
   downloadDirectory: '/path/to/games',
-  desiredFileName: 'my-game.zip',
+  desiredFileName: 'my-game', // the downloaded extension is preserved
 });
 ```
 
@@ -165,8 +181,8 @@ const result = await downloadGame({
   resume: true,
 });
 
-console.log(result.resumed);        // true if continued from partial
-console.log(result.sizeVerified);   // true if final size matches Content-Length
+console.log(result.resumed); // true if continued from partial
+console.log(result.sizeVerified); // true if final size matches Content-Length
 console.log(result.bytesDownloaded); // total bytes written
 ```
 
@@ -180,7 +196,9 @@ The library uses HTTP Range headers to resume. If the server doesn't support Ran
 
 ## Cookie caching
 
-Session cookies and CSRF tokens are cached automatically per domain (30-minute TTL). This speeds up subsequent downloads to the same itch.io author by skipping the CSRF negotiation step.
+Session cookies and CSRF tokens are cached automatically per domain (30-minute
+TTL), allowing subsequent downloads to reuse the same itch.io session. The
+game page is still fetched to classify its current uploads.
 
 Cookie caching is enabled by default. To disable it:
 
@@ -203,7 +221,11 @@ await downloadGame({
 You can also manage the cookie cache programmatically:
 
 ```javascript
-const { getCachedCookies, setCachedCookies, clearCachedCookies } = require('itchio-downloader');
+const {
+  getCachedCookies,
+  setCachedCookies,
+  clearCachedCookies,
+} = require('itchio-downloader');
 
 // Check for cached session
 const cached = await getCachedCookies('https://author.itch.io/game');
@@ -243,7 +265,9 @@ if (result.sizeVerified === false) {
 }
 ```
 
-For in-memory downloads (`inMemory: true`), a size mismatch throws an error immediately. For HTML5 game downloads, individual assets with mismatched sizes are skipped and reported in the failure count.
+For in-memory downloads (`inMemory: true`), a size mismatch throws an error
+immediately. For HTML5 game downloads, individual assets with mismatched sizes
+are removed and reported in the result message; `sizeVerified` is then `false`.
 
 ## Progress callback
 

@@ -7,19 +7,18 @@ This page tracks planned improvements for **Itchio-Downloader**. Items may chang
 These features have been implemented and are available in the current release:
 
 - **Direct HTTP downloads (no Puppeteer)** -- Free games are downloaded via direct HTTP using CSRF token extraction and CDN URL negotiation. No headless browser needed for most games.
-- **Puppeteer is optional** -- Puppeteer is now an optional dependency. The library only uses it as a last-resort fallback if all other download methods fail and Puppeteer is installed.
-- **HTML5 web game downloads** -- Browser-only games can be downloaded for offline play with `--html5`. The library scrapes the embedded iframe and downloads all assets (HTML, JS, CSS, images, audio, data files) with directory structure preserved. JavaScript files are scanned for additional asset references.
+- **Puppeteer is optional** -- Puppeteer is a separately installed, last-resort fallback on Node.js 22.12+. Core direct, API, and HTML5 downloads do not install or require it.
+- **HTML5 web game downloads** -- Browser-only games are auto-detected, while `--html5` selects that path immediately. The library saves the embedded game and discovered HTML, JavaScript, CSS, image, audio, and data references with their directory structure preserved.
 - **Platform selection** -- Use `--platform` (or the `platform` parameter) to choose a specific platform build (windows, linux, osx) for multi-upload games.
 - **Retry with exponential backoff** -- Configurable `retries` and `retryDelayMs` for automatic retry on failure.
-- **File deduplication** -- Existing files are automatically renamed with a numeric suffix to avoid overwrites.
 - **HTTP status codes in errors** -- Error responses include `httpStatus` when available.
 - **CLI concurrency flag** -- `--concurrency` controls parallel download limits.
 - **CLI progress bar** -- Real-time progress display with percentage, bytes, and file name.
-- **Cookie caching** -- Session cookies and CSRF tokens are cached per domain with a 30-minute TTL. Subsequent downloads skip the CSRF negotiation step. Configurable via `--noCookieCache` and `--cookieCacheDir`.
+- **Cookie caching** -- Session cookies and CSRF tokens are cached per domain with a 30-minute TTL so subsequent downloads can reuse the same session. Configurable via `--noCookieCache` and `--cookieCacheDir`.
 - **Resume support** -- Interrupted downloads can be resumed using HTTP Range headers. Partial data is saved to `.part` files. Enable with `--resume`.
-- **Checksum verification** -- Downloaded file sizes are verified against Content-Length headers. Responses include `sizeVerified`, `bytesDownloaded`, and `resumed` fields. In-memory downloads throw on size mismatch. HTML5 asset downloads verify each individual asset.
+- **Size verification** -- Downloaded file sizes are verified against Content-Length headers. Responses include `sizeVerified`, `bytesDownloaded`, and `resumed` fields. In-memory downloads throw on size mismatch. HTML5 asset downloads verify each individual asset.
 - **Game jam downloads** -- Download all entries from an itch.io game jam with `--jam`. Extracts jam ID from the jam page, fetches entries from the `entries.json` endpoint, and downloads each game through the existing pipeline.
-- **161 unit tests** -- Comprehensive test coverage for all download paths, cookie caching, resume logic, size verification, and game jams.
+- **178 automated tests** -- Coverage for download paths, cookie caching, resume logic, size verification, optional browser loading, and game jams.
 
 ## Planned
 

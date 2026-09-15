@@ -10,7 +10,12 @@ import * as waitFile from '../../fileUtils/waitForFile';
 import * as renameFileModule from '../../fileUtils/renameFile';
 import * as createFileModule from '../../fileUtils/createFile';
 import * as downloadGameDirectModule from '../downloadGameDirect';
+import * as puppeteerRuntime from '../puppeteerRuntime';
 import { Readable } from 'stream';
+
+jest.mock('puppeteer', () => ({ __esModule: true, default: {} }), {
+  virtual: true,
+});
 
 describe('downloadGame', () => {
   beforeEach(() => {
@@ -467,6 +472,7 @@ describe('downloadGame', () => {
   });
 
   it('returns a buffer when inMemory is true', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dg-memory-'));
     jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({
       found: true,
       itchRecord: { id: 3, name: 'bufgame', author: 'user' },
@@ -491,10 +497,13 @@ describe('downloadGame', () => {
       author: 'user',
       apiKey: 'key',
       inMemory: true,
+      downloadDirectory: tmpDir,
+      writeMetaData: false,
     })) as any;
 
     expect(result.fileBuffer).toEqual(data);
     expect(result.filePath).toBeUndefined();
+    expect(fs.readdirSync(tmpDir)).toEqual([]);
     (global.fetch as any).mockRestore?.();
   });
 
@@ -539,6 +548,20 @@ describe('downloadGame', () => {
     expect(spy).toHaveBeenCalled();
     expect(result.message).toContain('direct HTTP');
     spy.mockRestore();
+  });
+
+  it('returns actionable guidance when the optional browser is absent', async () => {
+    jest.spyOn(puppeteerRuntime, 'loadPuppeteer').mockResolvedValue(null);
+    const browserSpy = jest.spyOn(initBrowser, 'initializeBrowser');
+
+    const result = (await downloadGame({
+      itchGameUrl: 'https://author.itch.io/game',
+    })) as any;
+
+    expect(result.status).toBe(false);
+    expect(result.message).toContain('Puppeteer is not installed');
+    expect(result.message).toContain('Node.js 22.12');
+    expect(browserSpy).not.toHaveBeenCalled();
   });
 
   it('does not launch Puppeteer for an unavailable page', async () => {
@@ -617,13 +640,11 @@ describe('downloadGame', () => {
   });
 
   it('applies delayBetweenMs between batch downloads', async () => {
-    jest
-      .spyOn(fetchProfile, 'fetchItchGameProfile')
-      .mockResolvedValue({
-        found: true,
-        itchRecord: { name: 'game' },
-        message: 'ok',
-      });
+    jest.spyOn(fetchProfile, 'fetchItchGameProfile').mockResolvedValue({
+      found: true,
+      itchRecord: { name: 'game' },
+      message: 'ok',
+    });
 
     const directSpy = jest
       .spyOn(downloadGameDirectModule, 'downloadGameDirect')

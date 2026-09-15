@@ -1,4 +1,4 @@
-import type { Browser } from 'puppeteer';
+import { PuppeteerBrowser } from './puppeteerRuntime';
 
 /**
  * Initiates a download for a game from the Itch.io website using Puppeteer.
@@ -14,7 +14,7 @@ export const initiateDownload = async ({
   itchGameUrl,
   navigationTimeoutMs = 30000,
 }: {
-  browser: Browser;
+  browser: PuppeteerBrowser;
   itchGameUrl: string;
   navigationTimeoutMs?: number;
 }): Promise<{ status: boolean; message: string }> => {

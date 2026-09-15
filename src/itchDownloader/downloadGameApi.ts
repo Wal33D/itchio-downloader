@@ -74,7 +74,10 @@ export async function downloadGameViaApi(
         ) || uploadsData.uploads[0]
       : uploadsData.uploads[0];
     const fileName = upload.filename || `${record.name}.zip`;
-    const targetPath = downloadDirectory ? path.join(downloadDirectory, fileName) : undefined;
+    const targetPath =
+      !inMemory && downloadDirectory
+        ? path.join(downloadDirectory, fileName)
+        : undefined;
     let fileBuffer: Buffer | undefined;
     let sizeVerified = true;
     let bytesDownloaded = 0;
@@ -87,10 +90,6 @@ export async function downloadGameViaApi(
         fileName,
       );
       bytesDownloaded = fileBuffer.length;
-      if (targetPath) {
-        const fsPromises = await import('fs/promises');
-        await fsPromises.writeFile(targetPath, fileBuffer);
-      }
     } else {
       if (!targetPath) {
         throw new Error('downloadDirectory is required when not using memory mode');
@@ -142,7 +141,7 @@ export async function downloadGameViaApi(
     return {
       status: true,
       message: 'Download successful.',
-      filePath: downloadDirectory ? finalFilePath : undefined,
+      filePath: finalFilePath || undefined,
       metadataPath,
       metaData: record,
       fileBuffer,

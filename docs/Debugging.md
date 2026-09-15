@@ -17,10 +17,10 @@ DEBUG_DOWNLOAD_GAME=true itchio-downloader --url "https://example.itch.io/game"
 
 ## Troubleshooting tips
 
-- **Browser fails to launch** – Puppeteer is only an automatic last-resort fallback. A `.direct_download_btn` error means that fallback was already running; it does not mean Puppeteer was skipped. AUR users can install `chromium`, which is detected at `/usr/bin/chromium`, or set `PUPPETEER_EXECUTABLE_PATH` explicitly.
-- **HTML5 game has no download button** – Run the command with `--html5`. Browser-only games do not have the donation-page button used for desktop downloads.
+- **Browser fallback is unavailable** – Puppeteer is not installed by default and its secure supported release requires Node.js 22.12+. Install it with `npm install puppeteer@^25.11.0`. AUR users need `yay -S puppeteer chromium`. The downloader detects `/usr/bin/chromium`, or you can set `PUPPETEER_EXECUTABLE_PATH` explicitly.
+- **HTML5 game has no download button** – Browser-only games are auto-detected. Use `--html5` to select web-game downloading immediately, especially when a page also offers desktop uploads.
 - **Game page returns 403 or 404** – Verify the URL in a normal browser. The page may be private, restricted, unpublished, or removed; the downloader cannot bypass those controls.
 - **Downloads time out or hang** – The downloader waits up to 30 seconds for the file to appear. Slow connections may need more time. Ensure your internet connection is stable and that itch.io is reachable. Re-run with debug logging enabled to see where the process stops.
-- **Browser closes unexpectedly** – Make sure no other process is killing the spawned browser. On headless systems you can set `headless: false` in `initializeBrowser.ts` for interactive debugging.
+- **Browser closes unexpectedly** – Make sure no other process is killing the spawned browser. Contributors debugging the fallback can set `headless: false` in `initializeBrowser.ts` for an interactive run.
 
 If problems persist, open an issue on GitHub with the debug logs attached.
